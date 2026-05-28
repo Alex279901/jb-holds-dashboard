@@ -1,0 +1,10 @@
+{
+  "name": "jb-holds-cinematic-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "JB Holds cinematic executive intelligence operating system.",
+  "scripts": {
+    "start": "python3 -m http.server 8098 --bind 127.0.0.1",
+    "start:8097": "python3 -m http.server 8097 --bind 127.0.0.1"
+  }
+}

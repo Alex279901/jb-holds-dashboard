@@ -1,0 +1,5 @@
+branch_code,brand_code,periodo,mes,año,total_empleados,ingresos,bajas,rotacion_pct,rotacion_acumulada_pct,motivo_principal_baja,notas,semaforo_rotacion
+AMC-001-MER-MAIN,AMC,2026-05,Mayo,2026,15,1,3,0.2,,Voluntaria,Alta rotación. Equipo nuevo de barra principal. 1 colaborador en proceso de regularización.,rojo
+SG-001-MER-LAISLA,SG,2026-05,Mayo,2026,18,2,2,0.111,,Voluntaria / Desempeño,Rotación controlada. Apertura de posición de supervisor pendiente.,amarillo
+SG-002-MER-PDM,SG,2026-05,Mayo,2026,14,0,2,0.143,,Voluntaria,Ventas bajas generando desmotivación. Riesgo de más bajas si tendencia continúa.,amarillo
+CORP-001-MER-MAIN,CORP,2026-05,Mayo,2026,8,1,0,0.0,,,Equipo corporativo estable. Nueva contratación área de marketing digital.,verde

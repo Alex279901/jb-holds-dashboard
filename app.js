@@ -38,7 +38,7 @@ const kpis = [
     value: "41.6K",
     meta: "Ticket medio SG $194",
     status: "green",
-    target: "[data-module='operaciónes']",
+    target: "[data-module='operaciones']",
     points: [10.5, 8.1, 8.1, 8.2, 6.7]
   },
   {
@@ -110,7 +110,7 @@ const departments = [
     }
   },
   {
-    key: "operaciónes",
+    key: "operaciones",
     label: "Operaciones",
     code: "OPS",
     accent: "#7cc9a8",
@@ -355,7 +355,7 @@ const departmentDrilldowns = {
     ],
     notes: ["P&L disponible solo Jan-Abr.", "EBITDA exacto no viene en fuente; se conserva Resultado P&L."]
   },
-  operaciónes: {
+  operaciones: {
     title: "Desglose operativo",
     meta: "Ventas diarias, documentos, cumplimiento y semáforo por sucursal",
     filters: [
@@ -1001,7 +1001,7 @@ function renderDepartments() {
   theater.innerHTML = departments
     .map(
       (dept, index) => `
-        <article class="module-environment reveal ${index === 0 ? "is-focused" : ""}" data-module="${dept.key}" style="--accent: ${dept.accent}; --accent-2: ${dept.accent2}">
+        <article class="module-environment reveal ${index === 0 ? "is-focused is-visible" : ""}" data-module="${dept.key}" style="--accent: ${dept.accent}; --accent-2: ${dept.accent2}">
           <div class="module-header">
             <div>
               <span>${dept.tone}</span>
@@ -1076,6 +1076,7 @@ function renderDepartments() {
       theater.querySelectorAll(".module-environment").forEach((module) => {
         const isTarget = module.dataset.module === target;
         module.classList.toggle("is-focused", isTarget);
+        if (isTarget) module.classList.add("is-visible");
         if (isTarget) {
           module.scrollIntoView({ behavior: "smooth", block: "center" });
         }
@@ -1313,6 +1314,7 @@ function setupKpiNavigation() {
       if (target?.dataset.module) {
         document.querySelectorAll(".module-environment").forEach((module) => {
           module.classList.toggle("is-focused", module === target);
+          if (module === target) module.classList.add("is-visible");
         });
         document.querySelectorAll("[data-module-target]").forEach((button) => {
           button.classList.toggle("is-active", button.dataset.moduleTarget === target.dataset.module);

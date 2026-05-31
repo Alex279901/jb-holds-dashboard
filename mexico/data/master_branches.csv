@@ -1,0 +1,5 @@
+branch_id,branch_code,brand_code,nombre,ciudad,estado,pais,pos_system,fecha_apertura,is_active,notas
+1,SG-001-MER-LAISLA,SG,Santagloria La Isla,Mérida,Yucatán,MX,Soft Restaurant,2024-01-01,True,Sucursal flagship en La Isla Shopping Village
+2,SG-002-MER-PDM,SG,Santagloria Paseo de Montejo,Mérida,Yucatán,MX,Soft Restaurant,2024-06-01,True,Sucursal en Paseo de Montejo
+3,AMC-001-MER-MAIN,AMC,Allô Mon Coco Mérida,Mérida,Yucatán,MX,Hiopos,2025-01-01,True,Primera sucursal AMC en México
+4,CORP-001-MER-MAIN,CORP,IN-DEF Corporativo,Mérida,Yucatán,MX,,2023-01-01,True,Oficina corporativa — Admin / DAM

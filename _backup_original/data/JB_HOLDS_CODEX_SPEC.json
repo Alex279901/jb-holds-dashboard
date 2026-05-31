@@ -1,0 +1,518 @@
+{
+  "meta": {
+    "project": "JB Holds — Corporate ERP / Data Warehouse",
+    "version": "1.1",
+    "scope": "México only (MX · MXN)",
+    "date": "2026-05-27",
+    "entity": "IN-DEF / JB Holds",
+    "note": "Schema ready for international expansion. Adding Spain or other countries = INSERT in dim_countries + dim_brands only, no schema changes needed."
+  },
+
+  "brands": [
+    {
+      "code": "SG",
+      "name": "Santagloria México",
+      "type": "own",
+      "concept": "Coffee & Bakery",
+      "country": "MX",
+      "currency": "MXN",
+      "pos": "Soft Restaurant"
+    },
+    {
+      "code": "AMC",
+      "name": "Allô Mon Coco México",
+      "type": "own",
+      "concept": "Brunch Pétillant",
+      "country": "MX",
+      "currency": "MXN",
+      "pos": "Hiopos"
+    },
+    {
+      "code": "CBC",
+      "name": "CoCo Bubble Tea México",
+      "type": "own",
+      "concept": "Bubble Tea",
+      "country": "MX",
+      "currency": "MXN",
+      "pos": "TBD"
+    },
+    {
+      "code": "CORP",
+      "name": "IN-DEF Corporativo",
+      "type": "corporate",
+      "concept": "Holding",
+      "country": "MX",
+      "currency": "MXN"
+    }
+  ],
+
+  "branches": [
+    {
+      "code": "SG-001-MER-LAISLA",
+      "brand": "SG",
+      "name": "Santagloria La Isla",
+      "city": "Mérida",
+      "state": "Yucatán",
+      "pos": "Soft Restaurant",
+      "status": "active"
+    },
+    {
+      "code": "SG-002-MER-PDM",
+      "brand": "SG",
+      "name": "Santagloria Paseo de Montejo",
+      "city": "Mérida",
+      "state": "Yucatán",
+      "pos": "Soft Restaurant",
+      "status": "active"
+    },
+    {
+      "code": "AMC-001-MER-MAIN",
+      "brand": "AMC",
+      "name": "Allô Mon Coco Mérida",
+      "city": "Mérida",
+      "state": "Yucatán",
+      "pos": "Hiopos",
+      "status": "active"
+    }
+  ],
+
+  "areas": [
+    { "code": "FIN",    "name": "Administración y Finanzas" },
+    { "code": "OPS",    "name": "Operaciones" },
+    { "code": "MKT",    "name": "Marketing" },
+    { "code": "RH",     "name": "Recursos Humanos" },
+    { "code": "EXP",    "name": "Expansión" },
+    { "code": "EXCMRC", "name": "Excelencia de Marca" },
+    { "code": "DIR",    "name": "Dirección General" },
+    { "code": "COMP",   "name": "Compras" },
+    { "code": "TI",     "name": "Tecnología" }
+  ],
+
+  "naming_conventions": {
+    "branch_code": "{BRAND}-{NNN}-{CITY_CODE}-{LOCATION}",
+    "branch_examples": [
+      "SG-001-MER-LAISLA",
+      "SG-002-MER-PDM",
+      "AMC-001-MER-MAIN",
+      "SG-003-CANCUN-FORUM",
+      "AMC-002-CDMX-POLANCO"
+    ],
+    "expansion_code": "EXP-{YYYY}-{NNN}-{BRAND}-{CITY}",
+    "expansion_examples": [
+      "EXP-2026-001-AMC-CDMX",
+      "EXP-2026-002-SG-CANCUN"
+    ],
+    "period_monthly": "YYYY-MM",
+    "period_weekly": "YYYY-WNN",
+    "tables_prefix_dim": "dim_  (catálogos/dimensiones)",
+    "tables_prefix_fact": "fact_ (transacciones/mediciones)",
+    "booleans": "is_ prefix (is_active, is_franchise)",
+    "percentages": "_pct suffix (ebitda_pct, nomina_pct)",
+    "timestamps": "_at suffix TIMESTAMPTZ (created_at, updated_at)",
+    "dates_pure": "_date suffix DATE (sale_date, due_date)"
+  },
+
+  "kpis": {
+    "semaphore_values": ["green", "yellow", "red", "grey"],
+    "sql_function": "fn_get_semaphore(kpi_code, value) → 'green' | 'yellow' | 'red'",
+    "catalog": [
+      {
+        "code": "VTA_VS_META",
+        "name": "Ventas vs Meta %",
+        "category": "financial",
+        "unit": "percentage",
+        "formula": "(total_sales / sales_meta) * 100",
+        "source_table": "fact_sales_daily",
+        "frequency": "daily",
+        "green": ">=95",
+        "yellow": ">=85 AND <95",
+        "red": "<85",
+        "direction": "higher_better"
+      },
+      {
+        "code": "EBITDA_PCT",
+        "name": "EBITDA %",
+        "category": "financial",
+        "unit": "percentage",
+        "formula": "(ebitda / ventas_netas) * 100",
+        "source_table": "fact_pnl",
+        "frequency": "monthly",
+        "green": ">=15",
+        "yellow": ">=10 AND <15",
+        "red": "<10",
+        "direction": "higher_better"
+      },
+      {
+        "code": "NOMINA_PCT",
+        "name": "Nómina % sobre Ventas",
+        "category": "financial",
+        "unit": "percentage",
+        "formula": "(nomina_total / ventas_netas) * 100",
+        "source_tables": ["fact_payroll", "fact_pnl"],
+        "frequency": "monthly",
+        "green": "<=28",
+        "yellow": ">28 AND <=32",
+        "red": ">32",
+        "direction": "lower_better"
+      },
+      {
+        "code": "RENTA_PCT",
+        "name": "Renta % sobre Ventas",
+        "category": "financial",
+        "unit": "percentage",
+        "formula": "(renta_local / ventas_netas) * 100",
+        "source_table": "fact_pnl",
+        "frequency": "monthly",
+        "green": "<=8",
+        "yellow": ">8 AND <=10",
+        "red": ">10",
+        "direction": "lower_better"
+      },
+      {
+        "code": "MERMA_PCT",
+        "name": "Merma % sobre Ventas",
+        "category": "operational",
+        "unit": "percentage",
+        "formula": "(merma_amount / total_sales) * 100",
+        "source_tables": ["fact_waste", "fact_sales_daily"],
+        "frequency": "weekly",
+        "green": "<=3",
+        "yellow": ">3 AND <=5",
+        "red": ">5",
+        "direction": "lower_better"
+      },
+      {
+        "code": "ROTACION_PCT",
+        "name": "Rotación de Personal %",
+        "category": "hr",
+        "unit": "percentage",
+        "formula": "(terminations / headcount_start) * 100",
+        "source_table": "fact_turnover",
+        "frequency": "monthly",
+        "green": "<=5",
+        "yellow": ">5 AND <=10",
+        "red": ">10",
+        "direction": "lower_better",
+        "real_data": {
+          "AMC_MER_2026_02": 28.57,
+          "AMC_MER_2026_03": 27.59,
+          "SG_LAISLA_2026_05": 27.03,
+          "SG_PDM_2026_05": 13.33,
+          "CORP_2026_05": 3.85
+        }
+      },
+      {
+        "code": "ROAS",
+        "name": "ROAS Campañas Digitales",
+        "category": "marketing",
+        "unit": "ratio",
+        "formula": "revenue_attributed / budget_spent",
+        "source_table": "fact_campaigns",
+        "frequency": "weekly",
+        "green": ">=3.0",
+        "yellow": ">=2.0 AND <3.0",
+        "red": "<2.0",
+        "direction": "higher_better"
+      },
+      {
+        "code": "RESENAS_SCORE",
+        "name": "Score Reseñas Google",
+        "category": "operational",
+        "unit": "score_1_to_5",
+        "formula": "AVG(rating_score) WHERE platform='google'",
+        "source_table": "fact_reviews",
+        "frequency": "weekly",
+        "green": ">=4.5",
+        "yellow": ">=4.0 AND <4.5",
+        "red": "<4.0",
+        "direction": "higher_better"
+      },
+      {
+        "code": "CLIMA_SCORE",
+        "name": "Score Clima Laboral",
+        "category": "hr",
+        "unit": "score_0_to_100",
+        "formula": "score_overall from fact_climate_survey",
+        "source_table": "fact_climate_survey",
+        "frequency": "monthly",
+        "green": ">=80",
+        "yellow": ">=65 AND <80",
+        "red": "<65",
+        "direction": "higher_better",
+        "real_data": {
+          "note": "SG La Isla Mayo 2026 reportó clima bajo — área de oportunidad identificada"
+        }
+      },
+      {
+        "code": "APT_AVANCE_PCT",
+        "name": "Avance Apertura %",
+        "category": "expansion",
+        "unit": "percentage",
+        "formula": "(completed_milestones / total_milestones) * 100",
+        "source_table": "fact_expansion_milestones",
+        "frequency": "monthly",
+        "green": ">=90",
+        "yellow": ">=70 AND <90",
+        "red": "<70",
+        "direction": "higher_better"
+      },
+      {
+        "code": "COMP_VENCIDOS",
+        "name": "Compromisos Vencidos",
+        "category": "governance",
+        "unit": "count",
+        "formula": "COUNT(*) WHERE days_overdue > 0 AND status NOT IN ('completed','cancelled')",
+        "source_table": "fact_commitments",
+        "frequency": "weekly",
+        "green": "0",
+        "yellow": "1-2",
+        "red": ">=3",
+        "direction": "lower_better"
+      }
+    ]
+  },
+
+  "roles": [
+    { "code": "SUPER_ADMIN",  "level": 1, "can_view_all_brands": true,  "can_edit_financials": true,  "can_approve_budgets": true,  "can_manage_users": true  },
+    { "code": "DIR_GENERAL",  "level": 2, "can_view_all_brands": true,  "can_edit_financials": true,  "can_approve_budgets": true,  "can_manage_users": false },
+    { "code": "DIR_FIN",      "level": 2, "can_view_all_brands": true,  "can_edit_financials": true,  "can_approve_budgets": true,  "can_manage_users": false },
+    { "code": "DIR_OPS",      "level": 2, "can_view_all_brands": true,  "can_edit_financials": false, "can_approve_budgets": false, "can_manage_users": false },
+    { "code": "DIR_MKT",      "level": 2, "can_view_all_brands": true,  "can_edit_financials": false, "can_approve_budgets": false, "can_manage_users": false },
+    { "code": "DIR_RH",       "level": 2, "can_view_all_brands": true,  "can_edit_financials": false, "can_approve_budgets": false, "can_manage_users": true  },
+    { "code": "DIR_EXP",      "level": 2, "can_view_all_brands": true,  "can_edit_financials": false, "can_approve_budgets": false, "can_manage_users": false },
+    { "code": "AREA_MANAGER", "level": 3, "can_view_all_brands": false, "data_scope": "own_brand"   },
+    { "code": "STORE_MANAGER","level": 4, "can_view_all_brands": false, "data_scope": "own_branch"  },
+    { "code": "STAFF",        "level": 5, "dashboard_access": false                                  }
+  ],
+
+  "database_tables": {
+    "dimensions": [
+      "dim_countries — Países (MX activo; ready para ES, US)",
+      "dim_cities    — Ciudades de operación",
+      "dim_brands    — SG, AMC, CBC, CORP",
+      "dim_branches  — Sucursales con branch_code único",
+      "dim_areas     — Áreas funcionales corporativas",
+      "dim_roles     — Roles y permisos",
+      "dim_users     — Usuarios del sistema",
+      "dim_kpi_catalog — Catálogo de KPIs con umbrales",
+      "dim_periods   — Dimensión tiempo (día/semana/mes)",
+      "dim_employees — Empleados activos e histórico"
+    ],
+    "facts_financial": [
+      "fact_pnl         — P&L por sucursal × mes",
+      "fact_budgets     — Presupuestos por área/tipo",
+      "fact_cashflow    — Flujo de caja mensual",
+      "fact_capex       — Inversiones de capital",
+      "fact_ap_ar       — Cuentas por pagar y cobrar",
+      "fact_payroll     — Nómina quincenal/mensual"
+    ],
+    "facts_operational": [
+      "fact_sales_daily   — Ventas diarias (KPI principal)",
+      "fact_transactions  — Tickets del POS",
+      "fact_waste         — Merma",
+      "fact_incidents     — Incidencias operativas",
+      "fact_reviews       — Reseñas Google/TripAdvisor",
+      "fact_complaints    — Quejas formales"
+    ],
+    "facts_hr": [
+      "fact_turnover        — Rotación mensual por sucursal",
+      "fact_attendance      — Incidencias de asistencia",
+      "fact_vacancies       — Control de vacantes",
+      "fact_training        — Capacitaciones",
+      "fact_climate_survey  — Encuestas de clima laboral"
+    ],
+    "facts_marketing": [
+      "fact_campaigns       — Campañas Meta/Google/TikTok",
+      "fact_reservations    — Reservas",
+      "fact_social_metrics  — Métricas redes sociales"
+    ],
+    "facts_expansion": [
+      "fact_expansion_projects   — Proyectos de apertura",
+      "fact_expansion_milestones — Hitos por proyecto",
+      "fact_contracts            — Contratos de renta/franquicia"
+    ],
+    "facts_governance": [
+      "fact_audits              — Auditorías de marca",
+      "fact_committee_sessions  — Sesiones de comité",
+      "fact_commitments         — Compromisos y acuerdos",
+      "fact_risks               — Riesgos corporativos",
+      "fact_kpi_readings        — Lecturas diarias de KPIs"
+    ],
+    "operational": [
+      "etl_logs — Registro de todas las cargas de datos"
+    ]
+  },
+
+  "views": [
+    "v_semaforo_corporativo — Todos los KPIs actuales con semáforo",
+    "v_ventas_resumen       — Ventas diarias con semáforo automático",
+    "v_compromisos_vencidos — Compromisos fuera de plazo",
+    "v_pnl_mensual          — P&L consolidado por marca/sucursal",
+    "v_rotacion_mensual     — Dashboard de rotación RH",
+    "v_expansion_status     — Estado de proyectos de expansión"
+  ],
+
+  "etl_sources": [
+    {
+      "name": "soft_restaurant",
+      "type": "ODBC / MySQL",
+      "targets": ["fact_transactions", "fact_sales_daily"],
+      "frequency": "every_4h",
+      "brands": ["SG"]
+    },
+    {
+      "name": "hiopos",
+      "type": "REST API",
+      "targets": ["fact_transactions", "fact_sales_daily"],
+      "frequency": "every_4h",
+      "brands": ["AMC"]
+    },
+    {
+      "name": "google_sheets_pnl",
+      "type": "Google Sheets API (gspread)",
+      "targets": ["fact_pnl"],
+      "frequency": "monthly",
+      "brands": ["SG", "AMC", "CBC"]
+    },
+    {
+      "name": "excel_payroll",
+      "type": "File upload (.xlsx)",
+      "targets": ["fact_payroll"],
+      "frequency": "biweekly",
+      "brands": ["ALL"]
+    },
+    {
+      "name": "excel_turnover",
+      "type": "File upload (.xlsx)",
+      "targets": ["fact_turnover", "fact_attendance"],
+      "frequency": "monthly",
+      "brands": ["ALL"]
+    },
+    {
+      "name": "meta_ads_api",
+      "type": "Meta Marketing API",
+      "targets": ["fact_campaigns"],
+      "frequency": "daily_06am",
+      "brands": ["SG", "AMC", "CBC"]
+    },
+    {
+      "name": "google_ads_api",
+      "type": "Google Ads API",
+      "targets": ["fact_campaigns"],
+      "frequency": "daily_06am",
+      "brands": ["SG", "AMC"]
+    },
+    {
+      "name": "google_my_business",
+      "type": "Google API",
+      "targets": ["fact_reviews"],
+      "frequency": "weekly",
+      "brands": ["ALL"]
+    }
+  ],
+
+  "automation_jobs": [
+    {
+      "id": "job_daily_close",
+      "cron": "0 6 * * *",
+      "steps": ["extract_pos", "calc_kpis", "eval_semaphores", "trigger_alerts", "update_dashboard"]
+    },
+    {
+      "id": "job_committee_agenda",
+      "cron": "0 8 * * MON",
+      "steps": ["fetch_red_kpis", "fetch_overdue_commitments", "fetch_risks", "gen_agenda_pdf", "send_email"]
+    },
+    {
+      "id": "job_monthly_report",
+      "cron": "0 9 5 * *",
+      "steps": ["compile_kpis", "gen_pnl_pdf", "gen_hr_pdf", "gen_mkt_pdf", "send_directors"]
+    },
+    {
+      "id": "job_contract_alerts",
+      "cron": "0 9 * * MON",
+      "steps": ["check_contracts_60d", "send_notification"]
+    }
+  ],
+
+  "alert_rules": [
+    { "kpi": "VTA_VS_META",   "trigger": "<85",    "severity": "critical", "notify": ["DIR_GENERAL","DIR_OPS","AREA_MANAGER"],  "channels": ["email","whatsapp","dashboard"] },
+    { "kpi": "ROTACION_PCT",  "trigger": ">15",    "severity": "high",     "notify": ["DIR_RH","DIR_GENERAL"],                  "channels": ["email","dashboard"] },
+    { "kpi": "EBITDA_PCT",    "trigger": "<10",    "severity": "critical", "notify": ["DIR_FIN","DIR_GENERAL"],                 "channels": ["email","whatsapp","dashboard"] },
+    { "kpi": "MERMA_PCT",     "trigger": ">5",     "severity": "high",     "notify": ["DIR_OPS","AREA_MANAGER"],                "channels": ["email","dashboard"] },
+    { "kpi": "COMP_VENCIDOS", "trigger": ">0",     "severity": "medium",   "notify": ["owner","DIR_GENERAL si >7d"],            "channels": ["email","dashboard"] },
+    { "kpi": "CLIMA_SCORE",   "trigger": "<65",    "severity": "medium",   "notify": ["DIR_RH","DIR_GENERAL"],                  "channels": ["email"] }
+  ],
+
+  "dashboard_design": {
+    "theme": "dark",
+    "style": "Bloomberg Terminal + Stripe + Vercel + Palantir",
+    "glassmorphism": true,
+    "design_tokens": {
+      "bg_primary":     "#0a0a0f",
+      "bg_secondary":   "#111118",
+      "bg_tertiary":    "#1a1a25",
+      "bg_glass":       "rgba(255,255,255,0.04)",
+      "border":         "rgba(255,255,255,0.08)",
+      "green":          "#22c55e",
+      "green_bg":       "#052e16",
+      "yellow":         "#eab308",
+      "yellow_bg":      "#422006",
+      "red":            "#ef4444",
+      "red_bg":         "#450a0a",
+      "text_primary":   "#f8fafc",
+      "text_secondary": "#94a3b8",
+      "text_muted":     "#475569",
+      "accent_blue":    "#3b82f6",
+      "accent_purple":  "#8b5cf6",
+      "font_mono":      "JetBrains Mono, Fira Code, monospace",
+      "font_sans":      "Inter, system-ui, sans-serif",
+      "radius_card":    "12px"
+    },
+    "modules": [
+      "header_kpi_cards   — Ventas hoy, EBITDA mes, Rotación, Compromisos vencidos",
+      "semaforo_grid      — Semáforo multi-marca × KPI (v_semaforo_corporativo)",
+      "ventas_trend       — Líneas 12 semanas por sucursal",
+      "focos_rojos        — Alert feed priorizado (rojo primero)",
+      "expansion_tracker  — Cards de proyectos con progress bar",
+      "branch_ranking     — Ranking horizontal ventas vs meta",
+      "commitments_panel  — Tabla de compromisos con badges",
+      "heatmap_ventas     — Calor ventas día × sucursal"
+    ]
+  },
+
+  "tech_stack_phase1": {
+    "db":            "Supabase (PostgreSQL 15+)",
+    "auth":          "Supabase Auth + RLS",
+    "storage":       "Supabase Storage",
+    "api":           "FastAPI (Python)",
+    "frontend":      "Next.js 14 + Tailwind CSS",
+    "etl":           "Python 3.11 + pandas + dbt",
+    "orchestration": "n8n",
+    "dashboards_bi": "Looker Studio → Metabase",
+    "alerts":        "SendGrid (email) + Twilio WhatsApp Business API",
+    "pdfs":          "WeasyPrint + Jinja2"
+  },
+
+  "real_data_from_files": {
+    "source_files": [
+      "Estado de Resultados por Segmento - SG La Isla.xlsx",
+      "Estado de Resultados por Segmento - SG Paseo de Montejo.xlsx",
+      "Estado de Resultados Admin.xlsx",
+      "Expansion.xlsx",
+      "Santagloria Reporte.xlsx",
+      "AlloMonCoco Reporte.xlsx",
+      "REPORTE CORPORATIVO RRHH - MAYO 2026.pdf"
+    ],
+    "hr_turnover_real": [
+      { "brand": "AMC", "branch": "AMC-001-MER-MAIN", "period": "2026-01", "headcount_start": 28, "terminations": 5,  "turnover_pct": 19.60, "semaphore": "red"    },
+      { "brand": "AMC", "branch": "AMC-001-MER-MAIN", "period": "2026-02", "headcount_start": 36, "terminations": 9,  "turnover_pct": 28.57, "semaphore": "red"    },
+      { "brand": "AMC", "branch": "AMC-001-MER-MAIN", "period": "2026-03", "headcount_start": 33, "terminations": 8,  "turnover_pct": 27.59, "semaphore": "red"    },
+      { "brand": "AMC", "branch": "AMC-001-MER-MAIN", "period": "2026-04", "headcount_start": 28, "terminations": 2,  "turnover_pct": 7.41,  "semaphore": "yellow" },
+      { "brand": "AMC", "branch": "AMC-001-MER-MAIN", "period": "2026-05", "headcount_start": 27, "terminations": 0,  "turnover_pct": 0.0,   "semaphore": "green"  },
+      { "brand": "SG",  "branch": "SG-001-MER-LAISLA","period": "2026-01", "headcount_start": 16, "authorized": "12 staff + 1 store manager", "terminations": 3, "turnover_pct": 20.68, "semaphore": "red" },
+      { "brand": "SG",  "branch": "SG-001-MER-LAISLA","period": "2026-05", "headcount_start": 21, "authorized": "1 store manager + 1 asst mgr + 19 staff", "terminations": 5, "turnover_pct": 27.03, "semaphore": "red", "incidents": "15 faltas injustificadas, 8 justificadas incapacidad, 1 retardo" },
+      { "brand": "SG",  "branch": "SG-002-MER-PDM",   "period": "2026-05", "headcount_start": 16, "terminations": 2, "turnover_pct": 13.33, "semaphore": "red",    "incidents": "7 faltas injustificadas, 8 justificadas incapacidad" },
+      { "brand": "CORP","branch": null,                "period": "2026-05", "headcount_start": 26, "terminations": 1, "turnover_pct": 3.85,  "semaphore": "green",  "position": "Asistente de dirección", "reason": "Desempeño" }
+    ]
+  }
+}

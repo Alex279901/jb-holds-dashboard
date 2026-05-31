@@ -1,0 +1,19 @@
+brand_code,nombre_proyecto,ubicacion,ciudad,estado_mx,contacto,estatus,m2,costo_renta_mxn,plazo_construccion_semanas,notas,año_apertura_estimado,pais
+AMC,AMC Carr. Cholul,"Carr. Cholul, Mérida",Mérida,Yucatán,Victor Lechuga,contrato_firmado,523.89,134000.0,24.0,Contrato firmado. Medidas enviadas para lona. 24 semanas construcción.,2026,MX
+AMC,AMC Plaza Dorada,Plaza comercial afuera de Plaza Dorada,Mérida,Yucatán,Tanus Colliers,en_espera_contrato,500.0,96000.0,,En espera de contrato. Para Allo y SG.,2026,MX
+AMC,AMC Cocoyoles,"Cocoyoles, Mérida",Mérida,Yucatán,Gerry Roostnest,en_espera_contrato,,,,Medidas de lona enviadas a marketing.,2026,MX
+AMC,AMC CDMX,CDMX (puntos por visitar),Ciudad de México,CDMX,Paloma y Jorge Lizan,prospeccion,,,,Se visitarán opciones esta semana para definir.,2026,MX
+AMC,AMC Caucel,"Caucel, Mérida",Mérida,Yucatán,,prospeccion,,,,Pend. negociar con promotora residencial.,2026,MX
+SG,SG Victory Platz,"Victory Platz, Mérida",Mérida,Yucatán,,proxima_apertura,,,,Apertura 20 de junio de 2026.,2026,MX
+SG,SG Plaza Universidad CDMX,"Plaza Universidad, CDMX",Ciudad de México,CDMX,Gerry R y Jose Luis,firma_pendiente,181.05,162945.0,,Firma del obligado solidario lista. Se visitará la ubicación.,2026,MX
+SG,SG Plaza Santa Fe CDMX,"Plaza Santa Fe, CDMX",Ciudad de México,CDMX,Gerry R y Jose Luis,autorizado,188.29,112974.0,,Autorizado.,2026,MX
+SG,SG Xcanatun,"Xcanatun, Mérida",Mérida,Yucatán,Diego Serrano,contrato_en_notaria,170.09,71450.0,,Proyecto en notaría. Pendiente contrato y confirmación.,2026,MX
+SG,SG Altabrisa,"Altabrisa, Mérida",Mérida,Yucatán,Diego Serrano,proxima_apertura,,,,"Obra entregada 30 mayo, apertura ~7 junio 2026.",2026,MX
+SG,SG Montejo Norte,"Montejo Norte, Mérida",Mérida,Yucatán,,en_espera_planos,,,,Pendiente planos de cocina para avanzar.,2026,MX
+SG,SG Plaza Dorada (con AMC),Plaza comercial afuera de Plaza Dorada,Mérida,Yucatán,Tanus Colliers,en_espera_contrato,500.0,96000.0,,En espera de contrato. Compartido con AMC.,2026,MX
+SG,SG Perinorte,Periferico Norte / Plaza Perinorte,Ciudad de México,CDMX,Tanus Colliers,prospeccion,,,,En espera de costo por m2 y medida para drive thru.,2026,MX
+SG,SG Cancún,Las Américas / La Isla / Forum by the Sea,Cancún,Quintana Roo,,prospeccion,,,,"Opciones en Las Américas, La Isla o Forum.",2026,MX
+CBC,CBC Altabrisa,"Altabrisa, Mérida",Mérida,Yucatán,"Ingrid Olmos, Eva Marg. Baños y Mario Jesus Leiva",contrato_en_elaboracion,,,,En espera de croquis en autocad. Contrato en elaboración.,2026,MX
+CBC,CBC La Isla,"La Isla Shopping Village, Cancún",Cancún,Quintana Roo,Luis Carolina Herrera / Pau de Goncha,carta_enviada_pend_firma,28.55,35286.4,,"Carta enviada. Pend firma. Traspaso $270,000 MXN + renta $35,286 MXN + IVA.",2026,MX
+CBC,CBC Galerías,"Galerías, Mérida",Mérida,Yucatán,,prospeccion,,,,Checar opciones con Alejandra. En lista de espera.,2026,MX
+CBC,CBC La Isla Nueva Etapa,"La Isla nueva etapa, Cancún",Cancún,Quintana Roo,Maria Dolores Sedas,prospeccion,,,,Opciones de islas y locales en nueva etapa.,2026,MX

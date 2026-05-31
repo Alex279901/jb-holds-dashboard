@@ -1,0 +1,5 @@
+brand_id,brand_code,nombre,tipo,pais,sucursales_activas,color_hex,notas
+1,SG,Santagloria México,Restaurante / Cafetería,MX,2,#f59e0b,Café y bocadillos estilo español. Franquicia MX.
+2,AMC,Allô Mon Coco México,Restaurante / Brunch,MX,1,#22c55e,Brunch y desayunos estilo francés.
+3,CBC,CoCo Bubble Tea México,Bebidas / Bubble Tea,MX,0,#a78bfa,En expansión. Aún sin sucursales abiertas.
+4,CORP,IN-DEF Corporativo,Holding / Admin,MX,1,#94a3b8,Holding y gestión corporativa JB Holds.

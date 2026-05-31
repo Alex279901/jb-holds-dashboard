@@ -3,64 +3,287 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>JB Holds | España</title>
-    <style>
-      :root { --bg: #020611; --cyan: #43dcff; --muted: #8fa7bd; }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: var(--bg);
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-        color: var(--muted);
-      }
-      .center {
-        text-align: center;
-        padding: 48px 32px;
-      }
-      .label {
-        font-size: 0.74rem;
-        font-weight: 760;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: var(--cyan);
-        margin-bottom: 20px;
-      }
-      h1 {
-        font-size: clamp(2.8rem, 6vw, 4.8rem);
-        font-weight: 860;
-        color: #eef8ff;
-        line-height: 1;
-        margin-bottom: 18px;
-      }
-      p {
-        font-size: 1rem;
-        line-height: 1.6;
-        max-width: 420px;
-        margin: 0 auto 32px;
-      }
-      a {
-        display: inline-block;
-        padding: 10px 22px;
-        border: 1px solid rgba(67,220,255,0.28);
-        border-radius: 8px;
-        color: var(--cyan);
-        font-size: 0.84rem;
-        font-weight: 720;
-        text-decoration: none;
-        background: rgba(67,220,255,0.06);
-        transition: background 200ms;
-      }
-      a:hover { background: rgba(67,220,255,0.12); }
-    </style>
+    <title>JB Holds | España · Corporate Intelligence Operating System</title>
+    <meta
+      name="description"
+      content="JB Holds España, inteligencia financiera, operativa y estratégica para la operación española de INDEF / JBBlue Group."
+    >
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div class="center">
-      <p class="label">JB Holds · Corporate Intelligence OS</p>
-      <h1>España</h1>
-      <p>Panel ejecutivo en construcción. Datos en EUR (€) disponibles próximamente.</p>
-      <a href="/">← Volver al inicio</a>
-    </div>
+    <canvas id="ambientCanvas" aria-hidden="true"></canvas>
+    <div class="cinematic-gate" aria-hidden="true"></div>
+    <div class="scan-layer" aria-hidden="true"></div>
+    <div class="beam-field" aria-hidden="true"></div>
+
+    <nav class="top-shell" aria-label="Navegación principal">
+      <a class="brand-lockup" href="#hero" aria-label="JB Holds inicio">
+        <span class="brand-sigil">JB</span>
+        <span>
+          <strong>JB Holds</strong>
+          <small>INDEF / JBBlue Group</small>
+        </span>
+      </a>
+      <div class="nav-cluster">
+        <a href="#command">Command</a>
+        <a href="#modules">Módulos</a>
+        <a href="#pulse">Pulse</a>
+        <a href="#insights">Signals</a>
+        <a href="#risks">Riesgos</a>
+        <a href="#commitments">Compromisos</a>
+        <a href="#important-pending">Pendientes</a>
+      </div>
+    </nav>
+
+    <aside class="executive-rail is-collapsed" aria-label="Navegación ejecutiva">
+      <a class="rail-link is-active" href="#command" data-section="command">
+        <span class="rail-glyph rail-command" aria-hidden="true"></span>
+        <span class="rail-text">Command Center</span>
+      </a>
+      <a class="rail-link" href="#modules" data-section="modules">
+        <span class="rail-glyph rail-modules" aria-hidden="true"></span>
+        <span class="rail-text">Módulos</span>
+      </a>
+      <a class="rail-link" href="#pulse" data-section="pulse">
+        <span class="rail-glyph rail-pulse" aria-hidden="true"></span>
+        <span class="rail-text">Executive Pulse</span>
+      </a>
+      <a class="rail-link" href="#insights" data-section="insights">
+        <span class="rail-glyph rail-signals" aria-hidden="true"></span>
+        <span class="rail-text">Executive Signals</span>
+      </a>
+      <a class="rail-link" href="#risks" data-section="risks">
+        <span class="rail-glyph rail-risks" aria-hidden="true"></span>
+        <span class="rail-text">Riesgos</span>
+      </a>
+      <a class="rail-link" href="#commitments" data-section="commitments">
+        <span class="rail-glyph rail-commitments" aria-hidden="true"></span>
+        <span class="rail-text">Compromisos</span>
+      </a>
+      <a class="rail-link" href="#important-pending" data-section="important-pending">
+        <span class="rail-glyph rail-commitments" aria-hidden="true"></span>
+        <span class="rail-text">Pendientes</span>
+      </a>
+      <div class="rail-status">
+        <span>Semana 21 / 2026</span>
+        <strong>Live Signal</strong>
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero section-shell" id="hero" data-section="hero">
+        <div class="hero-aurora" aria-hidden="true"></div>
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Corporate Intelligence Operating System</p>
+          <h1>JB Holds</h1>
+          <p class="hero-subtitle">Corporate Intelligence Operating System</p>
+          <p class="hero-text">Inteligencia financiera, operativa y estratégica para gestión multi-marca.</p>
+        </div>
+
+        <div class="hero-theater reveal" aria-label="Atomo corporativo JB Holds">
+          <div class="hero-stage atom-stage">
+            <section class="premium-atom" aria-label="Sistema atomico corporativo">
+              <div class="atom-glass" aria-hidden="true"></div>
+              <div class="atom-core" aria-label="JB Holds">
+                <div class="core-lockup" aria-hidden="true">
+                  <span class="core-monogram">JB</span>
+                  <span class="core-wordmark">Holds</span>
+                </div>
+              </div>
+              <div class="atom-orbit atom-orbit-inner">
+                <span class="atom-particle particle-indef">IN-DEF</span>
+                <span class="atom-particle particle-jbblue">JBBlue Group</span>
+                <span class="atom-particle particle-franquiciandote">Franquiciándote</span>
+              </div>
+              <div class="atom-orbit atom-orbit-outer">
+                <span class="atom-particle brand-santa">Santagloria España</span>
+                <span class="atom-particle brand-allo">Wetzel Pretzel España</span>
+                <span class="atom-particle brand-wetzel">IN-DEF Corporativo</span>
+                <span class="atom-particle brand-coco">JBBlue Group ESP</span>
+              </div>
+            </section>
+
+            <div class="market-strip" aria-label="Resumen ejecutivo de mercado">
+              <span>Ventas netas <strong>€8.24M</strong></span>
+              <span>Cumplimiento <strong>91.3%</strong></span>
+              <span>Expansión ESP <strong>5</strong></span>
+              <span>Compromisos <strong>0</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="next-signal" aria-hidden="true">
+          <span></span>
+          <strong>Executive Command Center</strong>
+        </div>
+      </section>
+
+      <section class="section-shell command-section" id="command" data-section="command">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Executive Command Center</p>
+          <h2>Mission control para resultados, riesgos y decisiones.</h2>
+          <span>Semana 21 / 2026 · Corte validado lunes 08:10</span>
+        </div>
+
+        <div class="command-layout">
+          <article class="executive-monolith reveal">
+            <div class="monolith-topline">
+              <span>Resultado general</span>
+              <strong class="status-chip status-amber">Amarillo táctico</strong>
+            </div>
+            <div class="monolith-number">€8.24M</div>
+            <p>Ventas netas acumuladas al 24 de mayo de 2026 con cumplimiento consolidado de 91.3% vs meta. P&L real Jan-Abr registra resultado neto positivo, pero margen bajo objetivo.</p>
+            <div class="monolith-strip">
+              <span>
+                <small>Resultado P&L</small>
+                <strong>€312K</strong>
+              </span>
+              <span>
+                <small>Margen neto</small>
+                <strong>7.4%</strong>
+              </span>
+              <span>
+                <small>Documentos</small>
+                <strong>28.3K</strong>
+              </span>
+            </div>
+          </article>
+
+          <article class="signal-surface reveal">
+            <div class="surface-head">
+              <span>Revenue / P&L Signal</span>
+              <strong>Jan-May 2026</strong>
+            </div>
+            <canvas id="revenueCanvas" width="900" height="420" aria-label="Grafica financiera premium"></canvas>
+          </article>
+
+          <article class="decision-stream reveal">
+            <div class="surface-head">
+              <span>Decisiónes requeridas</span>
+              <strong>Comite semanal</strong>
+            </div>
+            <div class="decision-item status-red">
+              <span></span>
+              <p>Recuperar SG Alameda de Urquijo: 88.7% de venta vs meta en mayo 2026.</p>
+            </div>
+            <div class="decision-item status-amber">
+              <span></span>
+              <p>Elevar margen neto ESP: P&L Jan-Abr cierra en 7.4%, debajo del umbral ejecutivo 10%.</p>
+            </div>
+            <div class="decision-item status-green">
+              <span></span>
+              <p>Escalar pipeline ESP: 5 proyectos activos y SG Getxo como próxima apertura.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="kpi-constellation reveal" id="kpiConstellation" aria-label="KPIs ejecutivos"></div>
+      </section>
+
+      <section class="section-shell modules-section" id="modules" data-section="modules">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Módulos Departamentales</p>
+          <h2>Cada área como un entorno de inteligencia propio.</h2>
+          <span>Finanzas · Operaciones · Marketing · Recursos Humanos · Expansión · Excelencia de Marca</span>
+        </div>
+
+        <div class="department-lens reveal" id="departmentLens" aria-label="Selector de módulo departamental"></div>
+        <div class="module-theater" id="moduleTheater"></div>
+      </section>
+
+      <section class="section-shell pulse-section" id="pulse" data-section="pulse">
+        <div class="section-heading reveal">
+          <p class="eyebrow tactical">Executive Pulse</p>
+          <h2>Núcleo táctico de alertas estratégicas.</h2>
+          <span>Monitoreo corporativo de riesgos, desviaciones y bloqueos de ejecucion.</span>
+        </div>
+
+        <div class="pulse-grid">
+          <article class="pulse-reactor reveal" aria-label="Radar táctico de alertas">
+            <div class="reactor-core">
+              <span>5</span>
+              <strong>focos activos</strong>
+            </div>
+            <div class="reactor-ring ring-a"></div>
+            <div class="reactor-ring ring-b"></div>
+            <div class="reactor-ring ring-c"></div>
+          </article>
+          <div class="pulse-feed reveal" id="pulseFeed"></div>
+        </div>
+      </section>
+
+      <section class="section-shell insights-section" id="insights" data-section="insights">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Executive Signals</p>
+          <h2>Lectura predictiva para convertir datos en decisiones.</h2>
+          <span>Señales basadas en ventas diarias, P&L, marketing, expansión, RH y semáforos reales.</span>
+        </div>
+        <div class="insight-grid reveal" id="insightGrid"></div>
+      </section>
+
+      <section class="section-shell risk-section" id="risks" data-section="risks">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Centro de Riesgos</p>
+          <h2>Mapa ejecutivo de impacto, probabilidad y mitigación.</h2>
+          <span>Todo riesgo crítico requiere responsable, plan y fecha compromiso.</span>
+        </div>
+
+        <div class="risk-layout">
+          <article class="risk-map reveal" aria-label="Mapa ejecutivo de riesgos por prioridad">
+            <div class="risk-map-head">
+              <span>Risk Intelligence</span>
+              <strong>Impacto + Probabilidad</strong>
+            </div>
+            <div class="risk-matrix">
+              <div class="matrix-cell low">
+                <small>Monitoreo</small>
+                <strong>Core ESP</strong>
+                <span>2 marcas / 2 unidades activas</span>
+              </div>
+              <div class="matrix-cell medium">
+                <small>Prioridad media</small>
+                <strong>MKT ESP</strong>
+                <span>CPR Meta Ads €0.68</span>
+              </div>
+              <div class="matrix-cell high">
+                <small>Decisión</small>
+                <strong>SG Alameda Urquijo</strong>
+                <span>Venta vs meta 88.7%</span>
+              </div>
+              <div class="matrix-cell high">
+                <small>Seguimiento</small>
+                <strong>Margen ESP</strong>
+                <span>P&L neto 7.4%</span>
+              </div>
+            </div>
+            <div class="risk-axis-labels">
+              <span>Menor urgencia</span>
+              <span>Mayor prioridad ejecutiva</span>
+            </div>
+          </article>
+          <div class="risk-stream reveal" id="riskStream"></div>
+        </div>
+      </section>
+
+      <section class="section-shell commitments-section" id="commitments" data-section="commitments">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Tracker de Compromisos</p>
+          <h2>Minuta viva con responsables, avance y semáforo.</h2>
+          <span>Primera sesión sin minuta registrada. El tablero inicia en 0 compromisos.</span>
+        </div>
+        <div class="commitment-board reveal" id="commitmentBoard"></div>
+      </section>
+
+      <section class="section-shell commitments-section" id="important-pending" data-section="important-pending">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Pendientes Importantes</p>
+          <h2>Temas críticos para seguimiento ejecutivo.</h2>
+          <span>Lista viva de pendientes relevantes fuera de minuta formal.</span>
+        </div>
+        <div class="commitment-board pending-board reveal" id="importantPendingBoard"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
   </body>
 </html>

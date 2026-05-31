@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>INDEF Finance Command</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <section class="login-screen" id="loginScreen" aria-label="Inicio de sesion">
+      <div class="login-carousel" aria-hidden="true">
+        <img class="login-slide active" src="assets/cover-sgmx.png" alt="">
+        <img class="login-slide" src="assets/cover-sgesp.png" alt="">
+        <img class="login-slide" src="assets/cover-allomx.png" alt="">
+        <img class="login-slide" src="assets/cover-wetzesp.png" alt="">
+      </div>
+      <div class="login-panel">
+        <img class="login-logo" src="assets/logo-blanco.png" alt="INDEF">
+        <p class="eyebrow">Finance Command</p>
+        <h1>Acceso ejecutivo</h1>
+        <p class="subtitle">Selecciona tu usuario para entrar al demo del panel.</p>
+        <form id="loginForm" class="login-form">
+          <label>
+            Usuario
+            <select id="userSelect"></select>
+          </label>
+          <label>
+            Acceso demo
+            <input id="passwordInput" type="password" value="indef-demo" aria-label="Password demo">
+          </label>
+          <button class="primary-button" type="submit">Iniciar sesion</button>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell locked" id="appShell">
+      <aside class="brand-rail" aria-label="Identidad y marcas">
+        <div class="logo-lockup">
+          <img class="indef-logo" src="assets/logo-blanco.png" alt="INDEF">
+        </div>
+
+        <div class="market-pulse">
+          <span class="pulse-dot"></span>
+          <div>
+            <strong>Live demo</strong>
+            <span>Datos simulados · listo para Sheets</span>
+          </div>
+        </div>
+
+        <section class="brand-stack" aria-label="Portafolio">
+          <button class="brand-card active" type="button" data-brand="Santa Gloria MX">
+            <img src="assets/cover-sgmx.png" alt="">
+            <span>Santa Gloria MX</span>
+          </button>
+          <button class="brand-card" type="button" data-brand="Santa Gloria ESP">
+            <img src="assets/cover-sgesp.png" alt="">
+            <span>Santa Gloria ESP</span>
+          </button>
+          <button class="brand-card" type="button" data-brand="Allo mon Coco">
+            <img src="assets/cover-allomx.png" alt="">
+            <span>Allo mon Coco</span>
+          </button>
+          <button class="brand-card" type="button" data-brand="Wetzel Pretzel ESP">
+            <img src="assets/cover-wetzesp.png" alt="">
+            <span>Wetzel Pretzel ESP</span>
+          </button>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <section class="print-header" aria-hidden="true">
+          <div>
+            <p class="eyebrow">INDEF Command Center</p>
+            <h1 id="printTitle">Reporte ejecutivo</h1>
+            <p id="printSubtitle">Vista ejecutiva del periodo seleccionado.</p>
+            <p id="printMeta">Periodo seleccionado</p>
+          </div>
+          <img src="assets/logo-blanco.png" alt="">
+        </section>
+
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">INDEF Command Center</p>
+            <h1 id="pageTitle">Ventas</h1>
+            <p id="pageSubtitle" class="subtitle">Vista ejecutiva de venta neta, cumplimiento y riesgo operativo.</p>
+            <p id="welcomeMessage" class="welcome-message">Bienvenido</p>
+          </div>
+          <div class="top-actions">
+            <button class="ghost-button" type="button" id="refreshButton">Actualizar</button>
+            <button class="ghost-button" type="button" id="logoutButton">Salir</button>
+            <button class="primary-button" type="button" id="exportButton">Descargar PDF</button>
+          </div>
+        </header>
+
+        <section class="filters" aria-label="Filtros del panel">
+          <label>
+            Desde
+            <input id="dateStart" type="date" value="2026-05-11">
+          </label>
+          <label>
+            Hasta
+            <input id="dateEnd" type="date" value="2026-05-17">
+          </label>
+          <div>
+            <span class="filter-title">Sucursales</span>
+            <div class="branch-filter" id="branchFilter" aria-label="Filtro de sucursales"></div>
+          </div>
+          <div class="period-compare" id="periodCompare">Comparativo contra periodo anterior</div>
+        </section>
+
+        <section class="hero-panel" id="heroPanel" aria-label="Resumen del modulo">
+          <div class="hero-copy">
+            <p class="eyebrow" id="heroEyebrow">Ventas</p>
+            <h2 id="heroTitle">Radiografia comercial del periodo</h2>
+            <p id="heroText">Monitorea avance contra meta, GAP por sucursal y alertas de recuperacion antes del cierre.</p>
+          </div>
+          <div class="hero-metric">
+            <span id="heroMetricLabel">Venta neta</span>
+            <strong id="heroMetricValue">$745,037</strong>
+          </div>
+        </section>
+
+        <section class="alert-strip" id="alertStrip" aria-label="Alertas del negocio"></section>
+        <section class="kpi-grid" id="kpiGrid" aria-label="Indicadores principales"></section>
+        <section class="module-content" id="moduleContent" aria-label="Contenido del modulo"></section>
+      </main>
+
+      <aside class="module-rail" aria-label="Modulos del panel">
+        <div class="module-heading">
+          <p class="eyebrow">Modulos</p>
+          <h2>Control financiero</h2>
+        </div>
+        <nav class="module-nav">
+          <button class="module-card active" type="button" data-module="sales">
+            <span class="module-icon">01</span>
+            <strong>Ventas</strong>
+            <small>KPIs comerciales y rendimiento financiero</small>
+          </button>
+          <button class="module-card" type="button" data-module="products">
+            <span class="module-icon">02</span>
+            <strong>Producto</strong>
+            <small>Top sellers, mix y rentabilidad</small>
+          </button>
+          <button class="module-card" type="button" data-module="flow">
+            <span class="module-icon">03</span>
+            <strong>Flujo de Ventas</strong>
+            <small>Horas pico y comportamiento de consumo</small>
+          </button>
+        </nav>
+
+        <section class="right-watchlist">
+          <p class="eyebrow">Alertas vivas</p>
+          <div id="rightAlerts"></div>
+        </section>
+      </aside>
+    </div>
+
+    <aside class="inspector" id="inspector" aria-live="polite" aria-label="Detalle seleccionado">
+      <button class="close-button" type="button" id="closeInspector" aria-label="Cerrar">x</button>
+      <p class="eyebrow">Detalle</p>
+      <h2 id="inspectorTitle">Selecciona un indicador</h2>
+      <p id="inspectorBody">Haz click en una tarjeta, barra, producto o sucursal para ver acciones sugeridas.</p>
+      <div id="inspectorMetrics" class="inspector-metrics"></div>
+    </aside>
+
+    <div class="toast" id="toast">Vista actualizada</div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="assets/vendor/html2canvas.min.js"></script>
+    <script src="assets/vendor/jspdf.umd.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

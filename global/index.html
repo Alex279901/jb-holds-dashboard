@@ -3,64 +3,266 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>JB Holds | Global</title>
-    <style>
-      :root { --bg: #020611; --cyan: #43dcff; --muted: #8fa7bd; }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: var(--bg);
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-        color: var(--muted);
-      }
-      .center {
-        text-align: center;
-        padding: 48px 32px;
-      }
-      .label {
-        font-size: 0.74rem;
-        font-weight: 760;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: var(--cyan);
-        margin-bottom: 20px;
-      }
-      h1 {
-        font-size: clamp(2.8rem, 6vw, 4.8rem);
-        font-weight: 860;
-        color: #eef8ff;
-        line-height: 1;
-        margin-bottom: 18px;
-      }
-      p {
-        font-size: 1rem;
-        line-height: 1.6;
-        max-width: 420px;
-        margin: 0 auto 32px;
-      }
-      a {
-        display: inline-block;
-        padding: 10px 22px;
-        border: 1px solid rgba(67,220,255,0.28);
-        border-radius: 8px;
-        color: var(--cyan);
-        font-size: 0.84rem;
-        font-weight: 720;
-        text-decoration: none;
-        background: rgba(67,220,255,0.06);
-        transition: background 200ms;
-      }
-      a:hover { background: rgba(67,220,255,0.12); }
-    </style>
+    <title>JB Holds | Global Command Center</title>
+    <meta name="description" content="Vista consolidada global del holding JB Holds — México y España.">
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div class="center">
-      <p class="label">JB Holds · Corporate Intelligence OS</p>
-      <h1>Global</h1>
-      <p>Vista consolidada multi-país en construcción. Disponible próximamente.</p>
-      <a href="/">← Volver al inicio</a>
-    </div>
+    <canvas id="ambientCanvas" aria-hidden="true"></canvas>
+    <div class="cinematic-gate" aria-hidden="true"></div>
+    <div class="scan-layer" aria-hidden="true"></div>
+    <div class="beam-field" aria-hidden="true"></div>
+
+    <nav class="top-shell" aria-label="Navegación principal">
+      <a class="brand-lockup" href="/" aria-label="JB Holds inicio">
+        <span class="brand-sigil">JB</span>
+        <span>
+          <strong>JB Holds</strong>
+          <small>Global Command Center</small>
+        </span>
+      </a>
+      <div class="nav-cluster">
+        <a href="#overview">Overview</a>
+        <a href="#geographic">Geografía</a>
+        <a href="#brands">Marcas</a>
+        <a href="#alerts">Alertas</a>
+      </div>
+    </nav>
+
+    <aside class="executive-rail is-collapsed" aria-label="Navegación ejecutiva">
+      <a class="rail-link is-active" href="#overview" data-section="overview">
+        <span class="rail-glyph rail-command" aria-hidden="true"></span>
+        <span class="rail-text">Global Overview</span>
+      </a>
+      <a class="rail-link" href="#geographic" data-section="geographic">
+        <span class="rail-glyph rail-modules" aria-hidden="true"></span>
+        <span class="rail-text">Geografía</span>
+      </a>
+      <a class="rail-link" href="#brands" data-section="brands">
+        <span class="rail-glyph rail-signals" aria-hidden="true"></span>
+        <span class="rail-text">Marcas</span>
+      </a>
+      <a class="rail-link" href="#alerts" data-section="alerts">
+        <span class="rail-glyph rail-risks" aria-hidden="true"></span>
+        <span class="rail-text">Alertas</span>
+      </a>
+      <div class="rail-status">
+        <span>Semana 22 / 2026</span>
+        <strong>Live Signal</strong>
+      </div>
+    </aside>
+
+    <main>
+
+      <!-- SECCIÓN 1: HERO / GLOBAL OVERVIEW -->
+      <section class="hero section-shell" id="overview" data-section="overview">
+        <div class="hero-aurora" aria-hidden="true"></div>
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Global Command Center</p>
+          <h1>JB Holds</h1>
+          <p class="hero-subtitle">Vista Corporativa Consolidada</p>
+          <p class="hero-text">Inteligencia financiera y operativa agregada de todas las operaciones del grupo.</p>
+        </div>
+
+        <div class="hero-theater reveal" aria-label="Métricas globales consolidadas">
+          <div class="hero-stage atom-stage">
+            <section class="premium-atom" aria-label="Sistema global corporativo">
+              <div class="atom-glass" aria-hidden="true"></div>
+              <div class="atom-core" aria-label="JB Holds Global">
+                <div class="core-lockup" aria-hidden="true">
+                  <span class="core-monogram">GL</span>
+                  <span class="core-wordmark">Global</span>
+                </div>
+              </div>
+              <div class="atom-orbit atom-orbit-inner">
+                <span class="atom-particle particle-indef">IN-DEF</span>
+                <span class="atom-particle particle-jbblue">JBBlue Group</span>
+                <span class="atom-particle particle-franquiciandote">Franquiciándote</span>
+              </div>
+              <div class="atom-orbit atom-orbit-outer">
+                <span class="atom-particle brand-santa">Santagloria</span>
+                <span class="atom-particle brand-allo">Allô Mon Coco</span>
+                <span class="atom-particle brand-wetzel">Wetzel Pretzel</span>
+                <span class="atom-particle brand-coco">CoCo Bubble Tea</span>
+              </div>
+            </section>
+
+            <div class="market-strip" aria-label="Resumen global de mercado">
+              <span>Países activos <strong>2</strong></span>
+              <span>Unidades operativas <strong>5</strong></span>
+              <span>Marcas <strong>4</strong></span>
+              <span>Pipeline expansión <strong>23</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="next-signal" aria-hidden="true">
+          <span></span>
+          <strong>KPIs Consolidados</strong>
+        </div>
+      </section>
+
+      <!-- KPI CONSTELLATION GLOBAL -->
+      <section class="section-shell command-section" id="global-kpis" data-section="global-kpis">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Resumen Ejecutivo Global</p>
+          <h2>Métricas consolidadas del grupo.</h2>
+          <span>MX en MXN ($) · ESP en EUR (€) · Semana 22 / 2026</span>
+        </div>
+
+        <div class="command-layout">
+          <article class="executive-monolith reveal">
+            <div class="monolith-topline">
+              <span>Resultado global</span>
+              <strong class="status-chip status-amber">Amarillo táctico</strong>
+            </div>
+            <div class="monolith-number">5</div>
+            <p>Unidades operativas activas en 2 países: 3 en México (SG La Isla, SG Paseo de Montejo, AMC Mérida) y 2 en España (SG Alameda Recalde, SG Alameda de Urquijo). 4 marcas en el portafolio.</p>
+            <div class="monolith-strip">
+              <span>
+                <small>MX — Ventas</small>
+                <strong>$14.55M</strong>
+              </span>
+              <span>
+                <small>ESP — Ventas</small>
+                <strong>€8.24M</strong>
+              </span>
+              <span>
+                <small>Pipeline total</small>
+                <strong>23 proy.</strong>
+              </span>
+            </div>
+          </article>
+
+          <article class="signal-surface reveal">
+            <div class="surface-head">
+              <span>Revenue Global Signal</span>
+              <strong>Jan–May 2026</strong>
+            </div>
+            <canvas id="revenueCanvas" width="900" height="420" aria-label="Gráfica financiera global"></canvas>
+          </article>
+
+          <article class="decision-stream reveal">
+            <div class="surface-head">
+              <span>Decisiones requeridas</span>
+              <strong>Comité semanal</strong>
+            </div>
+            <div class="decision-item status-red">
+              <span></span>
+              <p>MX — Recuperar SG La Isla: 68.47% de venta vs meta en mayo 2026.</p>
+            </div>
+            <div class="decision-item status-amber">
+              <span></span>
+              <p>ESP — SG Alameda de Urquijo al 88.7% vs meta. Plan comercial requerido.</p>
+            </div>
+            <div class="decision-item status-green">
+              <span></span>
+              <p>Pipeline global: 23 proyectos activos entre MX y ESP. 3 próximas aperturas.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="kpi-constellation reveal" id="kpiConstellation" aria-label="KPIs globales"></div>
+      </section>
+
+      <!-- SECCIÓN 2: GEOGRAPHIC PERFORMANCE -->
+      <section class="section-shell modules-section" id="geographic" data-section="geographic">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Geographic Performance</p>
+          <h2>Comparativo de operaciones por país.</h2>
+          <span>México · España · Rendimiento Jan–May 2026</span>
+        </div>
+
+        <div class="module-theater" id="moduleTheater"></div>
+      </section>
+
+      <!-- SECCIÓN 3: BRAND PERFORMANCE -->
+      <section class="section-shell insights-section" id="brands" data-section="brands">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Brand Performance</p>
+          <h2>Rendimiento por marca en el portafolio global.</h2>
+          <span>Santagloria · Allô Mon Coco · Wetzel Pretzel · CoCo Bubble Tea</span>
+        </div>
+        <div class="insight-grid reveal" id="insightGrid"></div>
+      </section>
+
+      <!-- SECCIÓN 4: EXECUTIVE ALERTS -->
+      <section class="section-shell pulse-section" id="alerts" data-section="alerts">
+        <div class="section-heading reveal">
+          <p class="eyebrow tactical">Executive Alerts</p>
+          <h2>Focos de atención corporativa global.</h2>
+          <span>Riesgos, desviaciones y aperturas activas del grupo.</span>
+        </div>
+
+        <div class="pulse-grid">
+          <article class="pulse-reactor reveal" aria-label="Radar global de alertas">
+            <div class="reactor-core">
+              <span>6</span>
+              <strong>alertas activas</strong>
+            </div>
+            <div class="reactor-ring ring-a"></div>
+            <div class="reactor-ring ring-b"></div>
+            <div class="reactor-ring ring-c"></div>
+          </article>
+          <div class="pulse-feed reveal" id="pulseFeed"></div>
+        </div>
+      </section>
+
+      <!-- RIESGOS GLOBALES -->
+      <section class="section-shell risk-section" id="risks" data-section="risks">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Centro de Riesgos Global</p>
+          <h2>Mapa ejecutivo de impacto y probabilidad.</h2>
+          <span>Riesgos consolidados MX + ESP.</span>
+        </div>
+        <div class="risk-layout">
+          <article class="risk-map reveal" aria-label="Mapa de riesgos global">
+            <div class="risk-map-head">
+              <span>Risk Intelligence</span>
+              <strong>Impacto + Probabilidad</strong>
+            </div>
+            <div class="risk-matrix">
+              <div class="matrix-cell low">
+                <small>Monitoreo</small>
+                <strong>Expansión</strong>
+                <span>23 proyectos activos</span>
+              </div>
+              <div class="matrix-cell medium">
+                <small>Prioridad media</small>
+                <strong>Margen ESP</strong>
+                <span>7.4% — bajo umbral 10%</span>
+              </div>
+              <div class="matrix-cell high">
+                <small>Decisión MX</small>
+                <strong>SG La Isla</strong>
+                <span>Venta vs meta 68.47%</span>
+              </div>
+              <div class="matrix-cell high">
+                <small>Decisión ESP</small>
+                <strong>SG Urquijo</strong>
+                <span>Venta vs meta 88.7%</span>
+              </div>
+            </div>
+            <div class="risk-axis-labels">
+              <span>Menor urgencia</span>
+              <span>Mayor prioridad ejecutiva</span>
+            </div>
+          </article>
+          <div class="risk-stream reveal" id="riskStream"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <script src="app.js"></script>
+
+    <nav aria-label="Navegación global JB Holds" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:3px;padding:6px 8px;background:rgba(4,13,25,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(147,223,255,0.14);border-radius:999px;box-shadow:0 8px 44px rgba(0,0,0,0.46),inset 0 1px rgba(255,255,255,0.06);white-space:nowrap;">
+      <span style="padding:4px 10px 4px 8px;color:#43dcff;font-size:0.7rem;font-weight:860;letter-spacing:0.08em;border-right:1px solid rgba(147,223,255,0.14);margin-right:2px;font-family:inherit;">JB</span>
+      <a href="/"        style="padding:5px 11px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;border-radius:999px;">Inicio</a>
+      <a href="/global/" style="padding:5px 13px;color:#43dcff;font-size:0.72rem;font-weight:780;text-decoration:none;border-radius:999px;background:rgba(67,220,255,0.11);border:1px solid rgba(67,220,255,0.22);">Global</a>
+      <a href="/mexico/" style="padding:5px 11px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;border-radius:999px;">México</a>
+      <a href="/espana/" style="padding:5px 11px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;border-radius:999px;">España</a>
+      <a href="/indef/"  style="padding:5px 11px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;border-radius:999px;">INDEF</a>
+    </nav>
   </body>
 </html>

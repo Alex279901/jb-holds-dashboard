@@ -5335,14 +5335,17 @@ main::before {
 
 /* ── KPI Matrix (renderKpiMatrix → #kpiMatrix) ──────────────────────────── */
 .mx-wrap {
-  overflow-x: auto; margin-top: 32px;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 560px;
+  margin-top: 32px;
   border: 1px solid var(--line); border-radius: 12px;
 }
 
 .mx-table { width: 100%; border-collapse: collapse; min-width: 680px; }
 
 .mx-th {
-  position: sticky; top: 90px; z-index: 3;
+  position: sticky; top: 0; z-index: 3;
   padding: 14px 18px;
   border-bottom: 2px solid rgba(147,223,255,0.22);
   text-align: left; font-size: 0.63rem; font-weight: 760;

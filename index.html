@@ -1,292 +1,311 @@
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>JB Holds | Corporate Intelligence Operating System</title>
-    <meta
-      name="description"
-      content="JB Holds, experiencia premium de inteligencia financiera, operativa y estratégica para INDEF / JBBlue Group."
-    >
-    <link rel="stylesheet" href="styles.css?v=20260528-mobile-fix-2">
-  </head>
-  <body>
-    <canvas id="ambientCanvas" aria-hidden="true"></canvas>
-    <div class="cinematic-gate" aria-hidden="true"></div>
-    <div class="scan-layer" aria-hidden="true"></div>
-    <div class="beam-field" aria-hidden="true"></div>
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JB HOLDS | COMMAND CENTER</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;900&family=Inter:wght@400;500&family=Geist:wght@500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "background": "#0c1324",
+          "surface-container-highest": "#2e3447",
+          "surface-dim": "#0c1324",
+          "on-secondary": "#283044",
+          "on-tertiary-container": "#4f5a6e",
+          "on-surface": "#dce1fb",
+          "inverse-on-surface": "#2a3043",
+          "tertiary-container": "#c6d1e9",
+          "outline": "#849396",
+          "surface-tint": "#00daf3",
+          "on-tertiary": "#263143",
+          "on-primary": "#00363d",
+          "on-primary-fixed": "#001f24",
+          "tertiary-fixed-dim": "#bcc7de",
+          "on-error": "#690005",
+          "on-tertiary-fixed": "#111c2d",
+          "secondary-fixed": "#dae2fd",
+          "surface-container-high": "#23293c",
+          "primary-fixed-dim": "#00daf3",
+          "surface-container": "#191f31",
+          "outline-variant": "#3b494c",
+          "surface": "#0c1324",
+          "tertiary-fixed": "#d8e3fb",
+          "on-secondary-container": "#adb4ce",
+          "secondary-container": "#3f465c",
+          "primary": "#c3f5ff",
+          "on-background": "#dce1fb",
+          "on-primary-fixed-variant": "#004f58",
+          "surface-bright": "#33394c",
+          "primary-fixed": "#9cf0ff",
+          "on-secondary-fixed-variant": "#3f465c",
+          "surface-variant": "#2e3447",
+          "surface-container-lowest": "#070d1f",
+          "inverse-surface": "#dce1fb",
+          "secondary-fixed-dim": "#bec6e0",
+          "on-secondary-fixed": "#131b2e",
+          "error-container": "#93000a",
+          "surface-container-low": "#151b2d",
+          "on-surface-variant": "#bac9cc",
+          "tertiary": "#e6edff",
+          "on-error-container": "#ffdad6",
+          "secondary": "#bec6e0",
+          "on-primary-container": "#00626e",
+          "error": "#ffb4ab",
+          "on-tertiary-fixed-variant": "#3c475a",
+          "inverse-primary": "#006875",
+          "primary-container": "#00e5ff"
+        },
+        borderRadius: {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        spacing: {
+          "section-gap": "80px",
+          "stack-lg": "32px",
+          "grid-margin": "48px",
+          "stack-sm": "8px",
+          "grid-gutter": "24px",
+          "stack-md": "16px"
+        },
+        fontFamily: {
+          "display-lg": ["Hanken Grotesk"],
+          "mono-data": ["Geist"],
+          "body-md": ["Inter"],
+          "label-caps": ["Geist"],
+          "headline-lg-mobile": ["Hanken Grotesk"],
+          "body-sm": ["Inter"],
+          "headline-lg": ["Hanken Grotesk"]
+        },
+        fontSize: {
+          "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+          "mono-data": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+          "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+          "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+          "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body {
+    background-color: #020617;
+    color: #dce1fb;
+    overflow: hidden;
+  }
+  .glass-panel {
+    background: rgba(12, 19, 36, 0.72);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .text-glow {
+    text-shadow: 0 0 40px rgba(0, 218, 243, 0.28);
+  }
+  .menu-transition {
+    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .menu-hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .menu-visible {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+  }
+  .hero-bg {
+    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAq3DL-eoZlS-6FoSqrswio9Q-rJcmRrologKG4qQK1Jzs2Vz2OCLZ62LFzB3tBlkj-MsYluURXWTMXCpZPvHawUBT6BvtjluEh--KSCxixRqX_PllrmQDuThzGgcicTdjBgSR-CXg03qmjGq8gSeNBPj39hf1VCMDlp-bDD3ZLxNSNPLNFAYflDS4RI7Z4NVBW0853uUIFGz0UwPUeHnOy6zJtOW4125VyAV5FsXaJUpy55NuxnVYe-vrPPAdFsSSw12xUxAHwpjCG');
+    background-size: cover;
+    background-position: center;
+    filter: blur(8px);
+    transform: scale(1.1);
+  }
+  .hero-overlay {
+    background: radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.85) 100%);
+  }
+  .nav-item {
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 1.25rem;
+  }
+  .nav-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 0;
+    background: #c3f5ff;
+    transition: height 0.3s ease;
+    border-radius: 999px;
+  }
+  .nav-item:hover::before {
+    height: 60%;
+  }
+  .badge-code {
+    font-family: 'Geist', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: rgba(195, 245, 255, 0.45);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body class="font-body-md h-screen w-screen overflow-hidden bg-black">
 
-    <nav class="top-shell" aria-label="Navegación principal">
-      <a class="brand-lockup" href="#hero" aria-label="JB Holds inicio">
-        <span class="brand-sigil">JB</span>
-        <span>
-          <strong>JB Holds</strong>
-          <small>INDEF / JBBlue Group</small>
-        </span>
-      </a>
-      <div class="nav-cluster">
-        <a href="#command">Command</a>
-        <a href="#modules">Módulos</a>
-        <a href="#pulse">Pulse</a>
-        <a href="#insights">Signals</a>
-        <a href="#risks">Riesgos</a>
-        <a href="#commitments">Compromisos</a>
-        <a href="#important-pending">Pendientes</a>
+  <!-- Cinematic Background -->
+  <div class="fixed inset-0 hero-bg z-0 overflow-hidden">
+    <div class="absolute inset-0 hero-overlay"></div>
+  </div>
+
+  <!-- Main Hero -->
+  <main class="relative z-10 flex flex-col items-center justify-center h-full px-grid-margin text-center">
+    <div class="max-w-4xl space-y-4">
+
+      <p class="font-label-caps text-label-caps tracking-[0.35em] text-primary opacity-50 uppercase mb-6">
+        Corporate Intelligence Operating System
+      </p>
+
+      <h1 class="font-display-lg text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-on-surface text-glow uppercase leading-none">
+        JB HOLDS
+      </h1>
+
+      <p class="font-label-caps text-sm tracking-[0.22em] text-on-surface-variant uppercase opacity-60 mt-3">
+        JBBlue Group &nbsp;·&nbsp; INDEF &nbsp;·&nbsp; Franquiciándote
+      </p>
+
+      <div class="h-px w-20 bg-primary mx-auto my-8 opacity-30"></div>
+
+      <p class="font-body-md text-base text-on-surface-variant max-w-xl mx-auto leading-relaxed opacity-60 font-light">
+        Inteligencia financiera, operativa y estratégica para gestión multi-marca y multi-país.
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Menu Toggle Button -->
+  <div class="fixed top-10 right-10 z-50">
+    <button class="group flex items-center gap-3 text-on-surface hover:text-primary transition-all duration-300" id="menu-toggle">
+      <span class="font-label-caps text-label-caps tracking-widest opacity-0 group-hover:opacity-60 transition-opacity duration-300 text-xs">
+        COMMAND CENTER
+      </span>
+      <div class="w-11 h-11 flex items-center justify-center rounded-full border border-white/10 glass-panel group-hover:border-primary/40 transition-all duration-300">
+        <span class="material-symbols-outlined text-xl" id="toggle-icon">menu</span>
       </div>
-      <button class="nav-action magnetic" type="button" data-jump="#command">
-        <span>Empezar</span>
-      </button>
+    </button>
+  </div>
+
+  <!-- Slide-in Navigation Panel -->
+  <aside class="fixed inset-y-0 right-0 w-80 z-40 glass-panel border-l border-white/5 menu-transition shadow-2xl flex flex-col px-10 py-12 menu-hidden" id="menu-panel">
+
+    <!-- Panel Header -->
+    <div class="mt-16 mb-10">
+      <p class="badge-code mb-2">Command Center</p>
+      <p class="font-display-lg text-lg font-bold text-on-surface tracking-tight">JB HOLDS</p>
+      <p class="text-xs text-on-surface-variant opacity-40 mt-1 tracking-wide">Selecciona un módulo</p>
+      <div class="h-px w-full bg-primary/15 mt-6"></div>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="flex flex-col gap-0 pl-6">
+
+      <a class="group nav-item flex flex-col gap-1 py-5 text-on-surface hover:text-primary transition-all duration-300" href="/global/">
+        <div class="flex items-center gap-3">
+          <span class="text-lg leading-none">🌎</span>
+          <span class="font-display-lg text-xl font-bold tracking-tight">Global</span>
+          <span class="badge-code ml-auto">GL</span>
+        </div>
+        <p class="text-xs text-on-surface-variant opacity-40 pl-8">Vista consolidada multi-país</p>
+      </a>
+
+      <a class="group nav-item flex flex-col gap-1 py-5 text-on-surface hover:text-primary transition-all duration-300" href="/mexico/">
+        <div class="flex items-center gap-3">
+          <span class="text-lg leading-none">🇲🇽</span>
+          <span class="font-display-lg text-xl font-bold tracking-tight">México</span>
+          <span class="badge-code ml-auto">MX</span>
+        </div>
+        <p class="text-xs text-on-surface-variant opacity-40 pl-8">Santagloria · Allô Mon Coco · CBC</p>
+      </a>
+
+      <a class="group nav-item flex flex-col gap-1 py-5 text-on-surface hover:text-primary transition-all duration-300" href="/espana/">
+        <div class="flex items-center gap-3">
+          <span class="text-lg leading-none">🇪🇸</span>
+          <span class="font-display-lg text-xl font-bold tracking-tight">España</span>
+          <span class="badge-code ml-auto">ES</span>
+        </div>
+        <p class="text-xs text-on-surface-variant opacity-40 pl-8">Santagloria ESP · Wetzel Pretzel</p>
+      </a>
+
+      <a class="group nav-item flex flex-col gap-1 py-5 text-on-surface hover:text-primary transition-all duration-300" href="/indef/">
+        <div class="flex items-center gap-3">
+          <span class="text-lg leading-none">🏢</span>
+          <span class="font-display-lg text-xl font-bold tracking-tight">INDEF</span>
+          <span class="badge-code ml-auto">IN</span>
+        </div>
+        <p class="text-xs text-on-surface-variant opacity-40 pl-8">Finance Command · Analytics</p>
+      </a>
+
     </nav>
 
-    <aside class="executive-rail is-collapsed" aria-label="Navegación ejecutiva">
-      <a class="rail-link is-active" href="#command" data-section="command">
-        <span class="rail-glyph rail-command" aria-hidden="true"></span>
-        <span class="rail-text">Command Center</span>
-      </a>
-      <a class="rail-link" href="#modules" data-section="modules">
-        <span class="rail-glyph rail-modules" aria-hidden="true"></span>
-        <span class="rail-text">Módulos</span>
-      </a>
-      <a class="rail-link" href="#pulse" data-section="pulse">
-        <span class="rail-glyph rail-pulse" aria-hidden="true"></span>
-        <span class="rail-text">Executive Pulse</span>
-      </a>
-      <a class="rail-link" href="#insights" data-section="insights">
-        <span class="rail-glyph rail-signals" aria-hidden="true"></span>
-        <span class="rail-text">Executive Signals</span>
-      </a>
-      <a class="rail-link" href="#risks" data-section="risks">
-        <span class="rail-glyph rail-risks" aria-hidden="true"></span>
-        <span class="rail-text">Riesgos</span>
-      </a>
-      <a class="rail-link" href="#commitments" data-section="commitments">
-        <span class="rail-glyph rail-commitments" aria-hidden="true"></span>
-        <span class="rail-text">Compromisos</span>
-      </a>
-      <a class="rail-link" href="#important-pending" data-section="important-pending">
-        <span class="rail-glyph rail-commitments" aria-hidden="true"></span>
-        <span class="rail-text">Pendientes</span>
-      </a>
-      <div class="rail-status">
-        <span>Semana 21 / 2026</span>
-        <strong>Live Signal</strong>
-      </div>
-    </aside>
+    <!-- Panel Footer -->
+    <div class="mt-auto pt-8 border-t border-white/5">
+      <p class="badge-code opacity-30">INDEF / JBBlue Group · 2026</p>
+    </div>
 
-    <main>
-      <section class="hero section-shell" id="hero" data-section="hero">
-        <div class="hero-aurora" aria-hidden="true"></div>
-        <div class="hero-copy reveal">
-          <p class="eyebrow">Corporate Intelligence Operating System</p>
-          <h1>JB Holds</h1>
-          <p class="hero-subtitle">Corporate Intelligence Operating System</p>
-          <p class="hero-text">Inteligencia financiera, operativa y estratégica para gestión multi-marca.</p>
-        </div>
+  </aside>
 
-        <div class="hero-theater reveal" aria-label="Atomo corporativo JB Holds">
-          <div class="hero-stage atom-stage">
-            <section class="premium-atom" aria-label="Sistema atomico corporativo">
-              <div class="atom-glass" aria-hidden="true"></div>
-              <div class="atom-core" aria-label="JB Holds">
-                <div class="core-lockup" aria-hidden="true">
-                  <span class="core-monogram">JB</span>
-                  <span class="core-wordmark">Holds</span>
-                </div>
-              </div>
-              <div class="atom-orbit atom-orbit-inner">
-                <span class="atom-particle particle-indef">IN-DEF</span>
-                <span class="atom-particle particle-jbblue">JBBlue Group</span>
-                <span class="atom-particle particle-franquiciandote">Franquiciándote</span>
-              </div>
-              <div class="atom-orbit atom-orbit-outer">
-                <span class="atom-particle brand-santa">Santagloria México</span>
-                <span class="atom-particle brand-allo">Allô Mon Coco México</span>
-                <span class="atom-particle brand-wetzel">IN-DEF Corporativo</span>
-                <span class="atom-particle brand-coco">CoCo Bubble Tea México</span>
-              </div>
-            </section>
+  <!-- Noise Overlay -->
+  <div class="fixed inset-0 pointer-events-none opacity-[0.035] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-[100]"></div>
 
-            <div class="market-strip" aria-label="Resumen ejecutivo de mercado">
-              <span>Ventas netas <strong>$14.55M</strong></span>
-              <span>Cumplimiento <strong>94.5%</strong></span>
-              <span>Expansión MX <strong>18</strong></span>
-              <span>Compromisos <strong>0</strong></span>
-            </div>
-          </div>
-        </div>
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const menuPanel = document.getElementById('menu-panel');
+    const toggleIcon = document.getElementById('toggle-icon');
+    let isMenuOpen = false;
 
-        <div class="next-signal" aria-hidden="true">
-          <span></span>
-          <strong>Executive Command Center</strong>
-        </div>
-      </section>
+    menuToggle.addEventListener('click', () => {
+      isMenuOpen = !isMenuOpen;
+      if (isMenuOpen) {
+        menuPanel.classList.remove('menu-hidden');
+        menuPanel.classList.add('menu-visible');
+        toggleIcon.innerText = 'close';
+      } else {
+        menuPanel.classList.remove('menu-visible');
+        menuPanel.classList.add('menu-hidden');
+        toggleIcon.innerText = 'menu';
+      }
+    });
 
-      <section class="section-shell command-section" id="command" data-section="command">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Executive Command Center</p>
-          <h2>Mission control para resultados, riesgos y decisiones.</h2>
-          <span>Semana 21 / 2026 · Corte validado lunes 08:10</span>
-        </div>
+    document.addEventListener('mousedown', (e) => {
+      if (isMenuOpen && !menuPanel.contains(e.target) && !menuToggle.contains(e.target)) {
+        isMenuOpen = false;
+        menuPanel.classList.remove('menu-visible');
+        menuPanel.classList.add('menu-hidden');
+        toggleIcon.innerText = 'menu';
+      }
+    });
+  </script>
 
-        <div class="command-layout">
-          <article class="executive-monolith reveal">
-            <div class="monolith-topline">
-              <span>Resultado general</span>
-              <strong class="status-chip status-amber">Amarillo táctico</strong>
-            </div>
-            <div class="monolith-number">$14.55M</div>
-            <p>Ventas netas acumuladas al 24 de mayo de 2026 con cumplimiento consolidado de 94.5% vs meta. P&L real Jan-Abr registra resultado neto positivo, pero margen bajo objetivo.</p>
-            <div class="monolith-strip">
-              <span>
-                <small>Resultado P&L</small>
-                <strong>$660K</strong>
-              </span>
-              <span>
-                <small>Margen neto</small>
-                <strong>5.9%</strong>
-              </span>
-              <span>
-                <small>Documentos</small>
-                <strong>41.6K</strong>
-              </span>
-            </div>
-          </article>
-
-          <article class="signal-surface reveal">
-            <div class="surface-head">
-              <span>Revenue / P&L Signal</span>
-              <strong>Jan-May 2026</strong>
-            </div>
-            <canvas id="revenueCanvas" width="900" height="420" aria-label="Grafica financiera premium"></canvas>
-          </article>
-
-          <article class="decision-stream reveal">
-            <div class="surface-head">
-              <span>Decisiónes requeridas</span>
-              <strong>Comite semanal</strong>
-            </div>
-            <div class="decision-item status-red">
-              <span></span>
-              <p>Recuperar Santagloria La Isla: 68.47% de venta vs meta en mayo 2026.</p>
-            </div>
-            <div class="decision-item status-amber">
-              <span></span>
-              <p>Elevar margen neto consolidado: P&L Jan-Abr cierra en 5.9%, debajo de objetivo.</p>
-            </div>
-            <div class="decision-item status-green">
-              <span></span>
-              <p>Escalar pipeline: 18 proyectos de expansión MX y 2 próximas aperturas identificadas.</p>
-            </div>
-          </article>
-        </div>
-
-        <div class="kpi-constellation reveal" id="kpiConstellation" aria-label="KPIs ejecutivos"></div>
-      </section>
-
-      <section class="section-shell modules-section" id="modules" data-section="modules">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Módulos Departamentales</p>
-          <h2>Cada área como un entorno de inteligencia propio.</h2>
-          <span>Finanzas · Operaciones · Marketing · Recursos Humanos · Expansión · Excelencia de Marca</span>
-        </div>
-
-        <div class="department-lens reveal" id="departmentLens" aria-label="Selector de módulo departamental"></div>
-        <div class="module-theater" id="moduleTheater"></div>
-      </section>
-
-      <section class="section-shell pulse-section" id="pulse" data-section="pulse">
-        <div class="section-heading reveal">
-          <p class="eyebrow tactical">Executive Pulse</p>
-          <h2>Núcleo táctico de alertas estratégicas.</h2>
-          <span>Monitoreo corporativo de riesgos, desviaciones y bloqueos de ejecucion.</span>
-        </div>
-
-        <div class="pulse-grid">
-          <article class="pulse-reactor reveal" aria-label="Radar táctico de alertas">
-            <div class="reactor-core">
-              <span>13</span>
-              <strong>focos rojos</strong>
-            </div>
-            <div class="reactor-ring ring-a"></div>
-            <div class="reactor-ring ring-b"></div>
-            <div class="reactor-ring ring-c"></div>
-          </article>
-          <div class="pulse-feed reveal" id="pulseFeed"></div>
-        </div>
-      </section>
-
-      <section class="section-shell insights-section" id="insights" data-section="insights">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Executive Signals</p>
-          <h2>Lectura predictiva para convertir datos en decisiones.</h2>
-          <span>Señales basadas en ventas diarias, P&L, marketing, expansión, RH y semáforos reales.</span>
-        </div>
-        <div class="insight-grid reveal" id="insightGrid"></div>
-      </section>
-
-      <section class="section-shell risk-section" id="risks" data-section="risks">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Centro de Riesgos</p>
-          <h2>Mapa ejecutivo de impacto, probabilidad y mitigación.</h2>
-          <span>Todo riesgo crítico requiere responsable, plan y fecha compromiso.</span>
-        </div>
-
-        <div class="risk-layout">
-          <article class="risk-map reveal" aria-label="Mapa ejecutivo de riesgos por prioridad">
-            <div class="risk-map-head">
-              <span>Risk Intelligence</span>
-              <strong>Impacto + Probabilidad</strong>
-            </div>
-            <div class="risk-matrix">
-              <div class="matrix-cell low">
-                <small>Monitoreo</small>
-                <strong>Core</strong>
-                <span>4 marcas / 4 unidades activas</span>
-              </div>
-              <div class="matrix-cell medium">
-                <small>Prioridad media</small>
-                <strong>MKT</strong>
-                <span>CPR Meta Ads $0.72</span>
-              </div>
-              <div class="matrix-cell high">
-                <small>Decisión</small>
-                <strong>SG La Isla</strong>
-                <span>Venta vs meta 68.47%</span>
-              </div>
-              <div class="matrix-cell high">
-                <small>Decisión</small>
-                <strong>AMC</strong>
-                <span>Rotación 20.0%</span>
-              </div>
-            </div>
-            <div class="risk-axis-labels">
-              <span>Menor urgencia</span>
-              <span>Mayor prioridad ejecutiva</span>
-            </div>
-          </article>
-          <div class="risk-stream reveal" id="riskStream"></div>
-        </div>
-      </section>
-
-      <section class="section-shell commitments-section" id="commitments" data-section="commitments">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Tracker de Compromisos</p>
-          <h2>Minuta viva con responsables, avance y semáforo.</h2>
-          <span>Primera sesión sin minuta registrada. El tablero inicia en 0 compromisos.</span>
-        </div>
-        <div class="commitment-board reveal" id="commitmentBoard"></div>
-      </section>
-
-      <section class="section-shell commitments-section" id="important-pending" data-section="important-pending">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Pendientes Importantes</p>
-          <h2>Temas críticos para seguimiento ejecutivo.</h2>
-          <span>Lista viva de pendientes relevantes fuera de minuta formal.</span>
-        </div>
-        <div class="commitment-board pending-board reveal" id="importantPendingBoard"></div>
-      </section>
-    </main>
-
-    <script src="app.js?v=20260528-mobile-fix-2"></script>
-  </body>
+</body>
 </html>

@@ -1,261 +1,472 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>JB Holds | Global Command Center</title>
-    <meta name="description" content="Vista consolidada global del holding JB Holds — México y España.">
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <canvas id="ambientCanvas" aria-hidden="true"></canvas>
-    <div class="cinematic-gate" aria-hidden="true"></div>
-    <div class="scan-layer" aria-hidden="true"></div>
-    <div class="beam-field" aria-hidden="true"></div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JB Holds | Franchise Excellence</title>
+  <meta name="description" content="Franchise Excellence — KPIs críticos para escalar franquicias con control financiero, operativo y humano.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Franchise Excellence — component styles ── */
 
-    <nav class="top-shell" aria-label="Navegación principal">
-      <a class="brand-lockup" href="/" aria-label="JB Holds inicio">
-        <span class="brand-sigil">JB</span>
-        <span>
-          <strong>JB Holds</strong>
-          <small>Global Command Center</small>
-        </span>
-      </a>
-      <div class="nav-cluster">
-        <a href="#overview">Overview</a>
-        <a href="#geographic">Geografía</a>
-        <a href="#brands">Marcas</a>
-        <a href="#alerts">Alertas</a>
-      </div>
-    </nav>
+    .fe-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .fe-chip {
+      display: inline-flex; align-items: center;
+      padding: 5px 13px;
+      border: 1px solid rgba(147,223,255,0.18);
+      border-radius: 999px;
+      background: rgba(67,220,255,0.06);
+      color: #9db9c7; font-size: 0.69rem; font-weight: 760; letter-spacing: 0.05em;
+    }
 
-    <aside class="executive-rail is-collapsed" aria-label="Navegación ejecutiva">
-      <a class="rail-link is-active" href="#overview" data-section="overview">
-        <span class="rail-glyph rail-command" aria-hidden="true"></span>
-        <span class="rail-text">Global Overview</span>
-      </a>
-      <a class="rail-link" href="#geographic" data-section="geographic">
-        <span class="rail-glyph rail-modules" aria-hidden="true"></span>
-        <span class="rail-text">Geografía</span>
-      </a>
-      <a class="rail-link" href="#brands" data-section="brands">
-        <span class="rail-glyph rail-signals" aria-hidden="true"></span>
-        <span class="rail-text">Marcas</span>
-      </a>
-      <a class="rail-link" href="#alerts" data-section="alerts">
-        <span class="rail-glyph rail-risks" aria-hidden="true"></span>
-        <span class="rail-text">Alertas</span>
-      </a>
-      <div class="rail-status">
-        <span>Semana 22 / 2026</span>
-        <strong>Live Signal</strong>
-      </div>
-    </aside>
+    /* KPI Executive Cards */
+    .fe-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px; margin-top: 32px;
+    }
+    .fe-kpi-card {
+      position: relative; padding: 22px 24px 18px;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: rgba(6,17,31,0.66);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      transition: transform 240ms var(--ease), box-shadow 240ms var(--ease);
+    }
+    .fe-kpi-card:hover { transform: translateY(-3px); box-shadow: 0 22px 64px rgba(0,0,0,0.32); }
+    .fe-pending-card { opacity: 0.72; }
+    .fe-kpi-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .fe-kpi-label { color: var(--muted); font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .fe-kpi-meta { color: var(--muted-2); font-size: 0.67rem; margin-top: 5px; }
+    .fe-kpi-note { margin-top: 14px; font-size: 0.64rem; color: var(--muted-2); border-top: 1px solid rgba(147,223,255,0.07); padding-top: 10px; }
+    .fe-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .fe-dot.green { background: #7cc9a8; box-shadow: 0 0 14px rgba(124,201,168,0.55); }
+    .fe-dot.amber { background: #c9a96a; box-shadow: 0 0 14px rgba(201,169,106,0.55); }
+    .fe-dot.red   { background: #c46b73; box-shadow: 0 0 14px rgba(196,107,115,0.55); }
+    .fe-unit-rows { display: flex; flex-direction: column; gap: 10px; }
+    .fe-unit-row { display: flex; align-items: center; gap: 10px; }
+    .fe-unit-name { font-size: 0.73rem; color: #9db9c7; min-width: 80px; flex-shrink: 0; }
+    .fe-unit-value { font-size: 0.86rem; font-weight: 780; min-width: 66px; flex-shrink: 0; }
+    .fe-unit-bar-wrap { flex: 1; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .fe-unit-bar { height: 100%; border-radius: inherit; }
 
-    <main>
+    /* Health Score */
+    .fe-health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px; margin-top: 32px;
+    }
+    .fe-health-card {
+      padding: 28px 26px;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: rgba(6,17,31,0.66);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .fe-rank-badge { font-size: 2rem; margin-bottom: 6px; }
+    .fe-score-num { font-size: 4.2rem; font-weight: 880; line-height: 1; margin: 10px 0 8px; letter-spacing: -0.02em; }
+    .fe-score-bar-wrap { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; margin: 12px 0 16px; }
+    .fe-score-bar { height: 100%; border-radius: inherit; }
+    .fe-health-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
-      <!-- SECCIÓN 1: HERO / GLOBAL OVERVIEW -->
-      <section class="hero section-shell" id="overview" data-section="overview">
-        <div class="hero-aurora" aria-hidden="true"></div>
-        <div class="hero-copy reveal">
-          <p class="eyebrow">Global Command Center</p>
-          <h1>JB Holds</h1>
-          <p class="hero-subtitle">Vista Corporativa Consolidada</p>
-          <p class="hero-text">Inteligencia financiera y operativa agregada de todas las operaciones del grupo.</p>
+    /* Heatmap */
+    .fe-heatmap-wrap { overflow-x: auto; margin-top: 32px; }
+    .fe-heatmap {
+      display: grid;
+      border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+      min-width: 660px;
+    }
+    .fe-hm-cell {
+      padding: 13px 10px; font-size: 0.78rem; font-weight: 700;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .fe-hm-cell:last-child { border-right: none; }
+    .fe-hm-header { background: rgba(4,13,25,0.55); color: var(--muted); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 760; }
+    .fe-hm-unit { background: rgba(4,13,25,0.35); color: #c4d8e5; font-weight: 760; text-align: left; padding-left: 16px; }
+    .fe-hm-green { background: rgba(124,201,168,0.16); color: #7cc9a8; }
+    .fe-hm-amber { background: rgba(201,169,106,0.16); color: #c9a96a; }
+    .fe-hm-red   { background: rgba(196,107,115,0.16); color: #c46b73; }
+
+    /* Radar */
+    .fe-radar-wrap {
+      display: flex; justify-content: center; align-items: center;
+      gap: 48px; flex-wrap: wrap; margin-top: 32px; padding: 24px;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: rgba(4,13,25,0.4);
+    }
+    .fe-radar-legend { display: flex; flex-direction: column; gap: 14px; min-width: 180px; }
+    .fe-legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #a8bcc9; }
+    .fe-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .fe-legend-sub { font-size: 0.68rem; color: var(--muted-2); margin-top: 2px; }
+
+    /* Risks */
+    .fe-risk-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+    .fe-risk-item {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      gap: 16px; align-items: center;
+      padding: 18px 20px;
+      border: 1px solid transparent; border-radius: 10px;
+      backdrop-filter: blur(16px);
+    }
+    .fe-priority {
+      display: grid; place-items: center;
+      height: 40px; border: 1px solid transparent; border-radius: 8px;
+      background: rgba(0,0,0,0.24);
+      font-size: 0.7rem; font-weight: 820; letter-spacing: 0.05em;
+    }
+    .fe-risk-body h4 { margin: 0; font-size: 0.9rem; color: #eef8ff; font-weight: 720; }
+    .fe-risk-body p { margin: 5px 0 0; font-size: 0.77rem; color: #8fa7bd; line-height: 1.48; }
+    .fe-risk-kpi { text-align: right; min-width: 80px; }
+    .fe-risk-kpi strong { display: block; font-size: 1.08rem; font-weight: 840; }
+    .fe-risk-kpi span { font-size: 0.65rem; color: var(--muted-2); }
+
+    /* Executive Table */
+    .fe-table-wrap {
+      overflow-x: auto; margin-top: 32px;
+      border: 1px solid var(--line); border-radius: 12px;
+    }
+    .fe-table { width: 100%; border-collapse: collapse; min-width: 960px; }
+    .fe-table th {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left; font-size: 0.64rem; font-weight: 760;
+      text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted);
+      white-space: nowrap; background: rgba(4,13,25,0.45);
+    }
+    .fe-table td {
+      padding: 14px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.81rem; color: #c8dae5; white-space: nowrap;
+    }
+    .fe-table tr:last-child td { border-bottom: none; }
+    .fe-table tr:hover td { background: rgba(67,220,255,0.03); }
+    .fe-unit-col { font-weight: 780; color: #eef8ff !important; }
+    .fe-lectura { white-space: normal !important; font-size: 0.74rem; color: #8fa7bd !important; max-width: 220px; line-height: 1.45; }
+    .fe-td-green { color: #7cc9a8 !important; font-weight: 740; }
+    .fe-td-amber { color: #c9a96a !important; font-weight: 740; }
+    .fe-td-red   { color: #c46b73 !important; font-weight: 740; }
+
+    /* Future KPI Cards */
+    .fe-future-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px; margin-top: 32px;
+    }
+    .fe-future-card {
+      padding: 24px 20px; text-align: center;
+      border: 1px dashed rgba(147,223,255,0.15); border-radius: 12px;
+      background: rgba(4,13,25,0.28);
+      transition: border-color 220ms var(--ease);
+    }
+    .fe-future-card:hover { border-color: rgba(147,223,255,0.28); }
+    .fe-future-icon { font-size: 1.5rem; margin-bottom: 12px; opacity: 0.4; }
+    .fe-future-label { font-size: 0.82rem; font-weight: 760; color: #a8bcc9; margin-bottom: 5px; }
+    .fe-future-meta { font-size: 0.68rem; color: var(--muted); margin-bottom: 8px; }
+    .fe-future-badge {
+      display: inline-block; padding: 3px 10px;
+      border: 1px solid rgba(147,223,255,0.16); border-radius: 999px;
+      font-size: 0.62rem; font-weight: 760; color: var(--muted-2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .fe-risk-item { grid-template-columns: 48px 1fr; }
+      .fe-risk-kpi { display: none; }
+      .fe-radar-wrap { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="ambientCanvas" aria-hidden="true"></canvas>
+  <div class="cinematic-gate" aria-hidden="true"></div>
+  <div class="scan-layer" aria-hidden="true"></div>
+  <div class="beam-field" aria-hidden="true"></div>
+
+  <!-- Top Nav -->
+  <nav class="top-shell" aria-label="Navegación principal">
+    <a class="brand-lockup" href="/" aria-label="JB Holds inicio">
+      <span class="brand-sigil">JB</span>
+      <span>
+        <strong>JB Holds</strong>
+        <small>Franchise Excellence</small>
+      </span>
+    </a>
+    <div class="nav-cluster">
+      <a href="#hero">Overview</a>
+      <a href="#kpis">KPIs</a>
+      <a href="#health">Health Score</a>
+      <a href="#heatmap">Heatmap</a>
+      <a href="#risks">Riesgos</a>
+      <a href="#table">Tabla</a>
+    </div>
+  </nav>
+
+  <!-- Executive Rail -->
+  <aside class="executive-rail is-collapsed" aria-label="Navegación ejecutiva">
+    <a class="rail-link is-active" href="#hero" data-section="hero">
+      <span class="rail-glyph rail-command" aria-hidden="true"></span>
+      <span class="rail-text">Overview</span>
+    </a>
+    <a class="rail-link" href="#kpis" data-section="kpis">
+      <span class="rail-glyph rail-modules" aria-hidden="true"></span>
+      <span class="rail-text">KPI Cards</span>
+    </a>
+    <a class="rail-link" href="#health" data-section="health">
+      <span class="rail-glyph rail-signals" aria-hidden="true"></span>
+      <span class="rail-text">Health Score</span>
+    </a>
+    <a class="rail-link" href="#heatmap" data-section="heatmap">
+      <span class="rail-glyph rail-pulse" aria-hidden="true"></span>
+      <span class="rail-text">Heatmap</span>
+    </a>
+    <a class="rail-link" href="#risks" data-section="risks">
+      <span class="rail-glyph rail-risks" aria-hidden="true"></span>
+      <span class="rail-text">Top Riesgos</span>
+    </a>
+    <a class="rail-link" href="#table" data-section="table">
+      <span class="rail-glyph rail-commitments" aria-hidden="true"></span>
+      <span class="rail-text">Tabla Ejecutiva</span>
+    </a>
+    <div class="rail-status">
+      <span>Demo V1 · 2026</span>
+      <strong>Live Signal</strong>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ── SECCIÓN 1: HERO ──────────────────────────────────────────────── -->
+    <section class="hero section-shell" id="hero" data-section="hero">
+      <div class="hero-aurora" aria-hidden="true"></div>
+
+      <div class="hero-copy reveal">
+        <p class="eyebrow">Global Command Center</p>
+        <h1 style="font-size:clamp(3.2rem,6vw,5.4rem);line-height:0.94;letter-spacing:-0.02em;">
+          Franchise<br>Excellence
+        </h1>
+        <p class="hero-subtitle">KPIs críticos para escalar franquicias</p>
+        <p class="hero-text">
+          Control financiero, operativo y humano de las unidades del grupo.
+          Margen Neto · Food Cost · Labor Cost · Renta · Rotación.
+        </p>
+        <div class="fe-chips">
+          <span class="fe-chip">Consejo Directivo</span>
+          <span class="fe-chip">CEO View</span>
+          <span class="fe-chip">Franchise Scaling</span>
+          <span class="fe-chip">México · Demo V1</span>
         </div>
+      </div>
 
-        <div class="hero-theater reveal" aria-label="Métricas globales consolidadas">
-          <div class="hero-stage atom-stage">
-            <section class="premium-atom" aria-label="Sistema global corporativo">
-              <div class="atom-glass" aria-hidden="true"></div>
-              <div class="atom-core" aria-label="JB Holds Global">
-                <div class="core-lockup" aria-hidden="true">
-                  <span class="core-monogram">GL</span>
-                  <span class="core-wordmark">Global</span>
-                </div>
-              </div>
-              <div class="atom-orbit atom-orbit-inner">
-                <span class="atom-particle particle-indef">IN-DEF</span>
-                <span class="atom-particle particle-jbblue">JBBlue Group</span>
-                <span class="atom-particle particle-franquiciandote">Franquiciándote</span>
-              </div>
-              <div class="atom-orbit atom-orbit-outer">
-                <span class="atom-particle brand-santa">Santagloria</span>
-                <span class="atom-particle brand-allo">Allô Mon Coco</span>
-                <span class="atom-particle brand-wetzel">Wetzel Pretzel</span>
-                <span class="atom-particle brand-coco">CoCo Bubble Tea</span>
-              </div>
-            </section>
+      <div class="hero-theater reveal" aria-label="Resumen de unidades">
+        <div class="hero-stage">
+          <div style="display:grid;gap:16px;width:100%;max-width:420px">
 
-            <div class="market-strip" aria-label="Resumen global de mercado">
-              <span>Países activos <strong>2</strong></span>
-              <span>Unidades operativas <strong>5</strong></span>
-              <span>Marcas <strong>4</strong></span>
-              <span>Pipeline expansión <strong>23</strong></span>
+            <!-- Unit summary cards in hero -->
+            <div style="padding:20px 22px;border:1px solid rgba(124,201,168,0.28);border-radius:12px;background:rgba(124,201,168,0.08)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <span style="font-size:0.7rem;color:#7cc9a8;text-transform:uppercase;letter-spacing:0.08em;font-weight:760">🥇 SG Paseo Montejo</span>
+                <span style="font-size:0.68rem;color:#7cc9a8;font-weight:760">Health Score 92</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="font-size:0.74rem;color:#a0b8c8">Margen Neto <strong style="color:#7cc9a8">17.48%</strong></div>
+                <div style="font-size:0.74rem;color:#a0b8c8">Food Cost <strong style="color:#7cc9a8">29.75%</strong></div>
+              </div>
             </div>
+
+            <div style="padding:20px 22px;border:1px solid rgba(157,185,199,0.28);border-radius:12px;background:rgba(157,185,199,0.07)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <span style="font-size:0.7rem;color:#9db9c7;text-transform:uppercase;letter-spacing:0.08em;font-weight:760">🥈 SG La Isla</span>
+                <span style="font-size:0.68rem;color:#9db9c7;font-weight:760">Health Score 58</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="font-size:0.74rem;color:#a0b8c8">Margen Neto <strong style="color:#9db9c7">15.19%</strong></div>
+                <div style="font-size:0.74rem;color:#a0b8c8">Renta/Ventas <strong style="color:#c46b73">14.16%</strong></div>
+              </div>
+            </div>
+
+            <div style="padding:20px 22px;border:1px solid rgba(196,107,115,0.28);border-radius:12px;background:rgba(196,107,115,0.07)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <span style="font-size:0.7rem;color:#c46b73;text-transform:uppercase;letter-spacing:0.08em;font-weight:760">🥉 AMC DAM</span>
+                <span style="font-size:0.68rem;color:#c46b73;font-weight:760">Health Score 25</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="font-size:0.74rem;color:#a0b8c8">Margen Neto <strong style="color:#c46b73">-7.00%</strong></div>
+                <div style="font-size:0.74rem;color:#a0b8c8">Food Cost <strong style="color:#c46b73">40.54%</strong></div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="market-strip" style="margin-top:20px" aria-label="Resumen de unidades">
+            <span>Unidades <strong>3</strong></span>
+            <span>Rentables <strong>2</strong></span>
+            <span>En riesgo <strong>1</strong></span>
+            <span>KPIs evaluados <strong>7</strong></span>
           </div>
         </div>
+      </div>
 
-        <div class="next-signal" aria-hidden="true">
-          <span></span>
-          <strong>KPIs Consolidados</strong>
+      <div class="next-signal" aria-hidden="true">
+        <span></span>
+        <strong>KPI Executive Cards</strong>
+      </div>
+    </section>
+
+    <!-- ── SECCIÓN 2: KPI CARDS ──────────────────────────────────────────── -->
+    <section class="section-shell" id="kpis" data-section="kpis" style="--section-x:22%">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Executive KPI Cards</p>
+        <h2>Métricas críticas por unidad con semáforo ejecutivo.</h2>
+        <span>
+          Margen Neto · Food Cost · Labor Cost · Renta / Ventas · Rotación · Ausencias · NPS
+          &nbsp;·&nbsp; Rentabilidad medida como Margen Neto = Utilidad Neta / Ventas
+        </span>
+      </div>
+      <div class="fe-kpi-grid reveal" id="kpiGrid"></div>
+    </section>
+
+    <!-- ── SECCIÓN 3: HEALTH SCORE ──────────────────────────────────────── -->
+    <section class="section-shell" id="health" data-section="health" style="--section-x:78%">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Franchise Health Score</p>
+        <h2>Calificación ejecutiva 0–100 por unidad.</h2>
+        <span>
+          Ponderación: Margen Neto 33% · Food Cost 17% · Labor Cost 17% · Renta 17% · Rotación 16%
+          &nbsp;·&nbsp; NPS excluido temporalmente (pendiente de captura)
+        </span>
+      </div>
+      <div class="fe-health-grid" id="healthScoreGrid"></div>
+    </section>
+
+    <!-- ── SECCIÓN 4: HEATMAP ────────────────────────────────────────────── -->
+    <section class="section-shell" id="heatmap" data-section="heatmap" style="--section-x:30%">
+      <div class="section-heading reveal">
+        <p class="eyebrow">KPI Heatmap</p>
+        <h2>Semáforo visual de todos los KPIs por unidad.</h2>
+        <span>Verde = en objetivo · Amarillo = atención · Rojo = acción inmediata requerida</span>
+      </div>
+      <div class="fe-heatmap-wrap reveal">
+        <div class="fe-heatmap" id="heatmap"></div>
+      </div>
+
+      <!-- Radar Chart -->
+      <div class="section-heading reveal" style="margin-top:56px">
+        <p class="eyebrow">Radar Chart Comparativo</p>
+        <h2>Perfil de desempeño multi-dimensión.</h2>
+        <span>Escala 0–100 donde 100 = máximo desempeño en cada dimensión</span>
+      </div>
+      <div class="fe-radar-wrap reveal">
+        <svg id="radarSvg" width="400" height="380" class="fe-radar-svg" aria-label="Radar chart de desempeño por unidad"></svg>
+        <div class="fe-radar-legend">
+          <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Unidades</div>
+          <div class="fe-legend-item">
+            <span class="fe-legend-dot" style="background:#7cc9a8"></span>
+            <div><div>SG Paseo Montejo</div><div class="fe-legend-sub">Health Score 92</div></div>
+          </div>
+          <div class="fe-legend-item">
+            <span class="fe-legend-dot" style="background:#9db9c7"></span>
+            <div><div>SG La Isla</div><div class="fe-legend-sub">Health Score 58</div></div>
+          </div>
+          <div class="fe-legend-item">
+            <span class="fe-legend-dot" style="background:#c46b73"></span>
+            <div><div>AMC DAM</div><div class="fe-legend-sub">Health Score 25</div></div>
+          </div>
+          <div style="margin-top:20px;font-size:0.68rem;color:var(--muted-2);border-top:1px solid rgba(147,223,255,0.08);padding-top:14px;line-height:1.5">
+            Cada eje representa un KPI.<br>
+            Mayor área = mejor desempeño global.
+          </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- KPI CONSTELLATION GLOBAL -->
-      <section class="section-shell command-section" id="global-kpis" data-section="global-kpis">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Resumen Ejecutivo Global</p>
-          <h2>Métricas consolidadas del grupo.</h2>
-          <span>MX en MXN ($) · ESP en EUR (€) · Semana 22 / 2026</span>
+    <!-- ── SECCIÓN 5: TOP RIESGOS ────────────────────────────────────────── -->
+    <section class="section-shell risk-section" id="risks" data-section="risks" style="--section-x:80%">
+      <div class="section-heading reveal">
+        <p class="eyebrow tactical">Top Riesgos Detectados</p>
+        <h2>Focos críticos que requieren acción ejecutiva.</h2>
+        <span>Detectados automáticamente con base en semáforos · P1 = inmediato · P2 = esta semana</span>
+      </div>
+      <div class="fe-risk-grid reveal" id="risksGrid"></div>
+    </section>
+
+    <!-- ── SECCIÓN 6: TABLA EJECUTIVA ────────────────────────────────────── -->
+    <section class="section-shell commitments-section" id="table" data-section="table" style="--section-x:18%">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Tabla Ejecutiva</p>
+        <h2>Vista consolidada de todos los KPIs por unidad.</h2>
+        <span>Datos demo V1 · Margen Neto = Utilidad Neta / Ventas Totales</span>
+      </div>
+      <div class="fe-table-wrap reveal">
+        <table class="fe-table" aria-label="KPIs ejecutivos por unidad">
+          <thead>
+            <tr>
+              <th>Unidad</th>
+              <th>Margen Neto</th>
+              <th>Food Cost</th>
+              <th>Labor Cost</th>
+              <th>Renta / Ventas</th>
+              <th>Rotación</th>
+              <th>Ausencias</th>
+              <th>Retardos</th>
+              <th>Lectura Ejecutiva</th>
+            </tr>
+          </thead>
+          <tbody id="execTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Ranking visual -->
+      <div class="section-heading reveal" style="margin-top:56px">
+        <p class="eyebrow">Ranking de Unidades</p>
+        <h2>Posición relativa basada en Health Score.</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:24px" class="reveal">
+        <div style="padding:24px;border:1px solid rgba(124,201,168,0.28);border-radius:12px;background:rgba(124,201,168,0.07)">
+          <div style="font-size:2rem;margin-bottom:10px">🥇</div>
+          <div style="font-size:1.1rem;font-weight:780;color:#eef8ff;margin-bottom:6px">SG Paseo Montejo</div>
+          <div style="font-size:0.74rem;color:#7cc9a8;margin-bottom:10px">Health Score 92 / 100</div>
+          <div style="font-size:0.78rem;color:#9db9c7;line-height:1.5">La unidad más estable del grupo. Márgenes sanos, Food Cost en rango, rotación controlada. Oportunidad: reducir renta por debajo de 8%.</div>
         </div>
-
-        <div class="command-layout">
-          <article class="executive-monolith reveal">
-            <div class="monolith-topline">
-              <span>Resultado global</span>
-              <strong class="status-chip status-amber">Amarillo táctico</strong>
-            </div>
-            <div class="monolith-number">5</div>
-            <p>Unidades operativas activas en 2 países: 3 en México (SG La Isla, SG Paseo de Montejo, AMC Mérida) y 2 en España (SG Alameda Recalde, SG Alameda de Urquijo). 4 marcas en el portafolio.</p>
-            <div class="monolith-strip">
-              <span>
-                <small>MX — Ventas</small>
-                <strong>$14.55M</strong>
-              </span>
-              <span>
-                <small>ESP — Ventas</small>
-                <strong>€8.24M</strong>
-              </span>
-              <span>
-                <small>Pipeline total</small>
-                <strong>23 proy.</strong>
-              </span>
-            </div>
-          </article>
-
-          <article class="signal-surface reveal">
-            <div class="surface-head">
-              <span>Revenue Global Signal</span>
-              <strong>Jan–May 2026</strong>
-            </div>
-            <canvas id="revenueCanvas" width="900" height="420" aria-label="Gráfica financiera global"></canvas>
-          </article>
-
-          <article class="decision-stream reveal">
-            <div class="surface-head">
-              <span>Decisiones requeridas</span>
-              <strong>Comité semanal</strong>
-            </div>
-            <div class="decision-item status-red">
-              <span></span>
-              <p>MX — Recuperar SG La Isla: 68.47% de venta vs meta en mayo 2026.</p>
-            </div>
-            <div class="decision-item status-amber">
-              <span></span>
-              <p>ESP — SG Alameda de Urquijo al 88.7% vs meta. Plan comercial requerido.</p>
-            </div>
-            <div class="decision-item status-green">
-              <span></span>
-              <p>Pipeline global: 23 proyectos activos entre MX y ESP. 3 próximas aperturas.</p>
-            </div>
-          </article>
+        <div style="padding:24px;border:1px solid rgba(157,185,199,0.24);border-radius:12px;background:rgba(157,185,199,0.06)">
+          <div style="font-size:2rem;margin-bottom:10px">🥈</div>
+          <div style="font-size:1.1rem;font-weight:780;color:#eef8ff;margin-bottom:6px">SG La Isla</div>
+          <div style="font-size:0.74rem;color:#9db9c7;margin-bottom:10px">Health Score 58 / 100</div>
+          <div style="font-size:0.78rem;color:#9db9c7;line-height:1.5">Financieramente viable, pero con renta 14.16% y rotación 20.98%. Requiere plan operativo para estabilizar sin comprometer el margen.</div>
         </div>
-
-        <div class="kpi-constellation reveal" id="kpiConstellation" aria-label="KPIs globales"></div>
-      </section>
-
-      <!-- SECCIÓN 2: GEOGRAPHIC PERFORMANCE -->
-      <section class="section-shell modules-section" id="geographic" data-section="geographic">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Geographic Performance</p>
-          <h2>Comparativo de operaciones por país.</h2>
-          <span>México · España · Rendimiento Jan–May 2026</span>
+        <div style="padding:24px;border:1px solid rgba(196,107,115,0.28);border-radius:12px;background:rgba(196,107,115,0.07)">
+          <div style="font-size:2rem;margin-bottom:10px">🥉</div>
+          <div style="font-size:1.1rem;font-weight:780;color:#eef8ff;margin-bottom:6px">AMC DAM</div>
+          <div style="font-size:0.74rem;color:#c46b73;margin-bottom:10px">Health Score 25 / 100</div>
+          <div style="font-size:0.78rem;color:#9db9c7;line-height:1.5">Situación crítica. Margen negativo (-7%), Food Cost en 40.54% y Labor Cost en 33.55%. Requiere plan de turnaround urgente.</div>
         </div>
+      </div>
+    </section>
 
-        <div class="module-theater" id="moduleTheater"></div>
-      </section>
+    <!-- ── SECCIÓN 7: ROADMAP KPIs FUTUROS ──────────────────────────────── -->
+    <section class="section-shell" id="roadmap" data-section="roadmap" style="--section-x:50%">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Roadmap de Captura Futura</p>
+        <h2>KPIs estratégicos pendientes de implementar.</h2>
+        <span>Estructura lista · Conectar a fuente de datos cuando esté disponible · Sin inventar valores</span>
+      </div>
+      <div class="fe-future-grid reveal" id="futureGrid"></div>
 
-      <!-- SECCIÓN 3: BRAND PERFORMANCE -->
-      <section class="section-shell insights-section" id="brands" data-section="brands">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Brand Performance</p>
-          <h2>Rendimiento por marca en el portafolio global.</h2>
-          <span>Santagloria · Allô Mon Coco · Wetzel Pretzel · CoCo Bubble Tea</span>
-        </div>
-        <div class="insight-grid reveal" id="insightGrid"></div>
-      </section>
+      <div class="reveal" style="margin-top:32px;padding:22px 24px;border:1px dashed rgba(147,223,255,0.12);border-radius:12px;background:rgba(4,13,25,0.3)">
+        <p class="eyebrow" style="margin-bottom:8px">Nota metodológica</p>
+        <p style="font-size:0.82rem;color:#8fa7bd;line-height:1.6;max-width:720px;margin:0">
+          Este módulo usa <strong style="color:#eef8ff">Margen Neto</strong> (Utilidad Neta / Ventas Totales) como métrica de rentabilidad principal.
+          La métrica de rentabilidad es el <strong style="color:#eef8ff">Margen Neto</strong> (Utilidad Neta / Ventas Totales),
+          que refleja la ganancia real después de todos los costos de operación disponibles en los estados financieros actuales.
+          Los datos son demo V1 y están preparados para conectarse a Google Sheets mediante Apps Script en una fase posterior.
+        </p>
+      </div>
+    </section>
 
-      <!-- SECCIÓN 4: EXECUTIVE ALERTS -->
-      <section class="section-shell pulse-section" id="alerts" data-section="alerts">
-        <div class="section-heading reveal">
-          <p class="eyebrow tactical">Executive Alerts</p>
-          <h2>Focos de atención corporativa global.</h2>
-          <span>Riesgos, desviaciones y aperturas activas del grupo.</span>
-        </div>
+  </main>
 
-        <div class="pulse-grid">
-          <article class="pulse-reactor reveal" aria-label="Radar global de alertas">
-            <div class="reactor-core">
-              <span>6</span>
-              <strong>alertas activas</strong>
-            </div>
-            <div class="reactor-ring ring-a"></div>
-            <div class="reactor-ring ring-b"></div>
-            <div class="reactor-ring ring-c"></div>
-          </article>
-          <div class="pulse-feed reveal" id="pulseFeed"></div>
-        </div>
-      </section>
+  <script src="app.js"></script>
 
-      <!-- RIESGOS GLOBALES -->
-      <section class="section-shell risk-section" id="risks" data-section="risks">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Centro de Riesgos Global</p>
-          <h2>Mapa ejecutivo de impacto y probabilidad.</h2>
-          <span>Riesgos consolidados MX + ESP.</span>
-        </div>
-        <div class="risk-layout">
-          <article class="risk-map reveal" aria-label="Mapa de riesgos global">
-            <div class="risk-map-head">
-              <span>Risk Intelligence</span>
-              <strong>Impacto + Probabilidad</strong>
-            </div>
-            <div class="risk-matrix">
-              <div class="matrix-cell low">
-                <small>Monitoreo</small>
-                <strong>Expansión</strong>
-                <span>23 proyectos activos</span>
-              </div>
-              <div class="matrix-cell medium">
-                <small>Prioridad media</small>
-                <strong>Margen ESP</strong>
-                <span>7.4% — bajo umbral 10%</span>
-              </div>
-              <div class="matrix-cell high">
-                <small>Decisión MX</small>
-                <strong>SG La Isla</strong>
-                <span>Venta vs meta 68.47%</span>
-              </div>
-              <div class="matrix-cell high">
-                <small>Decisión ESP</small>
-                <strong>SG Urquijo</strong>
-                <span>Venta vs meta 88.7%</span>
-              </div>
-            </div>
-            <div class="risk-axis-labels">
-              <span>Menor urgencia</span>
-              <span>Mayor prioridad ejecutiva</span>
-            </div>
-          </article>
-          <div class="risk-stream reveal" id="riskStream"></div>
-        </div>
-      </section>
-
-    </main>
-
-    <script src="app.js"></script>
-
-    <a href="/" aria-label="Volver al inicio" style="position:fixed;bottom:24px;left:24px;z-index:200;display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:rgba(4,13,25,0.76);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(147,223,255,0.13);border-radius:999px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;font-family:inherit;" onmouseover="this.style.color='#eef8ff';this.style.borderColor='rgba(147,223,255,0.28)'" onmouseout="this.style.color='#8fa7bd';this.style.borderColor='rgba(147,223,255,0.13)'">&#8592; Inicio</a>
-  </body>
+  <a href="/" aria-label="Volver al inicio" style="position:fixed;bottom:24px;left:24px;z-index:200;display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:rgba(4,13,25,0.76);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(147,223,255,0.13);border-radius:999px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;font-family:inherit;" onmouseover="this.style.color='#eef8ff';this.style.borderColor='rgba(147,223,255,0.28)'" onmouseout="this.style.color='#8fa7bd';this.style.borderColor='rgba(147,223,255,0.13)'">&#8592; Inicio</a>
+</body>
 </html>

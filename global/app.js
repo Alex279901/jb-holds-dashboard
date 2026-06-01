@@ -1,522 +1,427 @@
-const statusColors = {
-  green: "#7cc9a8",
-  amber: "#c9a96a",
-  red: "#c46b73",
-  cyan: "#9db9c7",
-  blue: "#6f8ea8",
-  violet: "#9a8fb8",
-  grey: "#73808c"
+// ═══════════════════════════════════════════════════════════════════════════
+//  FRANCHISE EXCELLENCE — JB HOLDS COMMAND CENTER
+//  Demo V1 · Datos hardcodeados · Preparado para Google Sheets
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Paleta de estado ──────────────────────────────────────────────────────
+const S = {
+  green: { hex: '#7cc9a8', bg: 'rgba(124,201,168,0.15)', border: 'rgba(124,201,168,0.35)' },
+  amber: { hex: '#c9a96a', bg: 'rgba(201,169,106,0.15)', border: 'rgba(201,169,106,0.35)' },
+  red:   { hex: '#c46b73', bg: 'rgba(196,107,115,0.15)', border: 'rgba(196,107,115,0.35)' }
 };
 
-// KPIs globales consolidados — MX en MXN, ESP en EUR (sin conversión FX)
-const kpis = [
+// ── Definiciones de KPI + semáforos ──────────────────────────────────────
+const KPI_DEFS = [
   {
-    label: "Unidades operativas",
-    value: "5",
-    meta: "3 MX · 2 ESP",
-    status: "green",
-    target: "#geographic",
-    points: [3, 3, 4, 5, 5]
+    id: 'margenNeto', label: 'Margen Neto', meta: '> 15%', unit: '%', suffix: '%',
+    note: 'Utilidad Neta / Ventas Totales',
+    getStatus: v => v > 15 ? 'green' : v >= 10 ? 'amber' : 'red',
+    barMax: 25
   },
   {
-    label: "Países activos",
-    value: "2",
-    meta: "México · España",
-    status: "green",
-    target: "#geographic",
-    points: [1, 1, 2, 2, 2]
+    id: 'foodCost', label: 'Food Cost', meta: '25% – 30%', unit: '%', suffix: '%',
+    note: 'Costo de alimentos / Ventas',
+    getStatus: v => (v >= 25 && v <= 30) ? 'green' : ((v >= 22 && v < 25) || (v > 30 && v <= 33)) ? 'amber' : 'red',
+    barMax: 50
   },
   {
-    label: "MX — Ventas netas",
-    value: "$14.55M",
-    meta: "94.5% vs meta Jan-May",
-    status: "amber",
-    target: "#geographic",
-    points: [2.11, 2.93, 3.48, 3.36, 2.68]
+    id: 'laborCost', label: 'Labor Cost', meta: '< 28%', unit: '%', suffix: '%',
+    note: 'Costo de nómina / Ventas',
+    getStatus: v => v < 28 ? 'green' : v <= 32 ? 'amber' : 'red',
+    barMax: 45
   },
   {
-    label: "ESP — Ventas netas",
-    value: "€8.24M",
-    meta: "91.3% vs meta Jan-May",
-    status: "amber",
-    target: "#geographic",
-    points: [1.42, 1.68, 1.87, 1.74, 1.53]
+    id: 'rentRatio', label: 'Renta / Ventas', meta: '< 8%', unit: '%', suffix: '%',
+    note: 'Renta mensual / Ventas netas',
+    getStatus: v => v < 8 ? 'green' : v <= 10 ? 'amber' : 'red',
+    barMax: 20
   },
   {
-    label: "Marcas en portafolio",
-    value: "4",
-    meta: "SG · AMC · WP · CBC",
-    status: "green",
-    target: "#brands",
-    points: [2, 3, 4, 4, 4]
+    id: 'rotacion', label: 'Rotación de Personal', meta: '< 15%', unit: '%', suffix: '%',
+    note: 'Promedio Ene–May 2026',
+    getStatus: v => v < 15 ? 'green' : v <= 20 ? 'amber' : 'red',
+    barMax: 30
   },
   {
-    label: "Pipeline expansión",
-    value: "23",
-    meta: "18 MX · 5 ESP",
-    status: "amber",
-    target: "#alerts",
-    points: [8, 14, 18, 21, 23]
+    id: 'ausencias', label: 'Ausencias Injustificadas', meta: '< 5 / mes', unit: '', suffix: '',
+    note: 'Mayo 2026',
+    getStatus: v => v <= 4 ? 'green' : v <= 8 ? 'amber' : 'red',
+    barMax: 20
   },
   {
-    label: "Próximas aperturas",
-    value: "3",
-    meta: "SG Victory · SG Altabrisa · SG Getxo",
-    status: "green",
-    target: "#alerts",
-    points: [0, 1, 2, 3, 3]
-  },
-  {
-    label: "Compromisos vencidos",
-    value: "0",
-    meta: "Primera sesión · sin minuta",
-    status: "green",
-    target: "#alerts",
-    points: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    id: 'retardos', label: 'Retardos', meta: '< 3 / mes', unit: '', suffix: '',
+    note: 'Mayo 2026',
+    getStatus: v => v <= 2 ? 'green' : v <= 5 ? 'amber' : 'red',
+    barMax: 10
   }
 ];
 
-// Departamentos globales — dos países como "módulos"
-const departments = [
+// ── Datos maestros de unidades ────────────────────────────────────────────
+const UNITS = [
   {
-    key: "mexico",
-    label: "México",
-    code: "MX",
-    accent: "#7cc9a8",
-    accent2: "#9db9c7",
-    tone: "Operaciones México · SG La Isla · SG Paseo de Montejo · AMC Mérida.",
-    signal: "Ventas netas $14.55M con 94.5% de cumplimiento. AMC supera meta al 121.7%. SG La Isla con gap crítico al 68.47%.",
-    metrics: [
-      ["Ventas", "$14.55M"],
-      ["P&L neto", "$660K"],
-      ["Unidades", "3"]
-    ],
-    bars: [65, 91, 100, 100, 100],
-    visual: {
-      title: "MX Jan-May 2026",
-      value: "$14.55M",
-      meta: "3 unidades · 94.5% cumplimiento",
-      status: "amber",
-      items: [
-        ["SG La Isla", "68.47%", "rojo"],
-        ["SG Paseo Montejo", "79.74%", "rojo"],
-        ["AMC Mérida", "121.7%", "verde"],
-        ["P&L Jan-Abr", "$660K", "5.9% margen"]
-      ],
-      stages: [
-        ["SG La Isla", "68%", "red", 68],
-        ["SG Paseo Montejo", "79%", "red", 79],
-        ["AMC Mérida", "121%", "green", 100],
-        ["Consolidado", "94.5%", "amber", 94]
-      ]
-    }
+    id: 'sgpm',
+    name: 'SG Paseo Montejo',
+    shortName: 'PDM',
+    brand: 'Santagloria',
+    color: '#7cc9a8',
+    data: { margenNeto: 17.48, foodCost: 29.75, laborCost: 24.16, rentRatio: 9.02, rotacion: 6.00, ausencias: 7, retardos: 0 },
+    lectura: 'La unidad más estable del grupo. Márgenes sanos con oportunidad de optimizar renta.',
+    fortalezas: ['Margen Neto saludable', 'Food Cost en rango', 'Labor Cost controlado', 'Rotación mínima'],
+    oportunidades: ['Reducir Renta/Ventas por debajo de 8%', 'Escalar margen por encima de 18%']
   },
   {
-    key: "espana",
-    label: "España",
-    code: "ES",
-    accent: "#9a8fb8",
-    accent2: "#9db9c7",
-    tone: "Operaciones España · SG Alameda Recalde · SG Alameda de Urquijo.",
-    signal: "Ventas netas €8.24M con 91.3% de cumplimiento. SG Alameda Recalde al 94.2%. SG Alameda de Urquijo al 88.7%.",
-    metrics: [
-      ["Ventas", "€8.24M"],
-      ["P&L neto", "€312K"],
-      ["Unidades", "2"]
-    ],
-    bars: [62, 88, 100, 98, 91],
-    visual: {
-      title: "ESP Jan-May 2026",
-      value: "€8.24M",
-      meta: "2 unidades · 91.3% cumplimiento",
-      status: "amber",
-      items: [
-        ["SG Alameda Recalde", "94.2%", "verde"],
-        ["SG Alameda Urquijo", "88.7%", "rojo"],
-        ["P&L Jan-Abr", "€312K", "7.4% margen"],
-        ["Próx. apertura", "SG Getxo", "Q3 2026"]
-      ],
-      stages: [
-        ["SG Alameda Recalde", "94%", "green", 94],
-        ["SG Alameda Urquijo", "88%", "red", 88],
-        ["Consolidado", "91.3%", "amber", 91],
-        ["Pipeline", "5 proy.", "amber", 50]
-      ]
-    }
+    id: 'sgla',
+    name: 'SG La Isla',
+    shortName: 'La Isla',
+    brand: 'Santagloria',
+    color: '#9db9c7',
+    data: { margenNeto: 15.19, foodCost: 24.42, laborCost: 23.34, rentRatio: 14.16, rotacion: 20.98, ausencias: 15, retardos: 1 },
+    lectura: 'Financieramente rentable, pero con riesgos operativos críticos: renta excesiva y alta rotación.',
+    fortalezas: ['Margen Neto positivo', 'Labor Cost controlado'],
+    oportunidades: ['Renegociar renta o incrementar ventas ≥25%', 'Plan de retención de personal', 'Control de ausentismo']
+  },
+  {
+    id: 'amcdam',
+    name: 'AMC DAM',
+    shortName: 'AMC',
+    brand: 'Allô Mon Coco',
+    color: '#c46b73',
+    data: { margenNeto: -7.00, foodCost: 40.54, laborCost: 33.55, rentRatio: 6.48, rotacion: 16.63, ausencias: 2, retardos: 2 },
+    ventas: 5000646,
+    utilidadNeta: -349503,
+    lectura: 'Situación financiera crítica. Food Cost y Labor Cost muy por encima del estándar.',
+    fortalezas: ['Renta saludable', 'Ausentismo bajo', 'Rotación estabilizándose'],
+    oportunidades: ['Auditar recetas y proveedores urgentemente', 'Plan de eficiencia en nómina', 'Revisión de modelo operativo']
   }
 ];
 
-// Brand performance insights
-const insights = [
-  {
-    tag: "Santagloria",
-    title: "Multi-país activa",
-    bullets: [
-      "MX: 2 sucursales · $8.05M Jan-May",
-      "ESP: 2 sucursales · €8.24M Jan-May",
-      "3 próximas aperturas en pipeline"
-    ],
-    action: "Escalar modelo ESP",
-    status: "amber"
-  },
-  {
-    tag: "Allô Mon Coco",
-    title: "AMC 121.7% MX",
-    bullets: [
-      "Mayo supera meta con $1.50M",
-      "1 sucursal activa en Mérida",
-      "3 proyectos en expansión MX"
-    ],
-    action: "Replicar en ESP",
-    status: "green"
-  },
-  {
-    tag: "Wetzel Pretzel",
-    title: "ESP — Pipeline",
-    bullets: [
-      "0 sucursales activas aún",
-      "2 proyectos en pipeline ESP",
-      "Modelo en diseño"
-    ],
-    action: "Acelerar primer local",
-    status: "amber"
-  },
-  {
-    tag: "CoCo Bubble Tea",
-    title: "4 proyectos MX",
-    bullets: [
-      "0 sucursales activas",
-      "4 proyectos en pipeline MX",
-      "Marca en expansión temprana"
-    ],
-    action: "Definir primer local",
-    status: "amber"
-  }
-];
+// ── Health Score (sin NPS — redistribuido) ────────────────────────────────
+// Pesos base: Margen 30, Food 15, Labor 15, Renta 15, Rotación 15, NPS 10
+// NPS excluido → total 90 → normalizar sobre 90
+const WEIGHTS = { margenNeto: 30/90, foodCost: 15/90, laborCost: 15/90, rentRatio: 15/90, rotacion: 15/90 };
 
-// Alertas globales consolidadas
-const pulseAlerts = [
-  {
-    level: "P1",
-    title: "MX — SG La Isla vende 68.47% vs meta",
-    copy: "Mayo 2026: $751.7K vs meta de $1.10M. Principal gap operativo de ventas del grupo.",
-    owner: "DIR_OPS / MX",
-    status: "red"
-  },
-  {
-    level: "P1",
-    title: "ESP — SG Alameda de Urquijo al 88.7%",
-    copy: "Mayo 2026: €321.4K vs meta de €362.3K. Gap operativo requiere plan comercial.",
-    owner: "DIR_OPS / ESP",
-    status: "red"
-  },
-  {
-    level: "P2",
-    title: "MX — Margen neto consolidado 5.9%",
-    copy: "P&L Jan-Abr bajo umbral ejecutivo. Abril mejora a 12.8%. Tendencia positiva.",
-    owner: "DIR_FIN / MX",
-    status: "amber"
-  },
-  {
-    level: "P2",
-    title: "ESP — Margen neto 7.4% bajo umbral 10%",
-    copy: "P&L Jan-Abr en construcción. Mejora mes a mes desde enero.",
-    owner: "DIR_FIN / ESP",
-    status: "amber"
-  },
-  {
-    level: "P2",
-    title: "Pipeline global: 3 próximas aperturas",
-    copy: "SG Victory Platz y SG Altabrisa (MX) + SG Getxo (ESP). Cadencia de apertura requerida.",
-    owner: "DIR_EXP / GLOBAL",
-    status: "amber"
-  }
-];
-
-// Riesgos globales
-const risks = [
-  {
-    title: "SG La Isla MX — gap operativo crítico",
-    copy: "Venta vs meta de 68.47% en mayo 2026. Requiere plan comercial y operativo inmediato.",
-    meta: ["MX · Ventas", "$751.7K", "Rojo"],
-    status: "red"
-  },
-  {
-    title: "SG Alameda de Urquijo ESP — bajo meta",
-    copy: "Venta vs meta de 88.7% en mayo 2026. Plan comercial requerido.",
-    meta: ["ESP · Ventas", "€321.4K", "Rojo"],
-    status: "red"
-  },
-  {
-    title: "Márgenes netos por debajo de umbral",
-    copy: "MX: 5.9% (umbral 8%). ESP: 7.4% (umbral 10%). Ambos con tendencia positiva.",
-    meta: ["Global · P&L", "Ambos países", "Amarillo"],
-    status: "amber"
-  },
-  {
-    title: "Pipeline global exige cadencia de cierre",
-    copy: "23 proyectos activos entre MX y ESP. 3 próximas aperturas identificadas sin fecha exacta.",
-    meta: ["Expansión", "23 proyectos", "Seguimiento"],
-    status: "amber"
-  }
-];
-
-const commitments = [];
-
-// ── Gráfica Revenue — dos líneas: MX y ESP en sus propias escalas ──
-function setupRevenueChart() {
-  const canvas = document.querySelector("#revenueCanvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const labels = ["Ene", "Feb", "Mar", "Abr", "May"];
-  const revMX = [2.11, 2.93, 3.48, 3.36, 2.68];
-  const revES = [1.42, 1.68, 1.87, 1.74, 1.53];
-  const labelsMX = ["$2.11M", "$2.93M", "$3.48M", "$3.36M", "$2.68M"];
-  const labelsES = ["€1.42M", "€1.68M", "€1.87M", "€1.74M", "€1.53M"];
-  let anim = 0;
-
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    draw();
-  }
-
-  function plotLine(pts, bounds) {
-    const max = Math.max(...pts);
-    const min = Math.min(...pts);
-    const range = Math.max(0.1, max - min);
-    const step = bounds.width / (pts.length - 1);
-    return pts.map((v, i) => ({
-      x: bounds.x + step * i,
-      y: bounds.y + bounds.height - ((v - min) / range) * bounds.height
-    }));
-  }
-
-  function drawLine(pts, color, prog) {
-    const count = Math.max(2, Math.ceil(pts.length * prog));
-    const active = pts.slice(0, count);
-    ctx.beginPath();
-    active.forEach(({ x, y }, i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 12;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    active.forEach(({ x, y }) => {
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-    });
-  }
-
-  function drawPill(text, x, y, color, cw, ch) {
-    const pad = 8;
-    ctx.font = "700 11px Inter, sans-serif";
-    const tw = ctx.measureText(text).width;
-    const bw = tw + pad * 2;
-    const bh = 22;
-    const bx = Math.max(8, Math.min(x - bw / 2, cw - bw - 8));
-    const by = Math.max(8, Math.min(y - bh - 6, ch - bh - 8));
-    ctx.fillStyle = "rgba(6,12,20,0.76)";
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 6);
-    ctx.fill();
-    ctx.fillStyle = color;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, bx + bw / 2, by + bh / 2 + 0.5);
-  }
-
-  function draw() {
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-    ctx.clearRect(0, 0, w, h);
-    const bds = { x: 48, y: 34, width: w - 88, height: h - 82 };
-
-    ctx.strokeStyle = "rgba(147,223,255,0.07)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      const y = bds.y + (bds.height / 4) * i;
-      ctx.beginPath(); ctx.moveTo(bds.x, y); ctx.lineTo(bds.x + bds.width, y); ctx.stroke();
-    }
-
-    const pMX = plotLine(revMX, bds);
-    const pES = plotLine(revES, { ...bds, y: bds.y + bds.height * 0.1, height: bds.height * 0.7 });
-
-    drawLine(pMX, statusColors.cyan, anim);
-    drawLine(pES, statusColors.violet, Math.max(0, anim - 0.1));
-
-    if (anim > 0.5) {
-      pMX.forEach(({ x, y }, i) => drawPill(labelsMX[i], x, y, statusColors.cyan, w, h));
-      pES.forEach(({ x, y }, i) => drawPill(labelsES[i], x, y + 24, statusColors.violet, w, h));
-    }
-
-    ctx.font = "700 11px Inter, sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = statusColors.cyan;
-    ctx.fillText("México (MXN)", bds.x, 20);
-    ctx.fillStyle = statusColors.violet;
-    ctx.fillText("España (EUR)", bds.x + 120, 20);
-
-    ctx.textAlign = "right";
-    ctx.fillStyle = "rgba(238,248,255,0.8)";
-    ctx.font = "800 15px Inter, sans-serif";
-    ctx.fillText("2 países · 5 unidades", bds.x + bds.width, 20);
-    ctx.textAlign = "left";
-
-    ctx.fillStyle = "rgba(143,167,189,0.8)";
-    ctx.font = "600 11px Inter, sans-serif";
-    labels.forEach((lbl, i) => {
-      const x = bds.x + (bds.width / (labels.length - 1)) * i;
-      ctx.fillText(lbl, x - 8, h - 16);
-    });
-  }
-
-  function animate() {
-    anim = Math.min(1, anim + 0.016);
-    draw();
-    if (anim < 1) requestAnimationFrame(animate);
-  }
-
-  resize();
-  requestAnimationFrame(animate);
-  window.addEventListener("resize", resize);
+function kpiScore(kpiId, value) {
+  const def = KPI_DEFS.find(k => k.id === kpiId);
+  if (!def) return 0;
+  const s = def.getStatus(value);
+  return s === 'green' ? 100 : s === 'amber' ? 50 : 0;
 }
 
-// ── Reutilizamos las funciones render de México adaptadas ──
-function sparkline(points, width = 210, height = 58) {
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const range = Math.max(1, max - min);
-  const step = width / (points.length - 1);
-  const path = points.map((p, i) => {
-    const x = i * step;
-    const y = height - ((p - min) / range) * (height - 8) - 4;
-    return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-  }).join(" ");
-  return `<svg viewBox="0 0 ${width} ${height}" aria-hidden="true"><path d="${path}"></path></svg>`;
+function healthScore(unit) {
+  return Math.round(
+    Object.entries(WEIGHTS).reduce((sum, [id, w]) => sum + kpiScore(id, unit.data[id]) * w, 0)
+  );
 }
 
-function setStatusVariable(el, status) {
-  el.style.setProperty("--status", statusColors[status] || statusColors.cyan);
+// ── Riesgos detectados ────────────────────────────────────────────────────
+const TOP_RISKS = [
+  { priority: 'P1', unit: 'AMC DAM', kpi: 'Food Cost', value: '40.54%', status: 'red',
+    accion: 'Auditar proveedores y recetas. Revisar porciones y desperdicios de forma urgente.' },
+  { priority: 'P1', unit: 'AMC DAM', kpi: 'Margen Neto', value: '-7.00%', status: 'red',
+    accion: 'Plan de turnaround financiero: reducir costos variables y revisar precio/mix de venta.' },
+  { priority: 'P1', unit: 'SG La Isla', kpi: 'Renta / Ventas', value: '14.16%', status: 'red',
+    accion: 'Negociar reducción de renta o incrementar ventas al menos 25% para normalizar el ratio.' },
+  { priority: 'P2', unit: 'SG La Isla', kpi: 'Rotación de Personal', value: '20.98%', status: 'red',
+    accion: 'Implementar plan de retención: incentivos, clima laboral y plan de carrera.' },
+  { priority: 'P2', unit: 'SG La Isla', kpi: 'Ausencias Injustificadas', value: '15 en mayo', status: 'red',
+    accion: 'Protocolo de asistencia. Identificar causas raíz con supervisión directa.' }
+];
+
+// ── KPIs futuros (sin datos) ──────────────────────────────────────────────
+const FUTURE_KPIS = [
+  { label: 'Payback', meta: '< 48 meses', icon: '⏱', desc: 'Meses para recuperar inversión inicial' },
+  { label: 'Tiempo de Apertura', meta: '< 120 días', icon: '📅', desc: 'Días desde firma hasta apertura' },
+  { label: 'NPS', meta: '> 70', icon: '⭐', desc: 'Net Promoter Score de clientes' },
+  { label: 'Auditoría Operativa', meta: '> 90%', icon: '✓', desc: 'Calificación de inspección mensual' },
+  { label: 'Satisfacción del Cliente', meta: '> 85%', icon: '◎', desc: 'Encuesta mensual de satisfacción' }
+];
+
+// ── Radar scores (0-100, donde 100 = mejor desempeño) ─────────────────────
+function radarScores(unit) {
+  return [
+    kpiScore('margenNeto', unit.data.margenNeto),
+    kpiScore('foodCost', unit.data.foodCost),
+    kpiScore('laborCost', unit.data.laborCost),
+    kpiScore('rentRatio', unit.data.rentRatio),
+    kpiScore('rotacion', unit.data.rotacion),
+    kpiScore('ausencias', unit.data.ausencias)
+  ];
 }
 
-function renderKpis() {
-  const el = document.querySelector("#kpiConstellation");
-  if (!el) return;
-  el.innerHTML = kpis.map(k => `
-    <button class="kpi-node" type="button" data-target="${k.target}" style="--status:${statusColors[k.status]}" aria-label="Ir a ${k.label}">
-      <div class="kpi-label"><span>${k.label}</span><i class="kpi-dot" aria-hidden="true"></i></div>
-      <div class="kpi-value">${k.value}</div>
-      <div class="kpi-meta">${k.meta}</div>
-      ${sparkline(k.points)}
-    </button>`).join("");
-}
+const RADAR_LABELS = ['Margen\nNeto', 'Food\nCost', 'Labor\nCost', 'Renta /\nVentas', 'Rotación', 'Ausencias'];
 
-function renderDepartments() {
-  const theater = document.querySelector("#moduleTheater");
-  if (!theater) return;
-  theater.innerHTML = departments.map((dept, i) => `
-    <article class="module-environment reveal ${i === 0 ? "is-focused is-visible" : ""}" data-module="${dept.key}" style="--accent:${dept.accent};--accent-2:${dept.accent2}">
-      <div class="module-header">
-        <div><span>${dept.tone}</span><h3>${dept.label}</h3></div>
-        <div class="module-badge">${dept.code}</div>
-      </div>
-      <div class="module-metrics">
-        ${dept.metrics.map(([lbl, val]) => `<div class="metric-slab"><small>${lbl}</small><strong>${val}</strong></div>`).join("")}
-      </div>
-      <div class="module-visual">
-        <div class="module-intelligence" style="--status:${statusColors[dept.visual.status] || statusColors.cyan}">
-          <div class="visual-head"><span>${dept.visual.title}</span><strong>${dept.code}</strong></div>
-          <div class="visual-hero"><strong>${dept.visual.value}</strong><p>${dept.visual.meta}</p></div>
-          <div class="visual-metrics">
-            ${dept.visual.items.map(([l, v, m]) => `<div><small>${l}</small><strong>${v}</strong><span>${m}</span></div>`).join("")}
+// ═══════════════════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderExecutiveCards() {
+  const grid = document.querySelector('#kpiGrid');
+  if (!grid) return;
+
+  const kpisToShow = KPI_DEFS.slice(0, 6); // first 6 (excl. retardos for cards)
+
+  grid.innerHTML = kpisToShow.map(def => {
+    const statuses = UNITS.map(u => def.getStatus(u.data[def.id]));
+    const overallStatus = statuses.includes('red') ? 'red' : statuses.includes('amber') ? 'amber' : 'green';
+    const c = S[overallStatus];
+
+    const unitRows = UNITS.map(u => {
+      const v = u.data[def.id];
+      const s = def.getStatus(v);
+      const sc = S[s];
+      const barPct = Math.min(100, (Math.abs(v) / def.barMax) * 100);
+      const displayVal = v < 0 ? `${v.toFixed(2)}%` : `${v}${def.suffix}`;
+      return `
+        <div class="fe-unit-row">
+          <span class="fe-unit-name">${u.shortName}</span>
+          <span class="fe-unit-value" style="color:${sc.hex}">${displayVal}</span>
+          <div class="fe-unit-bar-wrap">
+            <div class="fe-unit-bar" style="width:${barPct}%;background:${sc.hex}"></div>
           </div>
-          <div class="visual-bars">
-            ${dept.visual.stages.map(([l, v, s, w]) => `
-              <div class="visual-bar" style="--bar-status:${statusColors[s]||statusColors.cyan};--bar-width:${Math.max(4,Math.min(100,w))}%">
-                <span>${l}</span><i><b></b></i><strong>${v}</strong>
-              </div>`).join("")}
+        </div>`;
+    }).join('');
+
+    return `
+      <article class="fe-kpi-card" style="border-color:${c.border};background:${c.bg}">
+        <div class="fe-kpi-card-top">
+          <div>
+            <div class="fe-kpi-label">${def.label}</div>
+            <div class="fe-kpi-meta">Meta: ${def.meta}</div>
           </div>
+          <span class="fe-dot ${overallStatus}"></span>
         </div>
+        <div class="fe-unit-rows">${unitRows}</div>
+        <div class="fe-kpi-note">${def.note}</div>
+      </article>`;
+  }).join('');
+
+  // NPS pending card
+  grid.innerHTML += `
+    <article class="fe-kpi-card fe-pending-card">
+      <div class="fe-kpi-card-top">
+        <div>
+          <div class="fe-kpi-label">NPS</div>
+          <div class="fe-kpi-meta">Meta: > 70</div>
+        </div>
+        <span class="fe-dot" style="background:rgba(147,223,255,0.3);box-shadow:none"></span>
       </div>
-      <div class="module-signal"><span>Signal</span><p>${dept.signal}</p></div>
-    </article>`).join("");
+      <div style="text-align:center;padding:24px 0 16px">
+        <div style="font-size:1.8rem;opacity:0.25;margin-bottom:12px">◎</div>
+        <div style="font-size:0.78rem;color:var(--muted)">Pendiente de captura</div>
+        <div style="font-size:0.68rem;color:var(--muted-2);margin-top:6px">Net Promoter Score — encuesta a clientes</div>
+      </div>
+    </article>`;
 }
 
-function renderInsights() {
-  const el = document.querySelector("#insightGrid");
-  if (!el) return;
-  el.innerHTML = insights.map(ins => `
-    <article class="executive-signal" style="--status:${statusColors[ins.status]}">
-      <span>${ins.tag}</span>
-      <h3>${ins.title}</h3>
-      <ul class="signal-list">${ins.bullets.map(b => `<li>${b}</li>`).join("")}</ul>
-      <strong>${ins.action}</strong>
-    </article>`).join("");
+function renderHealthScore() {
+  const container = document.querySelector('#healthScoreGrid');
+  if (!container) return;
+
+  const scores = UNITS.map(u => ({ unit: u, score: healthScore(u) }))
+    .sort((a, b) => b.score - a.score);
+
+  const medals = ['🥇', '🥈', '🥉'];
+  const rankLabels = ['Líder operativo', 'Segundo lugar', 'Requiere atención'];
+
+  container.innerHTML = scores.map(({ unit, score }, i) => {
+    const color = score >= 75 ? S.green.hex : score >= 45 ? S.amber.hex : S.red.hex;
+    const barColor = score >= 75 ? S.green.hex : score >= 45 ? S.amber.hex : S.red.hex;
+    return `
+      <article class="fe-health-card reveal">
+        <div class="fe-rank-badge">${medals[i]}</div>
+        <div class="fe-health-label">${rankLabels[i]}</div>
+        <div class="fe-score-num" style="color:${color}">${score}</div>
+        <div class="fe-score-bar-wrap">
+          <div class="fe-score-bar" style="width:${score}%;background:${barColor}"></div>
+        </div>
+        <div style="font-size:0.92rem;font-weight:780;color:#eef8ff;margin-bottom:4px">${unit.name}</div>
+        <div style="font-size:0.74rem;color:var(--muted);line-height:1.45">${unit.lectura}</div>
+        <div style="margin-top:14px;font-size:0.68rem;color:var(--muted-2)">
+          NPS excluido temporalmente · 5 KPIs ponderados · Score / 100
+        </div>
+      </article>`;
+  }).join('');
 }
 
-function renderPulse() {
-  const el = document.querySelector("#pulseFeed");
-  if (!el) return;
-  el.innerHTML = pulseAlerts.map(a => `
-    <article class="pulse-alert" style="--status:${statusColors[a.status]}">
-      <div class="alert-priority">${a.level}</div>
-      <div class="alert-copy"><h3>${a.title}</h3><p>${a.copy}</p></div>
-      <div class="alert-owner">${a.owner}</div>
-    </article>`).join("");
+function renderHeatmap() {
+  const wrap = document.querySelector('#heatmap');
+  if (!wrap) return;
+
+  const cols = KPI_DEFS.length;
+  const totalCols = 1 + cols;
+  wrap.style.gridTemplateColumns = `170px repeat(${cols}, 1fr)`;
+
+  // Header row
+  const headerCells = ['<div class="fe-hm-cell fe-hm-header">Unidad</div>',
+    ...KPI_DEFS.map(d => `<div class="fe-hm-cell fe-hm-header">${d.label}</div>`)
+  ].join('');
+
+  // Data rows
+  const dataRows = UNITS.map(u => {
+    const cells = KPI_DEFS.map(def => {
+      const v = u.data[def.id];
+      const s = def.getStatus(v);
+      const display = def.id === 'ausencias' || def.id === 'retardos' ? v : `${v}%`;
+      return `<div class="fe-hm-cell fe-hm-${s}" title="${def.label}: ${display}">${display}</div>`;
+    }).join('');
+    return `<div class="fe-hm-cell fe-hm-unit">${u.name}</div>${cells}`;
+  }).join('');
+
+  wrap.innerHTML = headerCells + dataRows;
+}
+
+function renderRadar() {
+  const svg = document.querySelector('#radarSvg');
+  if (!svg) return;
+
+  const cx = 200, cy = 190, r = 140;
+  const axes = RADAR_LABELS.length;
+  const levels = [25, 50, 75, 100];
+
+  function polar(val, axisIndex) {
+    const angle = ((360 / axes) * axisIndex - 90) * Math.PI / 180;
+    const d = (val / 100) * r;
+    return [cx + d * Math.cos(angle), cy + d * Math.sin(angle)];
+  }
+
+  // Grid rings
+  let rings = levels.map(lvl => {
+    const pts = Array.from({ length: axes }, (_, i) => polar(lvl, i).join(','));
+    return `<polygon points="${pts.join(' ')}" fill="none" stroke="rgba(147,223,255,0.09)" stroke-width="1"/>`;
+  }).join('');
+
+  // Axis lines
+  let axisLines = Array.from({ length: axes }, (_, i) => {
+    const [x, y] = polar(100, i);
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(147,223,255,0.12)" stroke-width="1"/>`;
+  }).join('');
+
+  // Axis labels
+  let axisLabels = RADAR_LABELS.map((lbl, i) => {
+    const [x, y] = polar(120, i);
+    const lines = lbl.split('\n');
+    const dy = lines.length > 1 ? -7 : 0;
+    return `<text x="${x}" y="${y + dy}" text-anchor="middle" fill="rgba(170,192,210,0.7)" font-size="10" font-family="Inter,sans-serif">
+      ${lines.map((l, li) => `<tspan x="${x}" dy="${li === 0 ? 0 : 14}">${l}</tspan>`).join('')}
+    </text>`;
+  }).join('');
+
+  // Unit polygons
+  let polygons = UNITS.map(u => {
+    const scores = radarScores(u);
+    const pts = scores.map((s, i) => polar(s, i).join(','));
+    return `
+      <polygon points="${pts.join(' ')}" fill="${u.color}22" stroke="${u.color}" stroke-width="1.8" stroke-linejoin="round" opacity="0.85"/>
+      ${scores.map((s, i) => { const [x, y] = polar(s, i); return `<circle cx="${x}" cy="${y}" r="3.5" fill="${u.color}" opacity="0.9"/>`; }).join('')}`;
+  }).join('');
+
+  // Center dot
+  const center = `<circle cx="${cx}" cy="${cy}" r="3" fill="rgba(147,223,255,0.3)"/>`;
+
+  svg.innerHTML = rings + axisLines + axisLabels + polygons + center;
 }
 
 function renderRisks() {
-  const el = document.querySelector("#riskStream");
-  if (!el) return;
-  el.innerHTML = risks.map(r => `
-    <article class="risk-item" style="--status:${statusColors[r.status]}">
-      <h3>${r.title}</h3>
-      <p>${r.copy}</p>
-      <div class="risk-meta">${r.meta.map(m => `<span>${m}</span>`).join("")}</div>
-    </article>`).join("");
+  const container = document.querySelector('#risksGrid');
+  if (!container) return;
+
+  container.innerHTML = TOP_RISKS.map(r => {
+    const c = r.priority === 'P1' ? S.red : S.amber;
+    return `
+      <article class="fe-risk-item" style="border-color:${c.border};background:${c.bg}">
+        <div class="fe-priority" style="border-color:${c.border};background:rgba(0,0,0,0.2);color:${c.hex}">${r.priority}</div>
+        <div class="fe-risk-body">
+          <h4><span style="color:${c.hex}">${r.unit}</span> — ${r.kpi}</h4>
+          <p>${r.accion}</p>
+        </div>
+        <div class="fe-risk-kpi">
+          <strong style="color:${c.hex}">${r.value}</strong>
+          <span>${r.kpi}</span>
+        </div>
+      </article>`;
+  }).join('');
 }
 
+function renderTable() {
+  const tbody = document.querySelector('#execTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = UNITS.map(u => {
+    function td(kpiId, val) {
+      const s = KPI_DEFS.find(k => k.id === kpiId).getStatus(val);
+      const display = kpiId === 'ausencias' || kpiId === 'retardos' ? val : `${val}%`;
+      return `<td class="fe-td-${s}">${display}</td>`;
+    }
+    const d = u.data;
+    return `
+      <tr>
+        <td class="fe-unit-col"><div style="display:flex;align-items:center;gap:8px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${u.color};display:inline-block;flex-shrink:0"></span>
+          ${u.name}
+        </div></td>
+        ${td('margenNeto', d.margenNeto)}
+        ${td('foodCost', d.foodCost)}
+        ${td('laborCost', d.laborCost)}
+        ${td('rentRatio', d.rentRatio)}
+        ${td('rotacion', d.rotacion)}
+        ${td('ausencias', d.ausencias)}
+        ${td('retardos', d.retardos)}
+        <td class="fe-lectura">${u.lectura}</td>
+      </tr>`;
+  }).join('');
+}
+
+function renderFutureKpis() {
+  const grid = document.querySelector('#futureGrid');
+  if (!grid) return;
+
+  grid.innerHTML = FUTURE_KPIS.map(k => `
+    <article class="fe-future-card">
+      <div class="fe-future-icon">${k.icon}</div>
+      <div class="fe-future-label">${k.label}</div>
+      <div class="fe-future-meta">Meta: ${k.meta}</div>
+      <div style="font-size:0.68rem;color:var(--muted-2);margin-bottom:12px;line-height:1.4">${k.desc}</div>
+      <span class="fe-future-badge">Pendiente de captura</span>
+    </article>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SETUP FUNCTIONS (visual / animation)
+// ═══════════════════════════════════════════════════════════════════════════
+
 function setupReveal() {
-  const targets = document.querySelectorAll(".reveal");
-  if (!("IntersectionObserver" in window)) {
-    targets.forEach(t => t.classList.add("is-visible"));
+  const targets = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(t => t.classList.add('is-visible'));
     return;
   }
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add("is-visible"); obs.unobserve(e.target); }
+      if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); }
     });
-  }, { threshold: 0.14, rootMargin: "0px 0px -60px 0px" });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
   targets.forEach(t => obs.observe(t));
 }
 
 function setupNavigation() {
-  const links = document.querySelectorAll(".rail-link");
-  const sections = document.querySelectorAll("[data-section]");
-  if (!("IntersectionObserver" in window)) return;
+  const links = document.querySelectorAll('.rail-link');
+  const sections = document.querySelectorAll('[data-section]');
+  if (!('IntersectionObserver' in window)) return;
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (!e.isIntersecting) return;
       const sec = e.target.dataset.section;
-      links.forEach(l => l.classList.toggle("is-active", l.dataset.section === sec));
+      links.forEach(l => l.classList.toggle('is-active', l.dataset.section === sec));
     });
   }, { threshold: 0.4 });
   sections.forEach(s => obs.observe(s));
 }
 
 function setupAmbientCanvas() {
-  const canvas = document.querySelector("#ambientCanvas");
+  const canvas = document.querySelector('#ambientCanvas');
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const noMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ctx = canvas.getContext('2d');
+  const noMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let particles = [], width = 0, height = 0, frame = 0;
 
   function resize() {
@@ -525,11 +430,11 @@ function setupAmbientCanvas() {
     canvas.width = width * dpr; canvas.height = height * dpr;
     canvas.style.width = `${width}px`; canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.min(128, Math.max(48, Math.floor((width * height) / 18000)));
+    const count = Math.min(100, Math.max(40, Math.floor((width * height) / 20000)));
     particles = Array.from({ length: count }, (_, i) => ({
       x: Math.random() * width, y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.24,
-      r: i % 7 === 0 ? 1.4 : 0.8 + Math.random() * 0.6,
+      vx: (Math.random() - 0.5) * 0.28, vy: (Math.random() - 0.5) * 0.22,
+      r: i % 7 === 0 ? 1.4 : 0.7 + Math.random() * 0.6,
       phase: Math.random() * Math.PI * 2
     }));
   }
@@ -537,70 +442,61 @@ function setupAmbientCanvas() {
   function draw() {
     frame += 0.01;
     ctx.clearRect(0, 0, width, height);
-    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
     particles.forEach((p, i) => {
       if (!noMotion) { p.x += p.vx; p.y += p.vy; }
-      if (p.x < -20) p.x = width + 20; if (p.x > width + 20) p.x = -20;
-      if (p.y < -20) p.y = height + 20; if (p.y > height + 20) p.y = -20;
-      const pulse = 0.45 + Math.sin(frame * 2 + p.phase) * 0.17;
+      if (p.x < -10) p.x = width + 10; if (p.x > width + 10) p.x = -10;
+      if (p.y < -10) p.y = height + 10; if (p.y > height + 10) p.y = -10;
+      const pulse = 0.42 + Math.sin(frame * 2 + p.phase) * 0.16;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(67,220,255,${0.15 + pulse * 0.22})`; ctx.fill();
+      ctx.fillStyle = `rgba(67,220,255,${0.13 + pulse * 0.2})`; ctx.fill();
       for (let j = i + 1; j < particles.length; j++) {
         const n = particles[j];
         const d = Math.hypot(p.x - n.x, p.y - n.y);
-        if (d < 116) {
+        if (d < 110) {
           ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(n.x, n.y);
-          ctx.strokeStyle = `rgba(67,220,255,${0.046 * (1 - d / 116)})`; ctx.lineWidth = 1; ctx.stroke();
+          ctx.strokeStyle = `rgba(67,220,255,${0.04 * (1 - d / 110)})`; ctx.lineWidth = 1; ctx.stroke();
         }
       }
     });
     ctx.restore();
     if (!noMotion) requestAnimationFrame(draw);
   }
-
   resize(); draw();
-  window.addEventListener("resize", resize);
-}
-
-function setupKpiNavigation() {
-  document.querySelectorAll(".kpi-node[data-target]").forEach(node => {
-    node.addEventListener("click", () => {
-      const target = document.querySelector(node.dataset.target);
-      if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
+  window.addEventListener('resize', () => { resize(); renderRadar(); });
 }
 
 function setupScrollDepth() {
-  const beam = document.querySelector(".beam-field");
-  const sections = Array.from(document.querySelectorAll(".section-shell"));
+  const beam = document.querySelector('.beam-field');
+  const sections = Array.from(document.querySelectorAll('.section-shell'));
   let ticking = false;
   function update() {
     ticking = false;
-    const offset = window.scrollY * 0.035;
-    if (beam) beam.style.transform = `translateY(${offset}px)`;
+    if (beam) beam.style.transform = `translateY(${window.scrollY * 0.035}px)`;
     sections.forEach(s => {
       const rect = s.getBoundingClientRect();
-      const progress = Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (window.innerHeight + rect.height)));
-      const depth = Math.max(-36, Math.min(36, (rect.top + rect.height / 2 - window.innerHeight / 2) * -0.018));
-      s.style.setProperty("--depth", `${depth}px`);
-      s.style.setProperty("--chapter-progress", progress.toFixed(3));
+      const d = Math.max(-36, Math.min(36, (rect.top + rect.height / 2 - window.innerHeight / 2) * -0.018));
+      s.style.setProperty('--depth', `${d}px`);
     });
   }
-  window.addEventListener("scroll", () => { if (ticking) return; ticking = true; requestAnimationFrame(update); }, { passive: true });
+  window.addEventListener('scroll', () => { if (ticking) return; ticking = true; requestAnimationFrame(update); }, { passive: true });
   update();
 }
 
-// Init
-renderKpis();
-renderDepartments();
-renderInsights();
-renderPulse();
+// ═══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+renderExecutiveCards();
+renderHealthScore();
+renderHeatmap();
 renderRisks();
+renderTable();
+renderFutureKpis();
 setupReveal();
 setupNavigation();
-setupKpiNavigation();
 setupAmbientCanvas();
-setupRevenueChart();
 setupScrollDepth();
+
+// Radar needs DOM to be painted first
+requestAnimationFrame(() => renderRadar());

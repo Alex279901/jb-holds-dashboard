@@ -5342,6 +5342,7 @@ main::before {
 .mx-table { width: 100%; border-collapse: collapse; min-width: 680px; }
 
 .mx-th {
+  position: sticky; top: 90px; z-index: 3;
   padding: 14px 18px;
   border-bottom: 2px solid rgba(147,223,255,0.22);
   text-align: left; font-size: 0.63rem; font-weight: 760;
@@ -5355,6 +5356,7 @@ main::before {
   background: rgba(4,13,25,0.96);
   border-right: 1px solid rgba(147,223,255,0.1);
 }
+.mx-kpi-col.mx-th { z-index: 5; }
 .mx-unit-th { min-width: 160px; }
 
 .mx-unit-name { font-size: 0.84rem; font-weight: 760; color: #eef8ff; margin-bottom: 2px; }

@@ -247,8 +247,14 @@ const state = {
   dateEnd: "2026-05-17"
 };
 
-const formatter = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
-const exactFormatter = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const _fmtMXN      = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
+const _exactFmtMXN = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const _fmtEUR      = new Intl.NumberFormat("es-MX", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const _exactFmtEUR = new Intl.NumberFormat("es-MX", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const _ESP_BRANDS = new Set(["Santa Gloria ESP", "Wetzel Pretzel ESP"]);
+const formatter      = { format: (n) => (_ESP_BRANDS.has(state.activeBrand) ? _fmtEUR      : _fmtMXN).format(n) };
+const exactFormatter = { format: (n) => (_ESP_BRANDS.has(state.activeBrand) ? _exactFmtEUR : _exactFmtMXN).format(n) };
 const numberFormatter = new Intl.NumberFormat("es-MX");
 
 const els = {

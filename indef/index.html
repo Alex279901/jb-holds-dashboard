@@ -166,6 +166,27 @@
     <div class="toast" id="toast">Vista actualizada</div>
     <div class="tooltip" id="tooltip"></div>
 
+    <div class="export-modal-overlay hidden" id="exportModal" role="dialog" aria-modal="true" aria-label="Configurar Reporte Ejecutivo">
+      <div class="export-modal">
+        <div class="export-modal-header">
+          <div>
+            <p class="eyebrow">INDEF Intelligence Platform</p>
+            <h2>Reporte Ejecutivo Corporativo</h2>
+          </div>
+          <button class="close-button" type="button" id="closeExportModal" aria-label="Cerrar">×</button>
+        </div>
+        <div class="export-modal-meta" id="exportModalMeta"></div>
+        <div class="export-modal-body">
+          <p class="eyebrow">Secciones a incluir</p>
+          <div class="export-sections" id="exportSections"></div>
+        </div>
+        <div class="export-modal-footer">
+          <button class="ghost-button" type="button" id="cancelExportModal">Cancelar</button>
+          <button class="primary-button" type="button" id="generateReportBtn">Generar Reporte Ejecutivo</button>
+        </div>
+      </div>
+    </div>
+
     <script src="assets/vendor/html2canvas.min.js"></script>
     <script src="assets/vendor/jspdf.umd.min.js"></script>
     <script src="app.js"></script>

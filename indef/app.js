@@ -233,6 +233,42 @@ const moduleMeta = {
   }
 };
 
+const EXPORT_SECTION_DEFS = [
+  {
+    group: "VENTAS",
+    module: "sales",
+    items: [
+      { key: "sales-kpis-alerts",  label: "KPIs y alertas comerciales" },
+      { key: "sales-trend",        label: "Tendencia diaria de venta" },
+      { key: "sales-waterfall",    label: "Acumulado semanal" },
+      { key: "sales-scorecards",   label: "Semaforo por sucursal" },
+      { key: "sales-risk",         label: "Riesgo operativo (GAP)" },
+      { key: "sales-heatmap",      label: "Mapa de calor por dia" },
+      { key: "sales-table",        label: "Tabla: Ventas vs meta" },
+      { key: "sales-comparison",   label: "Comparativo por sucursal" }
+    ]
+  },
+  {
+    group: "PRODUCTOS",
+    module: "products",
+    items: [
+      { key: "products-kpis-alerts", label: "KPIs y alertas de producto" },
+      { key: "products-grid",        label: "Top sellers, mix y treemap" },
+      { key: "products-table",       label: "Tabla: Matriz de producto" }
+    ]
+  },
+  {
+    group: "FLUJO DE VENTAS",
+    module: "flow",
+    items: [
+      { key: "flow-kpis-alerts", label: "KPIs y alertas de flujo" },
+      { key: "flow-cards",       label: "Resumen por sucursal" },
+      { key: "flow-charts",      label: "Graficas horarias y conversion" },
+      { key: "flow-table",       label: "Tabla: Plan de accion" }
+    ]
+  }
+];
+
 const state = {
   user: null,
   activeModule: "sales",
@@ -1795,7 +1831,7 @@ els.dateEnd.addEventListener("change", (event) => {
 
 document.querySelector("#closeInspector").addEventListener("click", () => els.inspector.classList.remove("open"));
 document.querySelector("#refreshButton").addEventListener("click", () => loadSheetData(true));
-document.querySelector("#exportButton").addEventListener("click", exportCurrentView);
+document.querySelector("#exportButton").addEventListener("click", openExportModal);
 document.querySelector("#logoutButton").addEventListener("click", () => {
   els.appShell.classList.add("locked");
   els.loginScreen.style.display = "grid";
@@ -1982,5 +2018,515 @@ function slugify(value) {
     .replace(/[^\w]+/g, "_")
     .replace(/^_+|_+$/g, "");
 }
+
+// ─── PDF Export Engine V2 — Modal listeners ──────────────────────────────────
+
+document.querySelector("#closeExportModal").addEventListener("click", () => {
+  document.querySelector("#exportModal").classList.add("hidden");
+});
+
+document.querySelector("#cancelExportModal").addEventListener("click", () => {
+  document.querySelector("#exportModal").classList.add("hidden");
+});
+
+document.querySelector("#exportModal").addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) event.currentTarget.classList.add("hidden");
+});
+
+document.querySelector("#generateReportBtn").addEventListener("click", async () => {
+  const selectedKeys = new Set(
+    [...document.querySelectorAll("#exportSections input[name='export-section']:checked")].map((cb) => cb.value)
+  );
+  if (!selectedKeys.size) { showToast("Selecciona al menos una seccion"); return; }
+  document.querySelector("#exportModal").classList.add("hidden");
+  await buildExportPdf(selectedKeys).catch(() => {});
+});
+
+// ─── 1. openExportModal() ─────────────────────────────────────────────────────
+
+function openExportModal() {
+  const modal = document.querySelector("#exportModal");
+  const metaContainer = document.querySelector("#exportModalMeta");
+  const sectionsContainer = document.querySelector("#exportSections");
+
+  const branchCount = [...state.activeBranches].length;
+  const dateFrom = formatShortDate(state.dateStart);
+  const dateTo = formatShortDate(state.dateEnd);
+
+  metaContainer.innerHTML = [
+    ["Marca", state.activeBrand],
+    ["Periodo", `${dateFrom} – ${dateTo}`],
+    ["Sucursales", `${branchCount} activa${branchCount !== 1 ? "s" : ""}`]
+  ].map(([label, value]) => `
+    <div class="export-meta-chip">
+      <span class="chip-label">${label}</span>
+      <span class="chip-value">${value}</span>
+    </div>
+  `).join("");
+
+  sectionsContainer.innerHTML = EXPORT_SECTION_DEFS.map(({ group, module, items }) => `
+    <div class="export-group">
+      <div class="export-group-header">
+        <span class="export-group-label">${group}</span>
+        <button class="export-toggle-all" type="button" data-toggle-module="${module}">Deseleccionar todo</button>
+      </div>
+      ${items.map(({ key, label }) => `
+        <label class="export-section-item">
+          <input type="checkbox" name="export-section" value="${key}" checked>
+          <span>${label}</span>
+        </label>
+      `).join("")}
+    </div>
+  `).join("");
+
+  sectionsContainer.querySelectorAll("[data-toggle-module]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mod = btn.dataset.toggleModule;
+      const group = EXPORT_SECTION_DEFS.find((g) => g.module === mod);
+      const boxes = group.items
+        .map((item) => sectionsContainer.querySelector(`input[value="${item.key}"]`))
+        .filter(Boolean);
+      const allOn = boxes.every((cb) => cb.checked);
+      boxes.forEach((cb) => { cb.checked = !allOn; });
+      btn.textContent = allOn ? "Seleccionar todo" : "Deseleccionar todo";
+    });
+  });
+
+  modal.classList.remove("hidden");
+}
+
+// ─── 2. buildExportPdf(selectedKeys) ─────────────────────────────────────────
+
+async function buildExportPdf(selectedKeys) {
+  if (!window.html2canvas || !window.jspdf?.jsPDF) {
+    showToast("No se pudo cargar el generador PDF");
+    throw new Error("PDF dependencies not loaded");
+  }
+
+  const btn = document.querySelector("#generateReportBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Generando..."; }
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  const savedModule = state.activeModule;
+  const savedSearch = state.tableSearch;
+
+  try {
+    showToast("Generando portada...");
+    await createPdfCover(pdf, pageWidth, pageHeight);
+
+    const allPageGroups = [];
+
+    for (const { module: moduleKey, items } of EXPORT_SECTION_DEFS) {
+      const hasAny = items.some((item) => selectedKeys.has(item.key));
+      if (!hasAny) continue;
+
+      state.activeModule = moduleKey;
+      state.tableSearch = "";
+      renderAll();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const blocks = collectV2PdfBlocks(selectedKeys, moduleKey);
+      blocks.forEach((b) => { b.density = calculateDensity(b.element); });
+
+      const pages = planPages(blocks);
+
+      for (const pageBlocks of pages) {
+        const cloned = pageBlocks
+          .map((b) => ({ key: b.key, element: cloneForPdf(b.element) }))
+          .filter((b) => b.element);
+        if (cloned.length) allPageGroups.push(cloned);
+      }
+    }
+
+    const totalPages = allPageGroups.length + 1;
+
+    for (let i = 0; i < allPageGroups.length; i++) {
+      const pageNum = i + 2;
+      showToast(`Generando pagina ${pageNum} de ${totalPages}...`);
+
+      pdf.addPage("a4", "landscape");
+      const stage = buildV2PageStage(allPageGroups[i], pageNum, totalPages);
+      await waitForPdfAssets(stage);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const canvas = await renderModuleToBuffer(stage);
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+      stage.remove();
+    }
+
+    const fileName = slugify(`INDEF Reporte Ejecutivo ${state.activeBrand} ${state.dateStart} ${state.dateEnd}`);
+    pdf.save(`${fileName}.pdf`);
+    showToast("Reporte Ejecutivo descargado");
+
+  } catch (error) {
+    console.error("[PDF V2]", error);
+    showToast("No se pudo generar el reporte");
+    throw error;
+  } finally {
+    state.activeModule = savedModule;
+    state.tableSearch = savedSearch;
+    renderAll();
+    if (btn) { btn.disabled = false; btn.textContent = "Generar Reporte Ejecutivo"; }
+  }
+}
+
+// ─── 3. renderModuleToBuffer(element) ────────────────────────────────────────
+
+async function renderModuleToBuffer(element) {
+  if (!window.html2canvas) throw new Error("html2canvas not loaded");
+  return window.html2canvas(element, {
+    backgroundColor: "#070a0f",
+    scale: 1.55,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    windowWidth: element.scrollWidth || element.offsetWidth,
+    windowHeight: element.scrollHeight || element.offsetHeight,
+    onclone: (doc) => {
+      doc.querySelectorAll(".scrollable").forEach((el) => {
+        el.classList.remove("scrollable");
+        el.style.overflow = "visible";
+      });
+    }
+  });
+}
+
+// ─── 4. createPdfCover(pdf, pageWidth, pageHeight) ────────────────────────────
+
+async function createPdfCover(pdf, pageWidth, pageHeight) {
+  const cover = document.createElement("div");
+  cover.style.cssText = [
+    "position:absolute", "left:-9999px", "top:0",
+    "width:1680px", "height:945px", "overflow:hidden",
+    `background:url("${brandConfig[state.activeBrand].cover}") center/cover no-repeat, #05080d`
+  ].join(";");
+
+  const gradient = document.createElement("div");
+  gradient.style.cssText = [
+    "position:absolute", "inset:0",
+    "background:linear-gradient(90deg,rgba(5,8,13,0.88) 0%,rgba(5,8,13,0.52) 50%,rgba(5,8,13,0.94) 100%)"
+  ].join(";");
+  cover.appendChild(gradient);
+
+  const logoWrap = document.createElement("div");
+  logoWrap.style.cssText = "position:absolute;top:48px;left:64px;display:flex;align-items:center;gap:12px;";
+  const logoImg = document.createElement("img");
+  logoImg.src = "assets/logo-blanco.png";
+  logoImg.style.cssText = "height:34px;opacity:0.92;";
+  logoWrap.appendChild(logoImg);
+  cover.appendChild(logoWrap);
+
+  const branchCount = [...state.activeBranches].length;
+  const dateFrom = formatShortDate(state.dateStart);
+  const dateTo = formatShortDate(state.dateEnd);
+  const today = new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
+
+  const box = document.createElement("div");
+  box.style.cssText = [
+    "position:absolute", "right:80px", "top:50%", "transform:translateY(-50%)",
+    "width:500px",
+    "background:rgba(7,10,15,0.93)",
+    "border:1px solid rgba(34,211,238,0.35)",
+    "border-radius:20px",
+    "padding:40px",
+    "color:#f4f7fb",
+    "font-family:Inter,sans-serif"
+  ].join(";");
+
+  box.innerHTML = `
+    <p style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:#22d3ee;margin:0 0 6px;">INDEF Intelligence Platform</p>
+    <h1 style="font-size:34px;font-weight:800;margin:0 0 4px;line-height:1.1;color:#f4f7fb;">JB HOLDS</h1>
+    <p style="font-size:8.5px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#22d3ee;margin:0 0 28px;">CORPORATE INTELLIGENCE OPERATING SYSTEM</p>
+    <div style="height:1px;background:rgba(169,184,204,0.18);margin-bottom:24px;"></div>
+    <h2 style="font-size:15px;font-weight:700;margin:0 0 26px;color:#c8d2df;letter-spacing:0.01em;">Reporte Ejecutivo Corporativo</h2>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:26px;">
+      <div>
+        <p style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bad;margin:0 0 3px;">Periodo Analizado</p>
+        <p style="font-size:13px;font-weight:600;color:#f4f7fb;margin:0;">${dateFrom} – ${dateTo}</p>
+      </div>
+      <div>
+        <p style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bad;margin:0 0 3px;">Marca Analizada</p>
+        <p style="font-size:13px;font-weight:600;color:#f4f7fb;margin:0;">${state.activeBrand}</p>
+      </div>
+      <div>
+        <p style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bad;margin:0 0 3px;">Sucursales Incluidas</p>
+        <p style="font-size:13px;font-weight:600;color:#f4f7fb;margin:0;">${branchCount} activas</p>
+      </div>
+      <div>
+        <p style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bad;margin:0 0 3px;">Fecha de Generacion</p>
+        <p style="font-size:13px;font-weight:600;color:#f4f7fb;margin:0;">${today}</p>
+      </div>
+    </div>
+    <div style="height:1px;background:rgba(169,184,204,0.18);margin-bottom:20px;"></div>
+    <div>
+      <p style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bad;margin:0 0 4px;">Preparado por</p>
+      <p style="font-size:13px;font-weight:700;color:#22d3ee;margin:0;">INDEF Intelligence Platform</p>
+    </div>
+    <p style="font-size:8px;color:#8f9bad;margin:22px 0 0;text-align:center;letter-spacing:0.04em;">Confidencial · Uso Interno</p>
+  `;
+  cover.appendChild(box);
+
+  document.body.appendChild(cover);
+  await waitForPdfAssets(cover);
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+  const canvas = await window.html2canvas(cover, {
+    backgroundColor: "#05080d",
+    scale: 1.4,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    windowWidth: 1680,
+    windowHeight: 945
+  });
+  cover.remove();
+
+  pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+}
+
+// ─── 5. calculateDensity(element) ────────────────────────────────────────────
+
+function calculateDensity(element) {
+  if (!element) return 0;
+
+  const PAGE_H = 1080;
+  const h = element.scrollHeight || element.offsetHeight || 200;
+
+  const bars = element.querySelectorAll("rect.bar").length;
+  const rows = element.querySelectorAll("tbody tr").length;
+  const cols = element.querySelectorAll("th").length;
+  const kpiCards = element.querySelectorAll(".kpi-card").length;
+  const heatCells = element.querySelectorAll(".heat-cell, .hour-cell, .tree-cell").length;
+  const scoreCards = element.querySelectorAll(".score-card").length;
+  const flowCards = element.querySelectorAll(".flow-card").length;
+
+  const heightScore = h / PAGE_H;
+  const complexityBonus =
+    bars * 0.012 +
+    rows * 0.05 +
+    cols * 0.04 +
+    kpiCards * 0.08 +
+    heatCells * 0.006 +
+    scoreCards * 0.06 +
+    flowCards * 0.05;
+
+  return Math.min(heightScore + complexityBonus * 0.25, 2.0);
+}
+
+// ─── 6. planPages(blocks) ─────────────────────────────────────────────────────
+
+function planPages(blocks) {
+  const THRESHOLD = 0.84;
+  const pages = [];
+  let current = [];
+  let density = 0;
+
+  for (const block of blocks) {
+    const d = block.density ?? calculateDensity(block.element);
+
+    if (d >= THRESHOLD) {
+      if (current.length) { pages.push(current); current = []; density = 0; }
+      pages.push([block]);
+    } else if (current.length && density + d > THRESHOLD) {
+      pages.push(current);
+      current = [block];
+      density = d;
+    } else {
+      current.push(block);
+      density += d;
+    }
+  }
+
+  if (current.length) pages.push(current);
+  return pages;
+}
+
+// ─── 7. describeSection(key) ──────────────────────────────────────────────────
+
+function describeSection(key) {
+  const brand = state.activeBrand;
+  const period = `${formatShortDate(state.dateStart)}–${formatShortDate(state.dateEnd)}`;
+  try {
+    if (key === "sales-trend") {
+      const t = totals();
+      const prev = totals(true);
+      const chg = ((t.sales - prev.sales) / Math.max(prev.sales, 1) * 100);
+      const dir = chg >= 0 ? "incremento" : "descenso";
+      return `${brand} registro una venta neta de ${formatter.format(t.sales)} en el periodo ${period}, lo que representa un ${dir} del ${Math.abs(chg).toFixed(1)}% frente al periodo inmediato anterior. El cumplimiento de meta se situa en ${(t.compliance * 100).toFixed(1)}%.`;
+    }
+    if (key === "sales-waterfall") {
+      const t = totals();
+      return `La distribucion acumulada por dia de la semana revela el patron de concentracion de venta de ${brand}. El GAP acumulado frente a meta es de ${formatter.format(t.gap)}, con un ticket medio de ${exactFormatter.format(t.ticket)} por documento.`;
+    }
+    if (key === "sales-scorecards") {
+      const rows = activeBranchRows();
+      const above = rows.filter((r) => r.compliance >= 1).length;
+      const below = rows.filter((r) => r.compliance < 1).length;
+      return `De las ${rows.length} sucursales activas de ${brand}, ${above} superan la meta al 100% y ${below} se encuentran por debajo en el periodo ${period}. El semaforo identifica en tiempo real que operaciones requieren intervencion antes del cierre.`;
+    }
+    if (key === "sales-risk") {
+      const rows = activeBranchRows();
+      const worst = [...rows].sort((a, b) => a.gap - b.gap)[0];
+      return worst && worst.gap < 0
+        ? `El grafico de riesgo operativo muestra que ${worst.name} presenta el mayor deficit con ${formatter.format(worst.gap)} frente a meta. Se recomienda accion correctiva para mitigar el cierre por debajo del objetivo en el periodo ${period}.`
+        : `El analisis de riesgo operativo indica que todas las sucursales activas de ${brand} se mantienen en zona positiva respecto a su meta durante el periodo ${period}. No se detectan deficits que requieran intervencion urgente.`;
+    }
+    if (key === "sales-heatmap") {
+      const dates = dateList();
+      const rows = activeBranchRows();
+      return `El mapa de calor muestra la distribucion de documentos por sucursal y dia para ${brand} en el periodo ${period}. Permite identificar dias de bajo trafico y sucursales con concentracion irregular de actividad comercial a traves de ${rows.length} unidades y ${dates.length} dias de analisis.`;
+    }
+    if (key === "sales-table") {
+      const t = totals();
+      const rows = activeBranchRows();
+      return `La tabla presenta el detalle de venta neta, meta, cumplimiento y GAP para las ${rows.length} sucursales activas de ${brand} en el periodo ${period}. La venta total consolidada asciende a ${formatter.format(t.sales)}, con un cumplimiento promedio del ${(t.compliance * 100).toFixed(1)}%.`;
+    }
+    if (key === "sales-comparison") {
+      const rows = activeBranchRows();
+      const t = totals();
+      const leader = [...rows].sort((a, b) => b.sales - a.sales)[0];
+      return leader
+        ? `El comparativo de desempeno posiciona a ${leader.name} como la unidad lider con ${formatter.format(leader.sales)}, equivalente al ${(leader.sales / Math.max(t.sales, 1) * 100).toFixed(1)}% del total de ${brand} en el periodo analizado.`
+        : `El comparativo muestra la distribucion de venta neta entre las sucursales activas de ${brand} para el periodo ${period}.`;
+    }
+    if (key === "products-grid") {
+      const pt = productTotals();
+      return `El analisis de producto de ${brand} posiciona a ${pt.top.name} como el articulo de mayor rotacion con ${numberFormatter.format(pt.top.total)} unidades. La categoria dominante es ${pt.leadingCategory.name} con ${pt.leadingCategory.value.toFixed(1)}% del mix total. La venta neta de producto en el periodo ${period} asciende a ${formatter.format(pt.sales)}.`;
+    }
+    if (key === "products-table") {
+      const pt = productTotals();
+      const rows = productRows();
+      return `La matriz de producto detalla la distribucion de ${rows.length} referencias activas entre las sucursales de ${brand}. La venta neta consolidada de producto es ${formatter.format(pt.sales)} con ${numberFormatter.format(pt.quantity)} unidades vendidas en el periodo ${period}.`;
+    }
+    if (key === "flow-cards" || key === "flow-charts") {
+      const ft = flowTotals();
+      return ft.peak
+        ? `El analisis de flujo de ${brand} identifica las ${ft.peak.hour}:00 como la franja horaria de mayor concentracion de venta, con ${formatter.format(ft.peak.sale)} generados por ${ft.peak.branch}. La conversion promedio entre sucursales activas es del ${ft.avgConversion.toFixed(0)}% en el periodo ${period}.`
+        : `El analisis de flujo de ventas presenta la distribucion horaria de trafico y conversion por sucursal de ${brand} en el periodo ${period}.`;
+    }
+    if (key === "flow-table") {
+      const ft = flowTotals();
+      return `El plan de accion presenta recomendaciones operativas por sucursal de ${brand} basadas en su comportamiento de flujo, conversion y venta pico en el periodo ${period}. La conversion promedio del sistema es del ${ft.avgConversion.toFixed(0)}%. Cada senal indica la prioridad de intervencion sugerida.`;
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+// ─── Helpers V2 ───────────────────────────────────────────────────────────────
+
+function collectV2PdfBlocks(selectedKeys, moduleKey) {
+  const blocks = [];
+  const content = els.moduleContent;
+
+  const add = (key, getEl) => {
+    if (!selectedKeys.has(key)) return;
+    const el = getEl();
+    if (el) blocks.push({ key, element: el });
+  };
+
+  if (moduleKey === "sales") {
+    if (selectedKeys.has("sales-kpis-alerts")) {
+      if (els.alertStrip.children.length) blocks.push({ key: "sales-alerts", element: els.alertStrip });
+      blocks.push({ key: "sales-kpis-alerts", element: els.kpiGrid });
+    }
+    add("sales-trend",      () => content.querySelector(".trend-panel"));
+    add("sales-waterfall",  () => content.querySelector(".cumulative-panel"));
+    add("sales-scorecards", () => content.querySelector(".score-panel"));
+    add("sales-risk",       () => content.querySelector(".risk-panel"));
+    add("sales-heatmap",    () => content.querySelector("#heatmap")?.closest(".panel"));
+    add("sales-table",      () => content.querySelector(".table-section"));
+    add("sales-comparison", () => content.querySelector("#branchComparisonChart")?.closest(".panel"));
+  }
+
+  if (moduleKey === "products") {
+    if (selectedKeys.has("products-kpis-alerts")) {
+      if (els.alertStrip.children.length) blocks.push({ key: "products-alerts", element: els.alertStrip });
+      blocks.push({ key: "products-kpis-alerts", element: els.kpiGrid });
+    }
+    add("products-grid",  () => content.querySelector(".content-grid.equal"));
+    add("products-table", () => content.querySelector(".table-section"));
+  }
+
+  if (moduleKey === "flow") {
+    if (selectedKeys.has("flow-kpis-alerts")) {
+      if (els.alertStrip.children.length) blocks.push({ key: "flow-alerts", element: els.alertStrip });
+      blocks.push({ key: "flow-kpis-alerts", element: els.kpiGrid });
+    }
+    add("flow-cards",  () => content.querySelector(".flow-cards"));
+    add("flow-charts", () => content.querySelector(".content-grid"));
+    add("flow-table",  () => content.querySelector(".table-section"));
+  }
+
+  return blocks.filter((b) => b.element);
+}
+
+function buildV2PageStage(blocks, pageNum, totalPages) {
+  const stage = document.createElement("div");
+  stage.className = "pdf-v2-stage";
+
+  const header = document.createElement("div");
+  header.className = "pdf-page-header";
+  header.innerHTML = `
+    <span style="color:#22d3ee;font-weight:800;letter-spacing:0.06em;">INDEF</span>
+    <span class="header-sep">|</span>
+    <span>${state.activeBrand}</span>
+    <span class="header-spacer">${formatShortDate(state.dateStart)} – ${formatShortDate(state.dateEnd)}</span>
+    <span class="header-page">Pág. ${pageNum} de ${totalPages}</span>
+  `;
+  stage.appendChild(header);
+
+  const body = document.createElement("div");
+  body.className = "pdf-v2-body";
+
+  blocks.forEach(({ key, element }) => {
+    const clone = element.cloneNode ? element : cloneForPdf(element);
+    if (!clone) return;
+
+    clone.querySelectorAll("input, .segmented, details[open]").forEach((el) => el.remove());
+    clone.querySelectorAll(".scrollable").forEach((el) => {
+      el.classList.remove("scrollable");
+      el.style.overflow = "visible";
+    });
+    clone.querySelectorAll(".chart, .heatmap, .hour-heatmap, .treemap, .ranking-list").forEach((el) => {
+      el.style.overflow = "visible";
+    });
+
+    const description = describeSection(key);
+    if (description) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "pdf-block-wrapper";
+      wrapper.appendChild(clone);
+      const note = document.createElement("p");
+      note.className = "pdf-section-description";
+      note.textContent = description;
+      wrapper.appendChild(note);
+      body.appendChild(wrapper);
+    } else {
+      body.appendChild(clone);
+    }
+  });
+
+  stage.appendChild(body);
+
+  const footer = document.createElement("div");
+  footer.className = "pdf-page-footer";
+  footer.innerHTML = `
+    <span>Sistema JB Holds Command Center</span>
+    <span style="color:#22d3ee;font-weight:700;">INDEF Intelligence Platform</span>
+    <span>Confidencial · Uso Interno</span>
+  `;
+  stage.appendChild(footer);
+
+  document.body.appendChild(stage);
+  return stage;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 boot();

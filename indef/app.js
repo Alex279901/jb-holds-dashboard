@@ -2995,102 +2995,116 @@ async function pdfV3Cover(pdf, pw, ph) {
   c.width = CW; c.height = CH;
   const ctx = c.getContext("2d");
 
-  // Layer 1 — dark base
+  // Layer 1 — dark base (NO brand photos, NO commercial images)
   ctx.fillStyle = "#020617";
   ctx.fillRect(0, 0, CW, CH);
 
-  // Layer 2 — brand photo as cinematic texture only (heavy blur, very dark)
-  try {
-    const img = await new Promise((resolve, reject) => {
-      const el = new Image();
-      el.crossOrigin = "anonymous";
-      el.onload = () => resolve(el);
-      el.onerror = reject;
-      setTimeout(() => reject(), 4000);
-      el.src = brandConfig[state.activeBrand].cover;
-    });
-    const scale = Math.max(CW / img.naturalWidth, CH / img.naturalHeight) * 1.1;
-    const sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
-    ctx.save();
-    ctx.filter = "blur(38px) brightness(0.20) saturate(0.7)";
-    ctx.drawImage(img, (CW - sw) / 2, (CH - sh) / 2, sw, sh);
-    ctx.restore();
-  } catch { /* keep dark base */ }
+  // Layer 2 — abstract corporate grid (command center / data wall aesthetic)
+  const GRID = 120;
+  ctx.strokeStyle = "rgba(34,211,238,0.045)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= CW; x += GRID) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke();
+  }
+  for (let y = 0; y <= CH; y += GRID) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke();
+  }
+  ctx.fillStyle = "rgba(34,211,238,0.07)";
+  for (let x = 0; x <= CW; x += GRID) {
+    for (let y = 0; y <= CH; y += GRID) {
+      ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
 
-  // Layer 3 — radial overlay (matches .hero-overlay from the landing)
-  const rad = ctx.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * 0.65);
-  rad.addColorStop(0, "rgba(2,6,23,0.05)");
-  rad.addColorStop(0.5, "rgba(2,6,23,0.62)");
-  rad.addColorStop(1, "rgba(2,6,23,0.95)");
+  // Layer 3 — radial glow center (like .hero-overlay from the landing)
+  const rad = ctx.createRadialGradient(CW / 2, CH * 0.44, 0, CW / 2, CH * 0.44, CW * 0.65);
+  rad.addColorStop(0, "rgba(34,211,238,0.05)");
+  rad.addColorStop(0.25, "rgba(2,6,23,0.15)");
+  rad.addColorStop(0.65, "rgba(2,6,23,0.72)");
+  rad.addColorStop(1, "rgba(2,6,23,0.96)");
   ctx.fillStyle = rad;
   ctx.fillRect(0, 0, CW, CH);
 
-  // Layer 4 — strong bottom vignette (readable text area)
-  const btm = ctx.createLinearGradient(0, CH * 0.48, 0, CH);
+  // Layer 4 — strong bottom vignette
+  const btm = ctx.createLinearGradient(0, CH * 0.46, 0, CH);
   btm.addColorStop(0, "rgba(2,6,23,0)");
   btm.addColorStop(1, "rgba(2,6,23,0.97)");
   ctx.fillStyle = btm;
   ctx.fillRect(0, 0, CW, CH);
 
-  // Layer 5 — top vignette
-  const top = ctx.createLinearGradient(0, 0, 0, CH * 0.20);
-  top.addColorStop(0, "rgba(2,6,23,0.82)");
-  top.addColorStop(1, "rgba(2,6,23,0)");
-  ctx.fillStyle = top;
+  // Layer 5 — top + side vignettes
+  const topG = ctx.createLinearGradient(0, 0, 0, CH * 0.18);
+  topG.addColorStop(0, "rgba(2,6,23,0.88)");
+  topG.addColorStop(1, "rgba(2,6,23,0)");
+  ctx.fillStyle = topG;
   ctx.fillRect(0, 0, CW, CH);
+
+  const lG = ctx.createLinearGradient(0, 0, CW * 0.22, 0);
+  lG.addColorStop(0, "rgba(2,6,23,0.72)"); lG.addColorStop(1, "rgba(2,6,23,0)");
+  ctx.fillStyle = lG; ctx.fillRect(0, 0, CW, CH);
+
+  const rG = ctx.createLinearGradient(CW * 0.78, 0, CW, 0);
+  rG.addColorStop(0, "rgba(2,6,23,0)"); rG.addColorStop(1, "rgba(2,6,23,0.72)");
+  ctx.fillStyle = rG; ctx.fillRect(0, 0, CW, CH);
 
   const setFont = (size, weight) => { ctx.font = `${weight} ${size}px Inter,system-ui,sans-serif`; };
 
-  // ── HERO ────────────────────────────────────────────────────────────────────
+  // ── HERO ─────────────────────────────────────────────────────────────────────
 
-  // Eyebrow — "CENTRO DE INTELIGENCIA CORPORATIVA"
-  setFont(26, "600");
+  setFont(28, "600");
   ctx.fillStyle = "rgba(195,245,255,0.45)";
   ctx.textAlign = "center";
   try { ctx.letterSpacing = "8px"; } catch {}
-  ctx.fillText("CENTRO DE INTELIGENCIA CORPORATIVA", CW / 2, CH * 0.38);
+  ctx.fillText("CENTRO DE INTELIGENCIA CORPORATIVA", CW / 2, CH * 0.355);
   try { ctx.letterSpacing = "0px"; } catch {}
 
-  // JB HOLDS — massive, protagonist, glow
   setFont(272, "900");
   ctx.textAlign = "center";
-  ctx.shadowColor = "rgba(0,218,243,0.28)";
-  ctx.shadowBlur = 100;
+  ctx.shadowColor = "rgba(0,218,243,0.30)";
+  ctx.shadowBlur = 110;
   ctx.fillStyle = "#dce1fb";
-  ctx.fillText("JB HOLDS", CW / 2, CH * 0.548);
+  ctx.fillText("JB HOLDS", CW / 2, CH * 0.535);
   ctx.shadowBlur = 0;
   ctx.shadowColor = "transparent";
 
-  // Cyan line — matches h-[1px] w-24 bg-primary opacity-50 from the HTML
   ctx.strokeStyle = "rgba(195,245,255,0.50)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(CW / 2 - 96, CH * 0.624);
-  ctx.lineTo(CW / 2 + 96, CH * 0.624);
+  ctx.moveTo(CW / 2 - 96, CH * 0.610);
+  ctx.lineTo(CW / 2 + 96, CH * 0.610);
   ctx.stroke();
 
-  // ── BOTTOM INFO — secondary, discrete, no panel ─────────────────────────────
+  // ── BOTTOM INFO — legible, 2-3× larger than before ───────────────────────────
 
   const branchCount = [...state.activeBranches].length;
   const today = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
 
-  setFont(20, "600");
-  ctx.fillStyle = "rgba(195,245,255,0.36)";
+  setFont(46, "600");
+  ctx.fillStyle = "rgba(195,245,255,0.42)";
   ctx.textAlign = "center";
-  try { ctx.letterSpacing = "5px"; } catch {}
-  ctx.fillText("REPORTE EJECUTIVO CORPORATIVO", CW / 2, CH * 0.800);
+  try { ctx.letterSpacing = "6px"; } catch {}
+  ctx.fillText("REPORTE EJECUTIVO CORPORATIVO", CW / 2, CH * 0.755);
   try { ctx.letterSpacing = "0px"; } catch {}
 
-  setFont(24, "400");
-  ctx.fillStyle = "rgba(220,225,251,0.62)";
+  setFont(64, "700");
+  ctx.fillStyle = "rgba(220,225,251,0.90)";
   ctx.textAlign = "center";
-  const infoLine = `${state.activeBrand}  ·  ${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}  ·  ${branchCount} sucursal${branchCount !== 1 ? "es" : ""}  ·  ${today}`;
-  ctx.fillText(infoLine, CW / 2, CH * 0.854);
+  ctx.fillText(`${state.activeBrand}`, CW / 2, CH * 0.822);
 
-  setFont(18, "400");
-  ctx.fillStyle = "rgba(186,201,204,0.34)";
+  setFont(50, "400");
+  ctx.fillStyle = "rgba(220,225,251,0.65)";
   ctx.textAlign = "center";
-  ctx.fillText("INDEF Intelligence Platform  ·  Confidencial · Uso Interno", CW / 2, CH * 0.905);
+  ctx.fillText(`${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}  ·  ${branchCount} sucursal${branchCount !== 1 ? "es" : ""}`, CW / 2, CH * 0.876);
+
+  setFont(46, "400");
+  ctx.fillStyle = "rgba(220,225,251,0.55)";
+  ctx.textAlign = "center";
+  ctx.fillText(`${today}`, CW / 2, CH * 0.922);
+
+  setFont(36, "400");
+  ctx.fillStyle = "rgba(186,201,204,0.38)";
+  ctx.textAlign = "center";
+  ctx.fillText("INDEF Intelligence Platform  ·  Confidencial · Uso Interno", CW / 2, CH * 0.962);
 
   pdf.addImage(c.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, pw, ph);
 }

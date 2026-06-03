@@ -2125,7 +2125,7 @@ async function buildExportPdf(selectedKeys) {
     for (let i = 0; i < pages.length; i++) {
       showToast(`Pagina ${i + 2} de ${total}...`);
       pdf.addPage("a4", "landscape");
-      pages[i].fn(pdf, pw, ph, i + 2, total);
+      await pages[i].fn(pdf, pw, ph, i + 2, total);
     }
 
     const fileName = slugify(`INDEF Reporte Ejecutivo ${state.activeBrand} ${state.dateStart} ${state.dateEnd}`);
@@ -2990,100 +2990,167 @@ function v3iFlow() {
 // ── V3 Page builders ──────────────────────────────────────────────────────────
 
 async function pdfV3Cover(pdf, pw, ph) {
-  let hasPhoto = false;
+  // Canvas dimensions: A4 landscape ratio (297/210 = 1.4143) at 2× quality
+  const CW = 3360, CH = 2376;
+  const c = document.createElement("canvas");
+  c.width = CW; c.height = CH;
+  const ctx = c.getContext("2d");
+
+  // ── Layer 1: Dark base ──────────────────────────────────────────────────────
+  ctx.fillStyle = "#020617";
+  ctx.fillRect(0, 0, CW, CH);
+
+  // ── Layer 2: Brand photo — blurred & darkened ────────────────────────────────
   try {
     const img = await new Promise((resolve, reject) => {
       const el = new Image();
       el.crossOrigin = "anonymous";
       el.onload = () => resolve(el);
       el.onerror = reject;
-      setTimeout(() => reject(new Error("timeout")), 5000);
+      setTimeout(() => reject(), 4000);
       el.src = brandConfig[state.activeBrand].cover;
     });
-    const c = document.createElement("canvas");
-    c.width = 1920; c.height = 1080;
-    c.getContext("2d").drawImage(img, 0, 0, 1920, 1080);
-    pdf.addImage(c.toDataURL("image/jpeg", 0.85), "JPEG", 0, 0, pw, ph);
-    hasPhoto = true;
-  } catch {
-    v3rgb(pdf, V3C.bg);
-    pdf.rect(0, 0, pw, ph, "F");
-  }
+    const scale = Math.max(CW / img.naturalWidth, CH / img.naturalHeight) * 1.08;
+    const sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
+    const sx = (CW - sw) / 2, sy = (CH - sh) / 2;
+    ctx.save();
+    ctx.filter = "blur(22px) brightness(0.42) saturate(1.1)";
+    ctx.drawImage(img, sx, sy, sw, sh);
+    ctx.restore();
+  } catch { /* keep dark base */ }
 
-  v3rgb(pdf, v3alpha(V3C.bg, hasPhoto ? 0.76 : 1));
-  pdf.rect(0, 0, pw, ph, "F");
+  // ── Layer 3: Radial gradient overlay (matches the real landing) ──────────────
+  const radGrad = ctx.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * 0.62);
+  radGrad.addColorStop(0, "rgba(2,6,23,0.10)");
+  radGrad.addColorStop(0.55, "rgba(2,6,23,0.65)");
+  radGrad.addColorStop(1, "rgba(2,6,23,0.92)");
+  ctx.fillStyle = radGrad;
+  ctx.fillRect(0, 0, CW, CH);
 
-  // Main block — large and dominant (89% × 86% of page)
-  const bx = 14, by = 14, bw = 255, bh = 178;
-  v3rgb(pdf, v3alpha(V3C.panel, 0.96));
-  pdf.roundedRect(bx, by, bw, bh, 3, 3, "F");
-  v3rgb(pdf, V3C.cyan);
-  pdf.roundedRect(bx, by, 3, bh, 1.5, 1.5, "F");
+  // ── Layer 4: Bottom & top vignettes ──────────────────────────────────────────
+  const btmGrad = ctx.createLinearGradient(0, CH * 0.55, 0, CH);
+  btmGrad.addColorStop(0, "rgba(2,6,23,0)");
+  btmGrad.addColorStop(1, "rgba(2,6,23,0.95)");
+  ctx.fillStyle = btmGrad;
+  ctx.fillRect(0, 0, CW, CH);
 
-  const tx = bx + 13;
-  let ty = by + 13;
+  const topGrad = ctx.createLinearGradient(0, 0, 0, CH * 0.25);
+  topGrad.addColorStop(0, "rgba(2,6,23,0.75)");
+  topGrad.addColorStop(1, "rgba(2,6,23,0)");
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, CW, CH);
 
-  v3font(pdf, 7, "bold");
-  v3rgb(pdf, V3C.cyan, "text");
-  pdf.text("INDEF INTELLIGENCE PLATFORM", tx, ty, { baseline: "top" });
-  ty += 9;
+  // ── Typography helpers ────────────────────────────────────────────────────────
+  const setFont = (size, weight, family = "Inter,system-ui,sans-serif") => {
+    ctx.font = `${weight} ${size}px ${family}`;
+  };
 
-  v3font(pdf, 46, "bold");
-  v3rgb(pdf, V3C.ink, "text");
-  pdf.text("JB HOLDS", tx, ty, { baseline: "top" });
-  ty += 19;
+  // ── Layer 5: Hero text — replicating the real landing ────────────────────────
 
-  v3font(pdf, 9, "normal");
-  v3rgb(pdf, V3C.cyan, "text");
-  pdf.text("Corporate Intelligence Platform", tx, ty, { baseline: "top" });
-  ty += 10;
+  // "Corporate Intelligence Operating System" eyebrow
+  setFont(26, "600");
+  ctx.fillStyle = "rgba(195,245,255,0.42)";
+  ctx.textAlign = "center";
+  ctx.fillText("CORPORATE INTELLIGENCE OPERATING SYSTEM", CW / 2, CH * 0.33);
 
-  v3rule(pdf, tx, ty, bw - 23);
-  ty += 9;
+  // "JB HOLDS" — massive, glow effect
+  setFont(240, "900");
+  ctx.textAlign = "center";
+  ctx.shadowColor = "rgba(0,218,243,0.30)";
+  ctx.shadowBlur = 90;
+  ctx.fillStyle = "#dce1fb";
+  ctx.fillText("JB HOLDS", CW / 2, CH * 0.53);
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = "transparent";
 
-  v3font(pdf, 14, "bold");
-  v3rgb(pdf, V3C.soft, "text");
-  pdf.text("REPORTE EJECUTIVO CORPORATIVO", tx, ty, { baseline: "top" });
-  ty += 13;
+  // "JBBlue Group · INDEF · Franquiciándote"
+  setFont(28, "400");
+  ctx.fillStyle = "rgba(220,225,251,0.42)";
+  ctx.textAlign = "center";
+  ctx.fillText("JBBlue Group  ·  INDEF  ·  Franquiciándote", CW / 2, CH * 0.62);
 
+  // Thin divider line (matches h-px w-20 in the landing)
+  ctx.strokeStyle = "rgba(195,245,255,0.28)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(CW / 2 - 80, CH * 0.675);
+  ctx.lineTo(CW / 2 + 80, CH * 0.675);
+  ctx.stroke();
+
+  // ── Layer 6: Report info glass panel ────────────────────────────────────────
+  const pX = CW / 2 - 720, pY = CH * 0.72, pW = 1440, pH = 370, pR = 22;
+
+  // Panel fill
+  ctx.fillStyle = "rgba(12,19,36,0.74)";
+  ctx.beginPath();
+  ctx.roundRect(pX, pY, pW, pH, pR);
+  ctx.fill();
+
+  // Panel border
+  ctx.strokeStyle = "rgba(255,255,255,0.055)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Top cyan accent
+  ctx.fillStyle = "rgba(0,218,243,0.65)";
+  ctx.beginPath();
+  ctx.roundRect(pX, pY, pW, 3, [pR, pR, 0, 0]);
+  ctx.fill();
+
+  // "Reporte Ejecutivo Corporativo"
+  setFont(22, "600");
+  ctx.fillStyle = "rgba(195,245,255,0.52)";
+  ctx.textAlign = "center";
+  ctx.fillText("REPORTE EJECUTIVO CORPORATIVO", CW / 2, pY + 48);
+
+  // Meta info — 2-column grid
   const branchCount = [...state.activeBranches].length;
   const today = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
-  [
-    ["Marca",       state.activeBrand],
-    ["Periodo",     `${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}`],
-    ["Sucursales",  `${branchCount} activa${branchCount !== 1 ? "s" : ""}`],
-    ["Fecha",       today],
-  ].forEach(([label, value]) => {
-    v3font(pdf, 7, "bold");
-    v3rgb(pdf, V3C.muted, "text");
-    pdf.text(`${label.toUpperCase()}:`, tx, ty, { baseline: "top" });
-    v3font(pdf, 8.5, "bold");
-    v3rgb(pdf, V3C.ink, "text");
-    pdf.text(value, tx + 30, ty, { baseline: "top" });
-    ty += 8;
+  const meta = [
+    ["MARCA",        state.activeBrand],
+    ["PERIODO",      `${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}`],
+    ["SUCURSALES",   `${branchCount} activa${branchCount !== 1 ? "s" : ""}`],
+    ["FECHA",        today],
+  ];
+  const colX = [pX + 110, pX + pW / 2 + 60];
+  meta.forEach(([label, value], idx) => {
+    const mx = colX[idx % 2];
+    const my = pY + 90 + Math.floor(idx / 2) * 88;
+    setFont(18, "600");
+    ctx.fillStyle = "rgba(186,201,204,0.46)";
+    ctx.textAlign = "left";
+    ctx.fillText(label, mx, my);
+    setFont(28, "700");
+    ctx.fillStyle = "#dce1fb";
+    ctx.fillText(value, mx, my + 38);
   });
 
-  ty += 4;
-  v3rule(pdf, tx, ty, bw - 23);
-  ty += 8;
+  // Panel footer: INDEF · Confidencial
+  setFont(22, "700");
+  ctx.fillStyle = "rgba(0,218,243,0.62)";
+  ctx.textAlign = "left";
+  ctx.fillText("INDEF Intelligence Platform", pX + 60, pY + pH - 32);
 
-  v3font(pdf, 7, "bold");
-  v3rgb(pdf, V3C.muted, "text");
-  pdf.text("PREPARED FOR", tx, ty, { baseline: "top" });
-  ty += 5.5;
+  setFont(20, "400");
+  ctx.fillStyle = "rgba(220,225,251,0.35)";
+  ctx.textAlign = "right";
+  ctx.fillText("Confidencial · Uso Interno", pX + pW - 60, pY + pH - 32);
 
-  v3font(pdf, 9, "bold");
-  v3rgb(pdf, V3C.ink, "text");
-  pdf.text("Dirección General", tx, ty, { baseline: "top" });
-  ty += 7;
+  // ── Layer 7: INDEF logo top-right ───────────────────────────────────────────
+  try {
+    const logo = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      setTimeout(() => reject(), 2000);
+      el.src = "assets/logo-blanco.png";
+    });
+    ctx.globalAlpha = 0.88;
+    ctx.drawImage(logo, CW - 200, 72, 150, 60);
+    ctx.globalAlpha = 1;
+  } catch { /* logo optional */ }
 
-  v3font(pdf, 8, "bold");
-  v3rgb(pdf, V3C.cyan, "text");
-  pdf.text("INDEF Intelligence Platform", tx, ty, { baseline: "top" });
-
-  v3font(pdf, 7, "normal");
-  v3rgb(pdf, V3C.muted, "text");
-  pdf.text("Confidencial · Uso Interno", bx + bw / 2, by + bh - 7, { align: "center", baseline: "top" });
+  pdf.addImage(c.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, pw, ph);
 }
 
 function pdfV3SalesKpis(pdf, pw, ph, pn, total) {
@@ -3275,40 +3342,107 @@ function pdfV3ProductKpis(pdf, pw, ph, pn, total) {
   if (insightH > 18) v3insight(pdf, v3iProducts(), cx, afterAlerts + 6, cw, insightH);
 }
 
-function pdfV3Products(pdf, pw, ph, pn, total) {
+function v3iProductsSpecific() {
+  const products = productRows();
+  const pt = productTotals();
+  if (!products.length) return [{ type: "body", text: "Sin datos de producto en el periodo." }];
+  const sorted = [...products].sort((a, b) => b.total - a.total);
+  const top = sorted[0];
+  const topShare = ((top.total / Math.max(pt.quantity, 1)) * 100).toFixed(1);
+  const withVol = sorted.filter((p) => p.total > 0);
+  const bottom = withVol.length ? withVol[withVol.length - 1] : null;
+  const cats = categoryBreakdown();
+  const top3 = sorted.slice(0, 3).reduce((s, p) => s + p.total, 0);
+  const top3Share = ((top3 / Math.max(pt.quantity, 1)) * 100).toFixed(0);
+  const blocks = [
+    { type: "eyebrow", text: "Producto líder" },
+    { type: "value", text: top.name.slice(0, 22), sub: `${numberFormatter.format(top.total)} uds. · ${topShare}% del volumen` },
+    { type: "divider" },
+  ];
+  if (cats.length) {
+    blocks.push({ type: "eyebrow", text: "Mix de categorías" });
+    cats.slice(0, 5).forEach((cat) => blocks.push({
+      type: "metric",
+      label: cat.name.slice(0, 20),
+      value: `${cat.value.toFixed(1)}%`,
+      color: cat.value > 25 ? V3C.green : cat.value > 12 ? V3C.blue : V3C.muted,
+    }));
+    blocks.push({ type: "divider" });
+  }
+  blocks.push({ type: "metric", label: "Top 3 concentran", value: `${top3Share}% del volumen` });
+  blocks.push({ type: "metric", label: "Referencias activas", value: `${products.length}` });
+  blocks.push({ type: "divider" });
+  if (bottom && bottom.total <= 5) {
+    blocks.push({ type: "body", text: `${bottom.name.slice(0, 28)} registra ${numberFormatter.format(bottom.total)} unidad${bottom.total !== 1 ? "es" : ""} — revisar exhibición, rotación o permanencia en carta.` });
+  }
+  blocks.push({ type: "body", text: `${top.name.slice(0, 25)} lidera con ${numberFormatter.format(top.total)} unidades (${topShare}% del total).${cats[0] ? ` ${cats[0].name} concentra ${cats[0].value.toFixed(1)}% del mix.${cats[1] ? ` ${cats[1].name} representa ${cats[1].value.toFixed(1)}%.` : ""}` : ""}` });
+  return blocks;
+}
+
+async function pdfV3Products(pdf, pw, ph, pn, total) {
   v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
   const cx = 10, cy = 13, cw = pw - 20;
   v3eyebrow(pdf, "Productos · Ranking y mix", cx, cy);
-  v3heading(pdf, "Productos Líderes y Categorías", cx, cy + 4.5);
+  v3heading(pdf, "Productos Líderes y Mix de Categorías", cx, cy + 4.5);
   const contentY = cy + 21, contentH = ph - 7 - contentY - 2;
-  const colW = (cw - 6) / 3;
-  const hexToRgb = (hex) => { const m = hex && hex.match(/\w\w/g); return m ? m.map((h) => parseInt(h, 16)) : V3C.blue; };
 
-  // Top products
-  v3barChart(pdf, productRows().slice(0, 10).map((p) => ({ value: p.total, label: compactName(p.name) })),
-    cx, contentY, colW, contentH, { colorFn: (_, i) => i < 3 ? V3C.green : V3C.blue });
+  // Capture the real products grid from the DOM at natural proportions
+  const savedModule = state.activeModule, savedSearch = state.tableSearch;
+  let captureCanvas = null;
+  try {
+    state.activeModule = "products";
+    state.tableSearch = "";
+    renderAll();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const grid = els.moduleContent.querySelector(".content-grid.equal");
+    if (grid && window.html2canvas) {
+      captureCanvas = await window.html2canvas(grid, {
+        backgroundColor: "#0d131c",
+        scale: 1.8,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        windowWidth: grid.scrollWidth,
+        windowHeight: grid.scrollHeight,
+        onclone: (doc) => {
+          doc.querySelectorAll("input, .segmented, details, .category-picker").forEach((el) => el.remove());
+          doc.querySelectorAll(".scrollable").forEach((el) => {
+            el.classList.remove("scrollable");
+            el.style.overflow = "visible";
+          });
+          doc.querySelectorAll(".treemap, .chart, .ranking-list, .donut-wrap").forEach((el) => {
+            el.style.overflow = "visible";
+          });
+        },
+      });
+    }
+  } catch (err) {
+    console.warn("[V3 Products]", err);
+  } finally {
+    state.activeModule = savedModule;
+    state.tableSearch = savedSearch;
+    renderAll();
+  }
 
-  // Category breakdown
-  const catX = cx + colW + 3;
-  v3eyebrow(pdf, "Mix de categorías", catX, contentY - 0.5);
-  categoryBreakdown().slice(0, 8).forEach((cat, i) => {
-    const iy = contentY + 5 + i * 15;
-    if (iy + 12 > contentY + contentH) return;
-    v3rgb(pdf, V3C.panel);
-    pdf.roundedRect(catX, iy, colW, 13, 1.5, 1.5, "F");
-    v3font(pdf, 6.5, "bold");
-    v3rgb(pdf, V3C.ink, "text");
-    pdf.text(cat.name.slice(0, 20), catX + 3, iy + 3.5, { baseline: "top" });
-    v3font(pdf, 6, "bold");
-    v3rgb(pdf, V3C.soft, "text");
-    pdf.text(`${cat.value.toFixed(1)}%`, catX + colW - 2, iy + 3.5, { align: "right", baseline: "top" });
-    v3rgb(pdf, V3C.panel3);
-    pdf.roundedRect(catX + 2, iy + 7.5, colW - 4, 2.5, 1, 1, "F");
-    v3rgb(pdf, hexToRgb(cat.color));
-    pdf.roundedRect(catX + 2, iy + 7.5, (colW - 4) * (cat.value / 100), 2.5, 1, 1, "F");
-  });
+  if (captureCanvas) {
+    // Natural proportions — NO stretch, NO fill-to-page
+    const aspect = captureCanvas.height / captureCanvas.width;
+    const maxW = cw * 0.62;
+    const maxH = contentH;
+    let imgW = maxW, imgH = imgW * aspect;
+    if (imgH > maxH) { imgH = maxH; imgW = imgH / aspect; }
 
-  v3insight(pdf, v3iProducts(), cx + 2 * colW + 6, contentY, colW - 2, contentH);
+    pdf.addImage(captureCanvas.toDataURL("image/png"), "PNG", cx, contentY, imgW, imgH);
+
+    const insightX = cx + imgW + 4;
+    const insightW = cw - imgW - 4;
+    if (insightW >= 28) {
+      v3insight(pdf, v3iProductsSpecific(), insightX, contentY, insightW, Math.min(imgH, contentH));
+    }
+  } else {
+    // Fallback: pure jsPDF insight only
+    v3insight(pdf, v3iProductsSpecific(), cx, contentY, cw, contentH);
+  }
 }
 
 function pdfV3ProductsTable(pdf, pw, ph, pn, total) {

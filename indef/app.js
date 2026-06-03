@@ -2154,7 +2154,7 @@ async function buildExportPdf(selectedKeys) {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const canvas = await renderModuleToBuffer(stage);
-      pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pageWidth, pageHeight);
       stage.remove();
     }
 
@@ -2180,7 +2180,7 @@ async function renderModuleToBuffer(element) {
   if (!window.html2canvas) throw new Error("html2canvas not loaded");
   return window.html2canvas(element, {
     backgroundColor: "#070a0f",
-    scale: 1.55,
+    scale: 2.5,
     useCORS: true,
     allowTaint: true,
     logging: false,
@@ -2276,7 +2276,7 @@ async function createPdfCover(pdf, pageWidth, pageHeight) {
 
   const canvas = await window.html2canvas(cover, {
     backgroundColor: "#05080d",
-    scale: 1.4,
+    scale: 2.0,
     useCORS: true,
     allowTaint: true,
     logging: false,
@@ -2285,7 +2285,7 @@ async function createPdfCover(pdf, pageWidth, pageHeight) {
   });
   cover.remove();
 
-  pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+  pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pageWidth, pageHeight);
 }
 
 // ─── 5. calculateDensity(element) ────────────────────────────────────────────

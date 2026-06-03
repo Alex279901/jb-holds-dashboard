@@ -2990,17 +2990,16 @@ function v3iFlow() {
 // ── V3 Page builders ──────────────────────────────────────────────────────────
 
 async function pdfV3Cover(pdf, pw, ph) {
-  // Canvas dimensions: A4 landscape ratio (297/210 = 1.4143) at 2× quality
   const CW = 3360, CH = 2376;
   const c = document.createElement("canvas");
   c.width = CW; c.height = CH;
   const ctx = c.getContext("2d");
 
-  // ── Layer 1: Dark base ──────────────────────────────────────────────────────
+  // Layer 1 — dark base
   ctx.fillStyle = "#020617";
   ctx.fillRect(0, 0, CW, CH);
 
-  // ── Layer 2: Brand photo — blurred & darkened ────────────────────────────────
+  // Layer 2 — brand photo as cinematic texture only (heavy blur, very dark)
   try {
     const img = await new Promise((resolve, reject) => {
       const el = new Image();
@@ -3010,145 +3009,88 @@ async function pdfV3Cover(pdf, pw, ph) {
       setTimeout(() => reject(), 4000);
       el.src = brandConfig[state.activeBrand].cover;
     });
-    const scale = Math.max(CW / img.naturalWidth, CH / img.naturalHeight) * 1.08;
+    const scale = Math.max(CW / img.naturalWidth, CH / img.naturalHeight) * 1.1;
     const sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
-    const sx = (CW - sw) / 2, sy = (CH - sh) / 2;
     ctx.save();
-    ctx.filter = "blur(22px) brightness(0.42) saturate(1.1)";
-    ctx.drawImage(img, sx, sy, sw, sh);
+    ctx.filter = "blur(38px) brightness(0.20) saturate(0.7)";
+    ctx.drawImage(img, (CW - sw) / 2, (CH - sh) / 2, sw, sh);
     ctx.restore();
   } catch { /* keep dark base */ }
 
-  // ── Layer 3: Radial gradient overlay (matches the real landing) ──────────────
-  const radGrad = ctx.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * 0.62);
-  radGrad.addColorStop(0, "rgba(2,6,23,0.10)");
-  radGrad.addColorStop(0.55, "rgba(2,6,23,0.65)");
-  radGrad.addColorStop(1, "rgba(2,6,23,0.92)");
-  ctx.fillStyle = radGrad;
+  // Layer 3 — radial overlay (matches .hero-overlay from the landing)
+  const rad = ctx.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * 0.65);
+  rad.addColorStop(0, "rgba(2,6,23,0.05)");
+  rad.addColorStop(0.5, "rgba(2,6,23,0.62)");
+  rad.addColorStop(1, "rgba(2,6,23,0.95)");
+  ctx.fillStyle = rad;
   ctx.fillRect(0, 0, CW, CH);
 
-  // ── Layer 4: Bottom & top vignettes ──────────────────────────────────────────
-  const btmGrad = ctx.createLinearGradient(0, CH * 0.55, 0, CH);
-  btmGrad.addColorStop(0, "rgba(2,6,23,0)");
-  btmGrad.addColorStop(1, "rgba(2,6,23,0.95)");
-  ctx.fillStyle = btmGrad;
+  // Layer 4 — strong bottom vignette (readable text area)
+  const btm = ctx.createLinearGradient(0, CH * 0.48, 0, CH);
+  btm.addColorStop(0, "rgba(2,6,23,0)");
+  btm.addColorStop(1, "rgba(2,6,23,0.97)");
+  ctx.fillStyle = btm;
   ctx.fillRect(0, 0, CW, CH);
 
-  const topGrad = ctx.createLinearGradient(0, 0, 0, CH * 0.25);
-  topGrad.addColorStop(0, "rgba(2,6,23,0.75)");
-  topGrad.addColorStop(1, "rgba(2,6,23,0)");
-  ctx.fillStyle = topGrad;
+  // Layer 5 — top vignette
+  const top = ctx.createLinearGradient(0, 0, 0, CH * 0.20);
+  top.addColorStop(0, "rgba(2,6,23,0.82)");
+  top.addColorStop(1, "rgba(2,6,23,0)");
+  ctx.fillStyle = top;
   ctx.fillRect(0, 0, CW, CH);
 
-  // ── Typography helpers ────────────────────────────────────────────────────────
-  const setFont = (size, weight, family = "Inter,system-ui,sans-serif") => {
-    ctx.font = `${weight} ${size}px ${family}`;
-  };
+  const setFont = (size, weight) => { ctx.font = `${weight} ${size}px Inter,system-ui,sans-serif`; };
 
-  // ── Layer 5: Hero text — replicating the real landing ────────────────────────
+  // ── HERO ────────────────────────────────────────────────────────────────────
 
-  // "Corporate Intelligence Operating System" eyebrow
+  // Eyebrow — "CENTRO DE INTELIGENCIA CORPORATIVA"
   setFont(26, "600");
-  ctx.fillStyle = "rgba(195,245,255,0.42)";
+  ctx.fillStyle = "rgba(195,245,255,0.45)";
   ctx.textAlign = "center";
-  ctx.fillText("CORPORATE INTELLIGENCE OPERATING SYSTEM", CW / 2, CH * 0.33);
+  try { ctx.letterSpacing = "8px"; } catch {}
+  ctx.fillText("CENTRO DE INTELIGENCIA CORPORATIVA", CW / 2, CH * 0.38);
+  try { ctx.letterSpacing = "0px"; } catch {}
 
-  // "JB HOLDS" — massive, glow effect
-  setFont(240, "900");
+  // JB HOLDS — massive, protagonist, glow
+  setFont(272, "900");
   ctx.textAlign = "center";
-  ctx.shadowColor = "rgba(0,218,243,0.30)";
-  ctx.shadowBlur = 90;
+  ctx.shadowColor = "rgba(0,218,243,0.28)";
+  ctx.shadowBlur = 100;
   ctx.fillStyle = "#dce1fb";
-  ctx.fillText("JB HOLDS", CW / 2, CH * 0.53);
+  ctx.fillText("JB HOLDS", CW / 2, CH * 0.548);
   ctx.shadowBlur = 0;
   ctx.shadowColor = "transparent";
 
-  // "JBBlue Group · INDEF · Franquiciándote"
-  setFont(28, "400");
-  ctx.fillStyle = "rgba(220,225,251,0.42)";
-  ctx.textAlign = "center";
-  ctx.fillText("JBBlue Group  ·  INDEF  ·  Franquiciándote", CW / 2, CH * 0.62);
-
-  // Thin divider line (matches h-px w-20 in the landing)
-  ctx.strokeStyle = "rgba(195,245,255,0.28)";
+  // Cyan line — matches h-[1px] w-24 bg-primary opacity-50 from the HTML
+  ctx.strokeStyle = "rgba(195,245,255,0.50)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(CW / 2 - 80, CH * 0.675);
-  ctx.lineTo(CW / 2 + 80, CH * 0.675);
+  ctx.moveTo(CW / 2 - 96, CH * 0.624);
+  ctx.lineTo(CW / 2 + 96, CH * 0.624);
   ctx.stroke();
 
-  // ── Layer 6: Report info glass panel ────────────────────────────────────────
-  const pX = CW / 2 - 720, pY = CH * 0.72, pW = 1440, pH = 370, pR = 22;
+  // ── BOTTOM INFO — secondary, discrete, no panel ─────────────────────────────
 
-  // Panel fill
-  ctx.fillStyle = "rgba(12,19,36,0.74)";
-  ctx.beginPath();
-  ctx.roundRect(pX, pY, pW, pH, pR);
-  ctx.fill();
-
-  // Panel border
-  ctx.strokeStyle = "rgba(255,255,255,0.055)";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Top cyan accent
-  ctx.fillStyle = "rgba(0,218,243,0.65)";
-  ctx.beginPath();
-  ctx.roundRect(pX, pY, pW, 3, [pR, pR, 0, 0]);
-  ctx.fill();
-
-  // "Reporte Ejecutivo Corporativo"
-  setFont(22, "600");
-  ctx.fillStyle = "rgba(195,245,255,0.52)";
-  ctx.textAlign = "center";
-  ctx.fillText("REPORTE EJECUTIVO CORPORATIVO", CW / 2, pY + 48);
-
-  // Meta info — 2-column grid
   const branchCount = [...state.activeBranches].length;
   const today = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
-  const meta = [
-    ["MARCA",        state.activeBrand],
-    ["PERIODO",      `${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}`],
-    ["SUCURSALES",   `${branchCount} activa${branchCount !== 1 ? "s" : ""}`],
-    ["FECHA",        today],
-  ];
-  const colX = [pX + 110, pX + pW / 2 + 60];
-  meta.forEach(([label, value], idx) => {
-    const mx = colX[idx % 2];
-    const my = pY + 90 + Math.floor(idx / 2) * 88;
-    setFont(18, "600");
-    ctx.fillStyle = "rgba(186,201,204,0.46)";
-    ctx.textAlign = "left";
-    ctx.fillText(label, mx, my);
-    setFont(28, "700");
-    ctx.fillStyle = "#dce1fb";
-    ctx.fillText(value, mx, my + 38);
-  });
 
-  // Panel footer: INDEF · Confidencial
-  setFont(22, "700");
-  ctx.fillStyle = "rgba(0,218,243,0.62)";
-  ctx.textAlign = "left";
-  ctx.fillText("INDEF Intelligence Platform", pX + 60, pY + pH - 32);
+  setFont(20, "600");
+  ctx.fillStyle = "rgba(195,245,255,0.36)";
+  ctx.textAlign = "center";
+  try { ctx.letterSpacing = "5px"; } catch {}
+  ctx.fillText("REPORTE EJECUTIVO CORPORATIVO", CW / 2, CH * 0.800);
+  try { ctx.letterSpacing = "0px"; } catch {}
 
-  setFont(20, "400");
-  ctx.fillStyle = "rgba(220,225,251,0.35)";
-  ctx.textAlign = "right";
-  ctx.fillText("Confidencial · Uso Interno", pX + pW - 60, pY + pH - 32);
+  setFont(24, "400");
+  ctx.fillStyle = "rgba(220,225,251,0.62)";
+  ctx.textAlign = "center";
+  const infoLine = `${state.activeBrand}  ·  ${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}  ·  ${branchCount} sucursal${branchCount !== 1 ? "es" : ""}  ·  ${today}`;
+  ctx.fillText(infoLine, CW / 2, CH * 0.854);
 
-  // ── Layer 7: INDEF logo top-right ───────────────────────────────────────────
-  try {
-    const logo = await new Promise((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = reject;
-      setTimeout(() => reject(), 2000);
-      el.src = "assets/logo-blanco.png";
-    });
-    ctx.globalAlpha = 0.88;
-    ctx.drawImage(logo, CW - 200, 72, 150, 60);
-    ctx.globalAlpha = 1;
-  } catch { /* logo optional */ }
+  setFont(18, "400");
+  ctx.fillStyle = "rgba(186,201,204,0.34)";
+  ctx.textAlign = "center";
+  ctx.fillText("INDEF Intelligence Platform  ·  Confidencial · Uso Interno", CW / 2, CH * 0.905);
 
   pdf.addImage(c.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, pw, ph);
 }

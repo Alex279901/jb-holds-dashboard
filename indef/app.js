@@ -2098,78 +2098,44 @@ function openExportModal() {
 // ─── 2. buildExportPdf(selectedKeys) ─────────────────────────────────────────
 
 async function buildExportPdf(selectedKeys) {
-  if (!window.html2canvas || !window.jspdf?.jsPDF) {
-    showToast("No se pudo cargar el generador PDF");
-    throw new Error("PDF dependencies not loaded");
+  if (!window.jspdf?.jsPDF) {
+    showToast("No se pudo cargar jsPDF");
+    throw new Error("jsPDF not loaded");
   }
-
   const btn = document.querySelector("#generateReportBtn");
   if (btn) { btn.disabled = true; btn.textContent = "Generando..."; }
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-
-  const savedModule = state.activeModule;
-  const savedSearch = state.tableSearch;
+  const pw = pdf.internal.pageSize.getWidth();
+  const ph = pdf.internal.pageSize.getHeight();
 
   try {
     showToast("Generando portada...");
-    await createPdfCover(pdf, pageWidth, pageHeight);
+    await pdfV3Cover(pdf, pw, ph);
 
-    const allPageGroups = [];
-
-    for (const { module: moduleKey, items } of EXPORT_SECTION_DEFS) {
-      const hasAny = items.some((item) => selectedKeys.has(item.key));
-      if (!hasAny) continue;
-
-      state.activeModule = moduleKey;
-      state.tableSearch = "";
-      renderAll();
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-      const blocks = collectV2PdfBlocks(selectedKeys, moduleKey);
-      blocks.forEach((b) => { b.density = calculateDensity(b.element); });
-
-      const pages = planPages(blocks);
-
-      for (const pageBlocks of pages) {
-        const cloned = pageBlocks
-          .map((b) => ({ key: b.key, element: cloneForPdf(b.element) }))
-          .filter((b) => b.element);
-        if (cloned.length) allPageGroups.push(cloned);
+    const pages = [];
+    for (const { items } of EXPORT_SECTION_DEFS) {
+      for (const { key } of items) {
+        if (selectedKeys.has(key) && V3_SECTION_MAP[key]) pages.push({ key, fn: V3_SECTION_MAP[key] });
       }
     }
 
-    const totalPages = allPageGroups.length + 1;
-
-    for (let i = 0; i < allPageGroups.length; i++) {
-      const pageNum = i + 2;
-      showToast(`Generando pagina ${pageNum} de ${totalPages}...`);
-
+    const total = pages.length + 1;
+    for (let i = 0; i < pages.length; i++) {
+      showToast(`Pagina ${i + 2} de ${total}...`);
       pdf.addPage("a4", "landscape");
-      const stage = buildV2PageStage(allPageGroups[i], pageNum, totalPages);
-      await waitForPdfAssets(stage);
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-      const canvas = await renderModuleToBuffer(stage);
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pageWidth, pageHeight);
-      stage.remove();
+      pages[i].fn(pdf, pw, ph, i + 2, total);
     }
 
     const fileName = slugify(`INDEF Reporte Ejecutivo ${state.activeBrand} ${state.dateStart} ${state.dateEnd}`);
     pdf.save(`${fileName}.pdf`);
     showToast("Reporte Ejecutivo descargado");
-
   } catch (error) {
-    console.error("[PDF V2]", error);
+    console.error("[PDF V3]", error);
     showToast("No se pudo generar el reporte");
     throw error;
   } finally {
-    state.activeModule = savedModule;
-    state.tableSearch = savedSearch;
-    renderAll();
     if (btn) { btn.disabled = false; btn.textContent = "Generar Reporte Ejecutivo"; }
   }
 }
@@ -2526,6 +2492,946 @@ function buildV2PageStage(blocks, pageNum, totalPages) {
   document.body.appendChild(stage);
   return stage;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF EXPORT ENGINE V3 — Executive Report · pure jsPDF, zero html2canvas
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── V3 Color palette ──────────────────────────────────────────────────────────
+
+const V3C = {
+  bg:     [7, 10, 15],
+  panel:  [13, 19, 28],
+  panel2: [17, 26, 37],
+  panel3: [22, 33, 48],
+  line:   [169, 184, 204],
+  ink:    [244, 247, 251],
+  muted:  [143, 155, 173],
+  soft:   [200, 210, 223],
+  green:  [24, 199, 122],
+  red:    [255, 93, 85],
+  amber:  [242, 184, 75],
+  blue:   [47, 140, 255],
+  cyan:   [34, 211, 238],
+};
+
+function v3alpha(color, a, bg = V3C.bg) {
+  return color.map((c, i) => Math.round(c * a + bg[i] * (1 - a)));
+}
+
+function v3rgb(pdf, color, mode = "fill") {
+  const [r, g, b] = color;
+  if (mode === "fill")      pdf.setFillColor(r, g, b);
+  else if (mode === "draw") pdf.setDrawColor(r, g, b);
+  else if (mode === "text") pdf.setTextColor(r, g, b);
+}
+
+function v3font(pdf, size, style = "normal") {
+  pdf.setFont("helvetica", style);
+  pdf.setFontSize(size);
+}
+
+function withModule(mod, fn) {
+  const saved = state.activeModule;
+  state.activeModule = mod;
+  const result = fn();
+  state.activeModule = saved;
+  return result;
+}
+
+// ── Page primitives ───────────────────────────────────────────────────────────
+
+function v3page(pdf, pw, ph) {
+  v3rgb(pdf, V3C.bg);
+  pdf.rect(0, 0, pw, ph, "F");
+}
+
+function v3header(pdf, pw, pn, total) {
+  v3rgb(pdf, V3C.panel);
+  pdf.rect(0, 0, pw, 10, "F");
+  v3rgb(pdf, v3alpha(V3C.line, 0.35), "draw");
+  pdf.setLineWidth(0.18);
+  pdf.line(0, 10, pw, 10);
+
+  v3font(pdf, 7.5, "bold");
+  v3rgb(pdf, V3C.cyan, "text");
+  pdf.text("INDEF", 10, 7, { baseline: "bottom" });
+
+  v3font(pdf, 7.5, "normal");
+  v3rgb(pdf, v3alpha(V3C.line, 0.55), "text");
+  pdf.text("|", 20, 7, { baseline: "bottom" });
+  v3rgb(pdf, V3C.soft, "text");
+  pdf.text(state.activeBrand, 24, 7, { baseline: "bottom" });
+
+  v3font(pdf, 6.5, "normal");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text(`${formatShortDate(state.dateStart)} – ${formatShortDate(state.dateEnd)}`, pw / 2, 7, { align: "center", baseline: "bottom" });
+
+  v3font(pdf, 6.5, "bold");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text(`Pág. ${pn} / ${total}`, pw - 10, 7, { align: "right", baseline: "bottom" });
+}
+
+function v3footer(pdf, pw, ph) {
+  const fy = ph - 7;
+  v3rgb(pdf, V3C.panel);
+  pdf.rect(0, fy, pw, 7, "F");
+  v3rgb(pdf, v3alpha(V3C.line, 0.28), "draw");
+  pdf.setLineWidth(0.15);
+  pdf.line(0, fy, pw, fy);
+
+  v3font(pdf, 6, "normal");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text("Sistema JB Holds Command Center", 10, fy + 4.8, { baseline: "bottom" });
+  v3font(pdf, 6, "bold");
+  v3rgb(pdf, V3C.cyan, "text");
+  pdf.text("INDEF Intelligence Platform", pw / 2, fy + 4.8, { align: "center", baseline: "bottom" });
+  v3font(pdf, 6, "normal");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text("Confidencial · Uso Interno", pw - 10, fy + 4.8, { align: "right", baseline: "bottom" });
+}
+
+function v3eyebrow(pdf, text, x, y) {
+  v3font(pdf, 6.5, "bold");
+  v3rgb(pdf, V3C.cyan, "text");
+  pdf.text(text.toUpperCase(), x, y, { baseline: "top" });
+}
+
+function v3heading(pdf, text, x, y) {
+  v3font(pdf, 13, "bold");
+  v3rgb(pdf, V3C.ink, "text");
+  pdf.text(text, x, y, { baseline: "top" });
+}
+
+function v3rule(pdf, x, y, w) {
+  v3rgb(pdf, v3alpha(V3C.line, 0.32), "draw");
+  pdf.setLineWidth(0.18);
+  pdf.line(x, y, x + w, y);
+}
+
+// ── Component: KPI row ────────────────────────────────────────────────────────
+
+function v3kpiRow(pdf, kpis, x, y, w, h) {
+  const gap = 3;
+  const cardW = (w - gap * (kpis.length - 1)) / kpis.length;
+  kpis.forEach((kpi, i) => {
+    const cx = x + i * (cardW + gap);
+    v3rgb(pdf, V3C.panel);
+    pdf.roundedRect(cx, y, cardW, h, 2, 2, "F");
+    v3rgb(pdf, kpi.up ? V3C.green : V3C.red);
+    pdf.roundedRect(cx, y, cardW, 1, 0.5, 0.5, "F");
+
+    v3font(pdf, 6.5, "normal");
+    v3rgb(pdf, V3C.muted, "text");
+    pdf.text(kpi.label, cx + cardW / 2, y + 5, { align: "center", baseline: "top" });
+
+    v3font(pdf, 15, "bold");
+    v3rgb(pdf, V3C.ink, "text");
+    pdf.text(kpi.value, cx + cardW / 2, y + 13, { align: "center", baseline: "top" });
+
+    v3font(pdf, 6.5, "normal");
+    v3rgb(pdf, V3C.muted, "text");
+    pdf.text(kpi.meta, cx + cardW / 2, y + 23, { align: "center", baseline: "top" });
+
+    v3font(pdf, 6.5, "normal");
+    v3rgb(pdf, kpi.up ? V3C.green : V3C.red, "text");
+    pdf.text(kpi.delta, cx + cardW / 2, y + 28, { align: "center", baseline: "top" });
+
+    v3rgb(pdf, V3C.panel3);
+    pdf.roundedRect(cx + 4, y + h - 5, cardW - 8, 2, 1, 1, "F");
+    if ((kpi.progress || 0) > 0) {
+      v3rgb(pdf, kpi.up ? V3C.green : V3C.red);
+      pdf.roundedRect(cx + 4, y + h - 5, (cardW - 8) * Math.min(kpi.progress, 1), 2, 1, 1, "F");
+    }
+  });
+}
+
+// ── Component: Alert rows ─────────────────────────────────────────────────────
+
+function v3alertRows(pdf, alerts, x, y, w) {
+  const colorMap = { danger: V3C.red, warning: V3C.amber, good: V3C.green };
+  const rh = 9, gap = 2;
+  alerts.forEach((alert, i) => {
+    const ay = y + i * (rh + gap);
+    const col = colorMap[alert.tone] || V3C.blue;
+    v3rgb(pdf, V3C.panel);
+    pdf.roundedRect(x, ay, w, rh, 1, 1, "F");
+    v3rgb(pdf, col);
+    pdf.roundedRect(x, ay, 2.5, rh, 0.8, 0.8, "F");
+    v3font(pdf, 7, "bold");
+    v3rgb(pdf, V3C.ink, "text");
+    pdf.text(alert.title, x + 6, ay + 3, { baseline: "top" });
+    v3font(pdf, 6.5, "normal");
+    v3rgb(pdf, V3C.muted, "text");
+    const tw = pdf.getTextWidth(alert.title) + 4;
+    const body = alert.body.length > 90 ? alert.body.slice(0, 90) + "…" : alert.body;
+    pdf.text(body, x + 6 + tw, ay + 3.2, { baseline: "top", maxWidth: w - tw - 10 });
+  });
+  return y + alerts.length * (rh + gap);
+}
+
+// ── Component: Bar chart ──────────────────────────────────────────────────────
+
+function v3barChart(pdf, items, x, y, w, h, opts = {}) {
+  if (!items.length) return;
+  const { colorFn } = opts;
+  const lblArea = 9, valArea = 4;
+  const chartH = h - lblArea - valArea;
+  const max = Math.max(...items.map((d) => Math.abs(d.value)), 1) * 1.1;
+  const slot = w / items.length;
+  const bw = Math.max(3, slot * 0.62);
+
+  [0.25, 0.5, 0.75, 1].forEach((f) => {
+    const gy = y + valArea + chartH * (1 - f);
+    v3rgb(pdf, V3C.panel3, "draw");
+    pdf.setLineWidth(0.1);
+    pdf.line(x, gy, x + w, gy);
+    v3font(pdf, 5.5, "normal");
+    v3rgb(pdf, V3C.muted, "text");
+    pdf.text(compactNumber(max * f), x - 1, gy, { align: "right", baseline: "middle" });
+  });
+
+  items.forEach((item, i) => {
+    const bx = x + i * slot + (slot - bw) / 2;
+    const barH = Math.max(1.5, (Math.abs(item.value) / max) * chartH);
+    const by = y + valArea + chartH - barH;
+    const color = colorFn ? colorFn(item, i) : V3C.green;
+    const col = Array.isArray(color) ? color : V3C.green;
+    v3rgb(pdf, col);
+    pdf.roundedRect(bx, by, bw, barH, 1, 1, "F");
+    v3font(pdf, 5.5, "bold");
+    v3rgb(pdf, V3C.soft, "text");
+    pdf.text(compactNumber(item.value), bx + bw / 2, by - 0.5, { align: "center", baseline: "bottom" });
+    v3font(pdf, 6, "normal");
+    v3rgb(pdf, V3C.muted, "text");
+    const lbl = item.label && item.label.length > 7 ? item.label.slice(0, 6) + "…" : (item.label || "");
+    pdf.text(lbl, bx + bw / 2, y + valArea + chartH + 2, { align: "center", baseline: "top" });
+  });
+}
+
+// ── Component: Branch cards ───────────────────────────────────────────────────
+
+function v3branchCards(pdf, branches, x, y, w, h) {
+  if (!branches.length) return;
+  const cardH = Math.min(28, (h - (branches.length - 1) * 2.5) / branches.length);
+  branches.forEach((branch, i) => {
+    const cy = y + i * (cardH + 2.5);
+    const risk = branch.compliance >= 1 ? "good" : branch.compliance >= 0.75 ? "warning" : "danger";
+    const acl = risk === "good" ? V3C.green : risk === "danger" ? V3C.red : V3C.amber;
+    v3rgb(pdf, V3C.panel);
+    pdf.roundedRect(x, cy, w, cardH, 1.5, 1.5, "F");
+    v3rgb(pdf, acl);
+    pdf.roundedRect(x, cy, 2.5, cardH, 1, 1, "F");
+    const tx = x + 6;
+    v3font(pdf, 7.5, "bold");
+    v3rgb(pdf, V3C.ink, "text");
+    pdf.text(branch.name, tx, cy + 4, { baseline: "top" });
+    const badge = risk === "good" ? "FUERTE" : risk === "danger" ? "CRÍTICO" : "VIGILAR";
+    v3font(pdf, 5.5, "bold");
+    v3rgb(pdf, acl, "text");
+    pdf.text(badge, x + w - 3, cy + 4.5, { align: "right", baseline: "top" });
+    const bw2 = w - tx + x - 4;
+    const bry = cy + 14;
+    v3rgb(pdf, V3C.panel3);
+    pdf.roundedRect(tx, bry, bw2, 2.5, 1, 1, "F");
+    v3rgb(pdf, acl);
+    pdf.roundedRect(tx, bry, bw2 * Math.min(Math.max(branch.compliance, 0), 1), 2.5, 1, 1, "F");
+    v3font(pdf, 6.5, "normal");
+    v3rgb(pdf, V3C.soft, "text");
+    pdf.text(exactFormatter.format(branch.sales), tx, cy + cardH - 5, { baseline: "top" });
+    pdf.text(`${(branch.compliance * 100).toFixed(1)}% meta`, tx + 34, cy + cardH - 5, { baseline: "top" });
+    v3rgb(pdf, branch.gap >= 0 ? V3C.green : V3C.red, "text");
+    pdf.text(`GAP ${formatter.format(branch.gap)}`, x + w - 3, cy + cardH - 5, { align: "right", baseline: "top" });
+  });
+}
+
+// ── Component: Insight panel ──────────────────────────────────────────────────
+
+function v3insight(pdf, blocks, x, y, w, h) {
+  v3rgb(pdf, V3C.panel2);
+  pdf.roundedRect(x, y, w, h, 2, 2, "F");
+  v3rgb(pdf, V3C.cyan);
+  pdf.roundedRect(x, y, 2, h, 1, 1, "F");
+
+  let ty = y + 5;
+  const tx = x + 6, tw = w - 10;
+  for (const block of blocks) {
+    if (ty > y + h - 6) break;
+    if (block.type === "eyebrow") {
+      v3font(pdf, 6, "bold");
+      v3rgb(pdf, V3C.cyan, "text");
+      pdf.text(block.text.toUpperCase(), tx, ty, { baseline: "top" });
+      ty += 4.5;
+    } else if (block.type === "value") {
+      v3font(pdf, 13, "bold");
+      v3rgb(pdf, V3C.ink, "text");
+      pdf.text(String(block.text).slice(0, 22), tx, ty, { baseline: "top" });
+      ty += 8;
+      if (block.sub) {
+        v3font(pdf, 7, "normal");
+        v3rgb(pdf, V3C.muted, "text");
+        pdf.text(String(block.sub), tx, ty - 2, { baseline: "top" });
+        ty += 2;
+      }
+    } else if (block.type === "metric") {
+      v3font(pdf, 7, "bold");
+      v3rgb(pdf, V3C.muted, "text");
+      pdf.text(block.label, tx, ty, { baseline: "top" });
+      v3font(pdf, 7.5, "bold");
+      v3rgb(pdf, block.color || V3C.ink, "text");
+      pdf.text(String(block.value).slice(0, 20), tx + tw, ty, { align: "right", baseline: "top" });
+      ty += 5.5;
+    } else if (block.type === "divider") {
+      ty += 2;
+      v3rule(pdf, tx, ty, tw);
+      ty += 4;
+    } else if (block.type === "body") {
+      v3font(pdf, 7.5, "normal");
+      v3rgb(pdf, V3C.soft, "text");
+      const lines = pdf.splitTextToSize(block.text, tw);
+      for (const line of lines) {
+        if (ty > y + h - 8) break;
+        pdf.text(line, tx, ty, { baseline: "top" });
+        ty += 4.5;
+      }
+      ty += 2;
+    }
+  }
+}
+
+// ── Component: Data table ─────────────────────────────────────────────────────
+
+function v3dataTable(pdf, cols, rows, x, y, w, availH) {
+  const cw = cols.map((c) => (c.pct * w) / 100);
+  const hdrH = 7, rh = 6.5;
+  v3rgb(pdf, V3C.panel3);
+  pdf.rect(x, y, w, hdrH, "F");
+  let cx = x;
+  cols.forEach((col, i) => {
+    const align = col.align || "left";
+    const tx = align === "right" ? cx + cw[i] - 2 : align === "center" ? cx + cw[i] / 2 : cx + 2;
+    v3font(pdf, 6.5, "bold");
+    v3rgb(pdf, V3C.soft, "text");
+    pdf.text(col.label, tx, y + hdrH / 2, { align, baseline: "middle" });
+    if (i < cols.length - 1) {
+      v3rgb(pdf, V3C.panel2, "draw");
+      pdf.setLineWidth(0.12);
+      pdf.line(cx + cw[i], y, cx + cw[i], y + hdrH);
+    }
+    cx += cw[i];
+  });
+
+  const maxRows = Math.floor((availH - hdrH) / rh);
+  const display = rows.slice(0, maxRows);
+  let ry = y + hdrH;
+  display.forEach((row, ri) => {
+    v3rgb(pdf, ri % 2 === 0 ? V3C.panel : V3C.panel2);
+    pdf.rect(x, ry, w, rh, "F");
+    cx = x;
+    row.forEach((cell, ci) => {
+      const col = cols[ci] || {};
+      const align = col.align || "left";
+      const tx = align === "right" ? cx + cw[ci] - 2 : align === "center" ? cx + cw[ci] / 2 : cx + 2;
+      if (cell && typeof cell === "object" && cell.badge) {
+        const bc = cell.badge === "good" ? V3C.green : cell.badge === "danger" ? V3C.red : V3C.amber;
+        const bt = cell.badge === "good" ? "Fuerte" : cell.badge === "danger" ? "Crítico" : "Vigilar";
+        v3rgb(pdf, bc);
+        pdf.roundedRect(cx + 1.5, ry + 1.5, cw[ci] - 3, 3.5, 1, 1, "F");
+        v3font(pdf, 5.5, "bold");
+        v3rgb(pdf, V3C.bg, "text");
+        pdf.text(bt, cx + cw[ci] / 2, ry + rh / 2, { align: "center", baseline: "middle" });
+      } else if (cell && typeof cell === "object" && cell.pct !== undefined) {
+        const pc = cell.pct;
+        const bc2 = pc >= 1 ? V3C.green : pc >= 0.75 ? V3C.amber : V3C.red;
+        v3rgb(pdf, V3C.panel3);
+        pdf.roundedRect(cx + 1, ry + 2, cw[ci] - 2, 2.5, 1, 1, "F");
+        v3rgb(pdf, bc2);
+        pdf.roundedRect(cx + 1, ry + 2, (cw[ci] - 2) * Math.min(pc, 1), 2.5, 1, 1, "F");
+        v3font(pdf, 6, "bold");
+        v3rgb(pdf, V3C.ink, "text");
+        pdf.text(`${(pc * 100).toFixed(1)}%`, cx + cw[ci] / 2, ry + rh / 2 + 0.5, { align: "center", baseline: "middle" });
+      } else {
+        const text = cell !== null && cell !== undefined ? String(cell) : "";
+        v3font(pdf, 7, ci === 0 ? "bold" : "normal");
+        v3rgb(pdf, ci === 0 ? V3C.ink : V3C.soft, "text");
+        pdf.text(text, tx, ry + rh / 2, { align, baseline: "middle" });
+      }
+      cx += cw[ci];
+    });
+    v3rgb(pdf, V3C.panel3, "draw");
+    pdf.setLineWidth(0.1);
+    pdf.line(x, ry + rh, x + w, ry + rh);
+    ry += rh;
+  });
+  v3rgb(pdf, v3alpha(V3C.line, 0.28), "draw");
+  pdf.setLineWidth(0.22);
+  pdf.rect(x, y, w, ry - y, "S");
+  if (rows.length > display.length) {
+    v3font(pdf, 6, "italic");
+    v3rgb(pdf, V3C.muted, "text");
+    pdf.text(`Mostrando ${display.length} de ${rows.length} registros`, x, ry + 3.5, { baseline: "top" });
+    ry += 5;
+  }
+  return ry;
+}
+
+// ── Smart insights ────────────────────────────────────────────────────────────
+
+function v3iTrend() {
+  const series = rangeSeries("sales");
+  if (!series.length) return [{ type: "body", text: "Sin datos en el periodo seleccionado." }];
+  const t = totals(), prev = totals(true);
+  const best = series.reduce((a, b) => (a.total > b.total ? a : b));
+  const positives = series.filter((s) => s.total > 0);
+  const worst = positives.length ? positives.reduce((a, b) => (a.total < b.total ? a : b)) : best;
+  const chg = ((t.sales - prev.sales) / Math.max(prev.sales, 1)) * 100;
+  const conc = ((best.total / Math.max(t.sales, 1)) * 100).toFixed(0);
+  return [
+    { type: "eyebrow", text: "Mejor día" },
+    { type: "value", text: formatter.format(best.total), sub: best.label },
+    { type: "metric", label: "Peor día", value: formatter.format(worst.total), color: V3C.red },
+    { type: "metric", label: "Concentración", value: `${conc}% del total` },
+    { type: "divider" },
+    { type: "metric", label: "Variación vs anterior", value: `${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%`, color: chg >= 0 ? V3C.green : V3C.red },
+    { type: "metric", label: "Cumplimiento meta", value: `${(t.compliance * 100).toFixed(1)}%`, color: t.compliance >= 1 ? V3C.green : V3C.red },
+    { type: "metric", label: "GAP acumulado", value: formatter.format(t.gap), color: t.gap >= 0 ? V3C.green : V3C.red },
+    { type: "divider" },
+    { type: "body", text: `${state.activeBrand} ${chg >= 0 ? "creció" : "cayó"} ${Math.abs(chg).toFixed(1)}% vs el periodo anterior. ${best.label} concentró el ${conc}% de la venta semanal. ${t.compliance >= 1 ? `Meta superada en ${formatter.format(t.gap)}.` : `Restan ${formatter.format(Math.abs(t.gap))} para cerrar al 100%.`}` },
+  ];
+}
+
+function v3iWaterfall() {
+  const t = totals(), prev = totals(true);
+  const series = rangeSeries("sales");
+  const names = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const byDay = Object.entries(series.reduce((acc, d) => {
+    const dow = d.date instanceof Date ? d.date.getDay() : -1;
+    if (dow >= 0) { const n = names[dow]; acc[n] = (acc[n] || 0) + d.total; }
+    return acc;
+  }, {})).sort((a, b) => b[1] - a[1]);
+  const topDay = byDay[0] || ["—", 0];
+  const lowDay = byDay[byDay.length - 1] || ["—", 0];
+  const chg = ((t.sales - prev.sales) / Math.max(prev.sales, 1) * 100);
+  return [
+    { type: "eyebrow", text: "Día más fuerte" },
+    { type: "value", text: formatter.format(topDay[1]), sub: topDay[0] },
+    { type: "metric", label: "Día más débil", value: formatter.format(lowDay[1]), color: V3C.amber },
+    { type: "metric", label: "Diferencia pico/valle", value: formatter.format(topDay[1] - lowDay[1]) },
+    { type: "divider" },
+    { type: "metric", label: "Total acumulado", value: formatter.format(t.sales) },
+    { type: "metric", label: "vs Periodo anterior", value: `${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%`, color: chg >= 0 ? V3C.green : V3C.red },
+    { type: "metric", label: "Ticket medio", value: exactFormatter.format(t.ticket) },
+    { type: "divider" },
+    { type: "body", text: `${topDay[0]} fue el día de mayor venta acumulada (${formatter.format(topDay[1])}). ${lowDay[0]} fue el de menor actividad. Dispersión pico/valle: ${formatter.format(topDay[1] - lowDay[1])}.` },
+  ];
+}
+
+function v3iBranches() {
+  const rows = activeBranchRows();
+  if (!rows.length) return [{ type: "body", text: "Sin sucursales activas." }];
+  const t = totals();
+  const leader = [...rows].sort((a, b) => b.sales - a.sales)[0];
+  const riskiest = [...rows].sort((a, b) => a.gap - b.gap)[0];
+  const above = rows.filter((r) => r.compliance >= 1).length;
+  const below = rows.length - above;
+  const share = ((leader.sales / Math.max(t.sales, 1)) * 100).toFixed(0);
+  return [
+    { type: "eyebrow", text: "Sucursal líder" },
+    { type: "value", text: leader.name, sub: `${exactFormatter.format(leader.sales)} · ${(leader.compliance * 100).toFixed(0)}% meta` },
+    { type: "divider" },
+    { type: "metric", label: "Sobre meta", value: `${above} de ${rows.length}`, color: V3C.green },
+    { type: "metric", label: "Bajo meta", value: `${below} de ${rows.length}`, color: below > 0 ? V3C.red : V3C.green },
+    { type: "metric", label: "Concentración líder", value: `${share}% del total` },
+    { type: "metric", label: "Mayor riesgo", value: riskiest.gap < 0 ? riskiest.name.slice(0, 16) : "Sin déficit", color: riskiest.gap < 0 ? V3C.red : V3C.green },
+    { type: "metric", label: "GAP de riesgo", value: riskiest.gap < 0 ? formatter.format(riskiest.gap) : "—", color: riskiest.gap < 0 ? V3C.red : V3C.green },
+    { type: "divider" },
+    { type: "body", text: `${leader.name} lidera con el ${share}% de la venta. ${below > 0 ? `${below} sucursal${below > 1 ? "es requieren" : " requiere"} intervención.${riskiest.gap < 0 ? ` Mayor déficit: ${formatter.format(Math.abs(riskiest.gap))}.` : ""}` : "Todas las sucursales superan su meta."}` },
+  ];
+}
+
+function v3iProducts() {
+  const pt = productTotals(), prev = productTotals(true);
+  const cat = categoryBreakdown()[0] || { name: "—", value: 0 };
+  const rows = productRows().slice(0, 3);
+  const top3share = rows.reduce((s, r) => s + r.total, 0) / Math.max(pt.quantity, 1) * 100;
+  const chg = ((pt.quantity - prev.quantity) / Math.max(prev.quantity, 1) * 100);
+  return [
+    { type: "eyebrow", text: "Producto líder" },
+    { type: "value", text: pt.top.name.slice(0, 22), sub: `${numberFormatter.format(pt.top.total)} unidades` },
+    { type: "divider" },
+    { type: "metric", label: "Categoría dominante", value: cat.name.slice(0, 18) },
+    { type: "metric", label: "Peso en mix", value: `${cat.value.toFixed(1)}%` },
+    { type: "metric", label: "Top 3 concentran", value: `${top3share.toFixed(0)}% unidades` },
+    { type: "metric", label: "Variación vs anterior", value: `${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%`, color: chg >= 0 ? V3C.green : V3C.red },
+    { type: "metric", label: "Venta de producto", value: formatter.format(pt.sales) },
+    { type: "divider" },
+    { type: "body", text: `${pt.top.name.slice(0, 25)} lidera con ${numberFormatter.format(pt.top.total)} unidades. ${cat.name} domina el mix con ${cat.value.toFixed(1)}%. Los 3 líderes concentran el ${top3share.toFixed(0)}% del volumen.` },
+  ];
+}
+
+function v3iFlow() {
+  const ft = flowTotals();
+  const active = [...(ft.active || [])].sort((a, b) => b.conversion - a.conversion);
+  const best = active[0], worst = active[active.length - 1];
+  const hours = activeFlowHours();
+  return [
+    { type: "eyebrow", text: "Hora pico" },
+    { type: "value", text: ft.peak ? `${ft.peak.hour}:00` : "Sin datos", sub: ft.peak ? `${ft.peak.branch.slice(0, 18)} · ${formatter.format(ft.peak.sale)}` : "" },
+    { type: "divider" },
+    { type: "metric", label: "Conversión promedio", value: `${ft.avgConversion.toFixed(0)}%`, color: ft.avgConversion >= 72 ? V3C.green : V3C.amber },
+    { type: "metric", label: "Mejor conversión", value: best ? `${best.name.slice(0, 12)} (${best.conversion}%)` : "—", color: V3C.green },
+    { type: "metric", label: "Menor conversión", value: worst ? `${worst.name.slice(0, 12)} (${worst.conversion}%)` : "—", color: V3C.red },
+    { type: "metric", label: "Franjas analizadas", value: `${hours.length} horas` },
+    { type: "divider" },
+    { type: "body", text: ft.peak ? `Hora pico: ${ft.peak.hour}:00 en ${ft.peak.branch.slice(0, 20)}. Conversión promedio: ${ft.avgConversion.toFixed(0)}%. ${ft.avgConversion < 70 ? "Reforzar staffing en horas pico para mejorar conversión." : "Nivel de conversión saludable."}` : "Sin datos de flujo para el periodo." },
+  ];
+}
+
+// ── V3 Page builders ──────────────────────────────────────────────────────────
+
+async function pdfV3Cover(pdf, pw, ph) {
+  let hasPhoto = false;
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.crossOrigin = "anonymous";
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      setTimeout(() => reject(new Error("timeout")), 5000);
+      el.src = brandConfig[state.activeBrand].cover;
+    });
+    const c = document.createElement("canvas");
+    c.width = 1920; c.height = 1080;
+    c.getContext("2d").drawImage(img, 0, 0, 1920, 1080);
+    pdf.addImage(c.toDataURL("image/jpeg", 0.85), "JPEG", 0, 0, pw, ph);
+    hasPhoto = true;
+  } catch {
+    v3rgb(pdf, V3C.bg);
+    pdf.rect(0, 0, pw, ph, "F");
+  }
+
+  v3rgb(pdf, v3alpha(V3C.bg, hasPhoto ? 0.76 : 1));
+  pdf.rect(0, 0, pw, ph, "F");
+
+  // Main block — large and dominant (89% × 86% of page)
+  const bx = 14, by = 14, bw = 255, bh = 178;
+  v3rgb(pdf, v3alpha(V3C.panel, 0.96));
+  pdf.roundedRect(bx, by, bw, bh, 3, 3, "F");
+  v3rgb(pdf, V3C.cyan);
+  pdf.roundedRect(bx, by, 3, bh, 1.5, 1.5, "F");
+
+  const tx = bx + 13;
+  let ty = by + 13;
+
+  v3font(pdf, 7, "bold");
+  v3rgb(pdf, V3C.cyan, "text");
+  pdf.text("INDEF INTELLIGENCE PLATFORM", tx, ty, { baseline: "top" });
+  ty += 9;
+
+  v3font(pdf, 46, "bold");
+  v3rgb(pdf, V3C.ink, "text");
+  pdf.text("JB HOLDS", tx, ty, { baseline: "top" });
+  ty += 19;
+
+  v3font(pdf, 9, "normal");
+  v3rgb(pdf, V3C.cyan, "text");
+  pdf.text("Corporate Intelligence Platform", tx, ty, { baseline: "top" });
+  ty += 10;
+
+  v3rule(pdf, tx, ty, bw - 23);
+  ty += 9;
+
+  v3font(pdf, 14, "bold");
+  v3rgb(pdf, V3C.soft, "text");
+  pdf.text("REPORTE EJECUTIVO CORPORATIVO", tx, ty, { baseline: "top" });
+  ty += 13;
+
+  const branchCount = [...state.activeBranches].length;
+  const today = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
+  [
+    ["Marca",       state.activeBrand],
+    ["Periodo",     `${formatShortDate(state.dateStart)} → ${formatShortDate(state.dateEnd)}`],
+    ["Sucursales",  `${branchCount} activa${branchCount !== 1 ? "s" : ""}`],
+    ["Fecha",       today],
+  ].forEach(([label, value]) => {
+    v3font(pdf, 7, "bold");
+    v3rgb(pdf, V3C.muted, "text");
+    pdf.text(`${label.toUpperCase()}:`, tx, ty, { baseline: "top" });
+    v3font(pdf, 8.5, "bold");
+    v3rgb(pdf, V3C.ink, "text");
+    pdf.text(value, tx + 30, ty, { baseline: "top" });
+    ty += 8;
+  });
+
+  ty += 4;
+  v3rule(pdf, tx, ty, bw - 23);
+  ty += 8;
+
+  v3font(pdf, 7, "bold");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text("PREPARED FOR", tx, ty, { baseline: "top" });
+  ty += 5.5;
+
+  v3font(pdf, 9, "bold");
+  v3rgb(pdf, V3C.ink, "text");
+  pdf.text("Dirección General", tx, ty, { baseline: "top" });
+  ty += 7;
+
+  v3font(pdf, 8, "bold");
+  v3rgb(pdf, V3C.cyan, "text");
+  pdf.text("INDEF Intelligence Platform", tx, ty, { baseline: "top" });
+
+  v3font(pdf, 7, "normal");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text("Confidencial · Uso Interno", bx + bw / 2, by + bh - 7, { align: "center", baseline: "top" });
+}
+
+function pdfV3SalesKpis(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Módulo: Ventas", cx, cy);
+  v3heading(pdf, "Indicadores Clave de Desempeño", cx, cy + 4.5);
+  v3kpiRow(pdf, salesKpis(), cx, cy + 21, cw, 38);
+  const alertY = cy + 67;
+  v3eyebrow(pdf, "Alertas activas", cx, alertY);
+  const afterAlerts = v3alertRows(pdf, withModule("sales", moduleAlerts), cx, alertY + 5, cw);
+  const insightH = ph - 7 - afterAlerts - 8;
+  if (insightH > 18) {
+    const t = totals(), prev = totals(true);
+    const chg = ((t.sales - prev.sales) / Math.max(prev.sales, 1) * 100);
+    v3insight(pdf, [
+      { type: "eyebrow", text: "Análisis ejecutivo" },
+      { type: "body", text: `${state.activeBrand} cerró el periodo con ${exactFormatter.format(t.sales)}, ${chg >= 0 ? "creciendo" : "cayendo"} un ${Math.abs(chg).toFixed(1)}% vs el periodo anterior. Cumplimiento: ${(t.compliance * 100).toFixed(1)}%. GAP: ${formatter.format(t.gap)}.` },
+    ], cx, afterAlerts + 6, cw, insightH);
+  }
+}
+
+function pdfV3Trend(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Tendencia diaria", cx, cy);
+  v3heading(pdf, "Ventas Netas por Día", cx, cy + 4.5);
+  const chartW = cw * 0.60, insightW = cw * 0.37;
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 4;
+  const insightX = cx + chartW + cw * 0.03;
+  v3barChart(pdf, rangeSeries("sales").map((d) => ({ value: d.total, label: d.label })),
+    cx, contentY, chartW, contentH, { colorFn: () => V3C.green });
+  v3insight(pdf, v3iTrend(), insightX, contentY, insightW, contentH);
+}
+
+function pdfV3Waterfall(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Acumulado semanal", cx, cy);
+  v3heading(pdf, "Distribución de Venta por Día de Semana", cx, cy + 4.5);
+  const names = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+  const series = rangeSeries("sales");
+  const byDay = [0,1,2,3,4,5,6].map((dow) => ({
+    label: names[dow],
+    value: series.filter((d) => d.date instanceof Date && (d.date.getDay() === 0 ? 6 : d.date.getDay() - 1) === dow).reduce((s, d) => s + d.total, 0),
+  })).sort((a, b) => b.value - a.value);
+  const chartW = cw * 0.60, insightW = cw * 0.37;
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 4;
+  v3barChart(pdf, byDay, cx, contentY, chartW, contentH, {
+    colorFn: (_, i) => i === 0 ? V3C.green : i === byDay.length - 1 ? V3C.red : V3C.blue,
+  });
+  v3insight(pdf, v3iWaterfall(), cx + chartW + cw * 0.03, contentY, insightW, contentH);
+}
+
+function pdfV3Branches(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Semáforo por sucursal", cx, cy);
+  v3heading(pdf, "Desempeño por Sucursal", cx, cy + 4.5);
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 2;
+  const cardsW = cw * 0.55, insightW = cw * 0.42;
+  v3branchCards(pdf, activeBranchRows(), cx, contentY, cardsW, contentH);
+  v3insight(pdf, v3iBranches(), cx + cardsW + cw * 0.03, contentY, insightW, contentH);
+}
+
+function pdfV3Risk(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Riesgo operativo", cx, cy);
+  v3heading(pdf, "GAP vs Meta por Sucursal", cx, cy + 4.5);
+  const branches = activeBranchRows();
+  const chartW = cw * 0.62, insightW = cw * 0.35;
+  const chartY = cy + 21, chartH = ph - 7 - chartY - 18;
+  const insightX = cx + chartW + cw * 0.03;
+  const maxAbs = Math.max(...branches.map((b) => Math.abs(b.gap)), 1) * 1.1;
+  const slot = chartW / Math.max(branches.length, 1);
+  const bw = Math.max(3, slot * 0.62);
+  const midY = chartY + chartH / 2;
+  v3rgb(pdf, v3alpha(V3C.line, 0.45), "draw");
+  pdf.setLineWidth(0.25);
+  pdf.line(cx, midY, cx + chartW, midY);
+  v3font(pdf, 6, "normal");
+  v3rgb(pdf, V3C.muted, "text");
+  pdf.text("$0", cx - 1, midY, { align: "right", baseline: "middle" });
+  branches.forEach((branch, i) => {
+    const bx = cx + i * slot + (slot - bw) / 2;
+    const hh = Math.max(1.5, (Math.abs(branch.gap) / maxAbs) * (chartH / 2));
+    const by = branch.gap >= 0 ? midY - hh : midY;
+    const col = branch.gap >= 0 ? V3C.green : V3C.red;
+    v3rgb(pdf, col);
+    pdf.roundedRect(bx, by, bw, hh, 1, 1, "F");
+    v3font(pdf, 5.5, "bold");
+    v3rgb(pdf, V3C.soft, "text");
+    const lblY = branch.gap >= 0 ? by - 0.5 : by + hh + 0.5;
+    pdf.text(compactNumber(branch.gap), bx + bw / 2, lblY, { align: "center", baseline: branch.gap >= 0 ? "bottom" : "top" });
+    v3font(pdf, 6, "normal");
+    v3rgb(pdf, V3C.muted, "text");
+    pdf.text(shortName(branch.name), bx + bw / 2, chartY + chartH + 2, { align: "center", baseline: "top" });
+  });
+  const riskiest = [...branches].sort((a, b) => a.gap - b.gap)[0];
+  v3insight(pdf, [
+    { type: "eyebrow", text: "Mayor déficit" },
+    riskiest && riskiest.gap < 0
+      ? { type: "value", text: riskiest.name.slice(0, 18), sub: `GAP ${formatter.format(riskiest.gap)}` }
+      : { type: "value", text: "Sin déficit activo", sub: "Todas sobre meta" },
+    { type: "divider" },
+    ...branches.map((b) => ({ type: "metric", label: shortName(b.name), value: formatter.format(b.gap), color: b.gap >= 0 ? V3C.green : V3C.red })),
+  ], insightX, chartY, insightW, chartH + 15);
+}
+
+function pdfV3Heatmap(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Actividad por día", cx, cy);
+  v3heading(pdf, "Documentos por Día y Sucursal", cx, cy + 4.5);
+  const branches = activeBranchRows(), dates = dateList();
+  const tableY = cy + 21, availH = ph - 7 - tableY - 2;
+  const bPct = Math.max(6, Math.floor(68 / Math.max(dates.length, 1)));
+  const cols = [
+    { label: "Sucursal", pct: 100 - dates.length * bPct, align: "left" },
+    ...dates.map((d) => ({ label: formatChartDate(d).slice(0, 5), pct: bPct, align: "center" })),
+  ];
+  const rows = branches.map((branch) => [
+    branch.name,
+    ...dates.map((date) => String(branchValue(branch, date, "docs"))),
+  ]);
+  v3dataTable(pdf, cols, rows, cx, tableY, cw, availH);
+}
+
+function pdfV3SalesTable(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Detalle accionable", cx, cy);
+  v3heading(pdf, "Ventas Netas vs Meta por Sucursal", cx, cy + 4.5);
+  const tableY = cy + 21;
+  const prev = Object.fromEntries(activeBranchRows(true).map((b) => [b.name, b]));
+  const branches = activeBranchRows();
+  const cols = [
+    { label: "Sucursal", pct: 22, align: "left" },
+    { label: "Venta Neta", pct: 16, align: "right" },
+    { label: "Periodo Ant.", pct: 14, align: "right" },
+    { label: "Meta 100%", pct: 14, align: "right" },
+    { label: "Cumpl.", pct: 14, align: "center" },
+    { label: "GAP", pct: 12, align: "right" },
+    { label: "Estado", pct: 8, align: "center" },
+  ];
+  const rows = branches.map((b) => [
+    b.name,
+    exactFormatter.format(b.sales),
+    exactFormatter.format(prev[b.name]?.sales || 0),
+    exactFormatter.format(b.target),
+    { pct: b.compliance },
+    exactFormatter.format(b.gap),
+    { badge: b.compliance >= 1 ? "good" : b.compliance >= 0.75 ? "warning" : "danger" },
+  ]);
+  const tableBottom = v3dataTable(pdf, cols, rows, cx, tableY, cw, ph - 7 - tableY - 2);
+  if (tableBottom < ph - 14) {
+    const t = totals();
+    v3font(pdf, 7, "bold");
+    v3rgb(pdf, V3C.soft, "text");
+    pdf.text(`Total: ${exactFormatter.format(t.sales)}  |  Meta: ${exactFormatter.format(t.target)}  |  Cumpl: ${(t.compliance * 100).toFixed(1)}%  |  GAP: ${formatter.format(t.gap)}`, cx, tableBottom + 5, { baseline: "top" });
+  }
+}
+
+function pdfV3Comparison(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Ventas · Comparativo", cx, cy);
+  v3heading(pdf, "Desempeño Comparativo por Sucursal", cx, cy + 4.5);
+  const branches = activeBranchRows();
+  const chartW = cw * 0.62, insightW = cw * 0.35;
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 6;
+  const hexToRgb = (hex) => { const m = hex.match(/\w\w/g); return m ? m.map((h) => parseInt(h, 16)) : V3C.cyan; };
+  v3barChart(pdf, branches.map((b) => ({ value: b.sales, label: shortName(b.name), color: b.color })),
+    cx, contentY, chartW, contentH, { colorFn: (item) => item.color ? hexToRgb(item.color) : V3C.cyan });
+  v3insight(pdf, v3iBranches(), cx + chartW + cw * 0.03, contentY, insightW, contentH);
+}
+
+function pdfV3ProductKpis(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Módulo: Productos", cx, cy);
+  v3heading(pdf, "Indicadores de Producto", cx, cy + 4.5);
+  v3kpiRow(pdf, productKpis(), cx, cy + 21, cw, 38);
+  const alertY = cy + 67;
+  v3eyebrow(pdf, "Alertas de producto", cx, alertY);
+  const afterAlerts = v3alertRows(pdf, withModule("products", moduleAlerts), cx, alertY + 5, cw);
+  const insightH = ph - 7 - afterAlerts - 8;
+  if (insightH > 18) v3insight(pdf, v3iProducts(), cx, afterAlerts + 6, cw, insightH);
+}
+
+function pdfV3Products(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Productos · Ranking y mix", cx, cy);
+  v3heading(pdf, "Productos Líderes y Categorías", cx, cy + 4.5);
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 2;
+  const colW = (cw - 6) / 3;
+  const hexToRgb = (hex) => { const m = hex && hex.match(/\w\w/g); return m ? m.map((h) => parseInt(h, 16)) : V3C.blue; };
+
+  // Top products
+  v3barChart(pdf, productRows().slice(0, 10).map((p) => ({ value: p.total, label: compactName(p.name) })),
+    cx, contentY, colW, contentH, { colorFn: (_, i) => i < 3 ? V3C.green : V3C.blue });
+
+  // Category breakdown
+  const catX = cx + colW + 3;
+  v3eyebrow(pdf, "Mix de categorías", catX, contentY - 0.5);
+  categoryBreakdown().slice(0, 8).forEach((cat, i) => {
+    const iy = contentY + 5 + i * 15;
+    if (iy + 12 > contentY + contentH) return;
+    v3rgb(pdf, V3C.panel);
+    pdf.roundedRect(catX, iy, colW, 13, 1.5, 1.5, "F");
+    v3font(pdf, 6.5, "bold");
+    v3rgb(pdf, V3C.ink, "text");
+    pdf.text(cat.name.slice(0, 20), catX + 3, iy + 3.5, { baseline: "top" });
+    v3font(pdf, 6, "bold");
+    v3rgb(pdf, V3C.soft, "text");
+    pdf.text(`${cat.value.toFixed(1)}%`, catX + colW - 2, iy + 3.5, { align: "right", baseline: "top" });
+    v3rgb(pdf, V3C.panel3);
+    pdf.roundedRect(catX + 2, iy + 7.5, colW - 4, 2.5, 1, 1, "F");
+    v3rgb(pdf, hexToRgb(cat.color));
+    pdf.roundedRect(catX + 2, iy + 7.5, (colW - 4) * (cat.value / 100), 2.5, 1, 1, "F");
+  });
+
+  v3insight(pdf, v3iProducts(), cx + 2 * colW + 6, contentY, colW - 2, contentH);
+}
+
+function pdfV3ProductsTable(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Productos · Matriz completa", cx, cy);
+  v3heading(pdf, "Cantidad por Sucursal", cx, cy + 4.5);
+  const tableY = cy + 21;
+  const branches = currentBranches();
+  const products = productRows().slice(0, 25);
+  const bPct = branches.length > 0 ? Math.min(11, Math.floor(65 / branches.length)) : 11;
+  const namePct = 100 - branches.length * bPct - 12;
+  const cols = [
+    { label: "Producto", pct: namePct, align: "left" },
+    { label: "Total", pct: 12, align: "right" },
+    ...branches.map((b) => ({ label: shortName(b.name), pct: bPct, align: "right" })),
+  ];
+  const rows = products.map((p) => [
+    p.name.slice(0, 28),
+    numberFormatter.format(p.total),
+    ...branches.map((b) => numberFormatter.format(p.quantities[b.name] || 0)),
+  ]);
+  v3dataTable(pdf, cols, rows, cx, tableY, cw, ph - 7 - tableY - 2);
+}
+
+function pdfV3FlowKpis(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Módulo: Flujo de ventas", cx, cy);
+  v3heading(pdf, "Indicadores de Flujo Horario", cx, cy + 4.5);
+  v3kpiRow(pdf, flowKpis(), cx, cy + 21, cw, 38);
+  const alertY = cy + 67;
+  v3eyebrow(pdf, "Señales operativas", cx, alertY);
+  const afterAlerts = v3alertRows(pdf, withModule("flow", moduleAlerts), cx, alertY + 5, cw);
+  const insightH = ph - 7 - afterAlerts - 8;
+  if (insightH > 18) v3insight(pdf, v3iFlow(), cx, afterAlerts + 6, cw, insightH);
+}
+
+function pdfV3FlowCards(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Flujo · Venta horaria consolidada", cx, cy);
+  v3heading(pdf, "Venta por Franja Horaria", cx, cy + 4.5);
+  const ft = flowTotals();
+  const hours = activeFlowHours();
+  const active = ft.active || [];
+  const hourlyTotals = hours.map((h, hi) => ({
+    label: `${h}h`,
+    value: active.reduce((sum, branch) => sum + (branch.sales[hi] || 0), 0),
+  }));
+  const chartW = cw * 0.60, insightW = cw * 0.37;
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 6;
+  const peak = Math.max(...hourlyTotals.map((h) => h.value), 1);
+  v3barChart(pdf, hourlyTotals, cx, contentY, chartW, contentH, {
+    colorFn: (item) => item.value >= peak * 0.85 ? V3C.green : item.value >= peak * 0.5 ? V3C.blue : v3alpha(V3C.muted, 0.7),
+  });
+  v3insight(pdf, v3iFlow(), cx + chartW + cw * 0.03, contentY, insightW, contentH);
+}
+
+function pdfV3FlowCharts(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Flujo · Conversión por sucursal", cx, cy);
+  v3heading(pdf, "Conversión y Eficiencia Operativa", cx, cy + 4.5);
+  const ft = flowTotals();
+  const active = [...(ft.active || [])].sort((a, b) => b.conversion - a.conversion);
+  const chartW = cw * 0.60, insightW = cw * 0.37;
+  const contentY = cy + 21, contentH = ph - 7 - contentY - 6;
+  v3barChart(pdf, active.map((b) => ({ value: b.conversion, label: shortName(b.name) })),
+    cx, contentY, chartW, contentH, {
+      colorFn: (item) => item.value >= 80 ? V3C.green : item.value >= 65 ? V3C.amber : V3C.red,
+    });
+  v3insight(pdf, v3iFlow(), cx + chartW + cw * 0.03, contentY, insightW, contentH);
+}
+
+function pdfV3FlowTable(pdf, pw, ph, pn, total) {
+  v3page(pdf, pw, ph); v3header(pdf, pw, pn, total); v3footer(pdf, pw, ph);
+  const cx = 10, cy = 13, cw = pw - 20;
+  v3eyebrow(pdf, "Flujo · Plan de accion", cx, cy);
+  v3heading(pdf, "Recomendaciones por Sucursal", cx, cy + 4.5);
+  const tableY = cy + 21;
+  const ft = flowTotals();
+  const active = ft.active || [];
+  const hours = activeFlowHours();
+  const cols = [
+    { label: "Sucursal", pct: 22, align: "left" },
+    { label: "Hora Pico", pct: 11, align: "center" },
+    { label: "Conversión", pct: 13, align: "center" },
+    { label: "Venta Pico", pct: 16, align: "right" },
+    { label: "Señal operativa", pct: 38, align: "left" },
+  ];
+  const rows = active.map((branch) => {
+    const peakHour = hours[branch.peakIndex] || "--";
+    const peakSale = branch.sales[branch.peakIndex] || 0;
+    const signal = branch.conversion >= 80
+      ? "Conversión fuerte — mantener staffing actual"
+      : branch.conversion >= 65
+        ? "Conversión media — revisar impulso comercial en hora pico"
+        : "Conversión baja — reforzar equipo y oferta en piso";
+    return [branch.name, `${peakHour}:00`, { pct: branch.conversion / 100 }, formatter.format(peakSale), signal];
+  });
+  v3dataTable(pdf, cols, rows, cx, tableY, cw, ph - 7 - tableY - 2);
+}
+
+// ── V3 Section → Page builder map ────────────────────────────────────────────
+
+const V3_SECTION_MAP = {
+  "sales-kpis-alerts":    pdfV3SalesKpis,
+  "sales-trend":          pdfV3Trend,
+  "sales-waterfall":      pdfV3Waterfall,
+  "sales-scorecards":     pdfV3Branches,
+  "sales-risk":           pdfV3Risk,
+  "sales-heatmap":        pdfV3Heatmap,
+  "sales-table":          pdfV3SalesTable,
+  "sales-comparison":     pdfV3Comparison,
+  "products-kpis-alerts": pdfV3ProductKpis,
+  "products-grid":        pdfV3Products,
+  "products-table":       pdfV3ProductsTable,
+  "flow-kpis-alerts":     pdfV3FlowKpis,
+  "flow-cards":           pdfV3FlowCards,
+  "flow-charts":          pdfV3FlowCharts,
+  "flow-table":           pdfV3FlowTable,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -239,6 +239,7 @@ const state = {
   activeBrand: "Santa Gloria MX",
   activeBranches: new Set(brandConfig["Santa Gloria MX"].branches),
   chartMode: "sales",
+  compareMode: "sales",
   cumulativeMode: "sales",
   tableSearch: "",
   productCategories: new Set(["Todas"]),
@@ -1072,7 +1073,17 @@ function renderSalesContent() {
     <section class="table-section">
       <div class="table-toolbar"><div><p class="eyebrow">Detalle accionable</p><h2>Ventas netas vs meta</h2></div><input id="tableSearch" type="search" placeholder="Buscar sucursal, estado o alerta"></div>
       <div class="table-wrap"><table><thead><tr><th>Sucursal</th><th>Venta neta</th><th>Periodo anterior</th><th>Meta 100%</th><th>Cumplimiento</th><th>GAP</th><th>Estado</th></tr></thead><tbody id="detailRows"></tbody></table></div>
-    </section>`;
+    </section>
+    <article class="panel full">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Comparativo</p><h2>Desempeño por sucursal</h2><p class="chart-note">${periodLabel()}</p></div>
+        <div class="segmented">
+          <button class="segment ${state.compareMode === "sales" ? "active" : ""}" type="button" data-compare-mode="sales">Ventas</button>
+          <button class="segment ${state.compareMode === "docs" ? "active" : ""}" type="button" data-compare-mode="docs">Docs</button>
+        </div>
+      </div>
+      <div id="branchComparisonChart" class="chart"></div>
+    </article>`;
   bindSegmented();
   renderTrendChart();
   renderWaterfall();
@@ -1080,6 +1091,47 @@ function renderSalesContent() {
   renderHeatmap();
   renderDeficit();
   renderSalesTable();
+  renderBranchComparison();
+}
+
+function renderBranchComparison() {
+  const container = document.querySelector("#branchComparisonChart");
+  if (!container) return;
+  const branches = activeBranchRows();
+  if (!branches.length) {
+    container.innerHTML = `<div class="empty-state">Selecciona sucursales para comparar.</div>`;
+    return;
+  }
+  const metric = state.compareMode;
+  const data = branches.map((b) => ({
+    name: b.name,
+    value: metric === "docs" ? b.docs : b.sales,
+    color: b.color
+  }));
+  const n = data.length;
+  const width = Math.max(460, n * 160 + 116);
+  const height = 300;
+  const pad = { top: 26, right: 24, bottom: 56, left: 62 };
+  const max = Math.max(...data.map((d) => d.value), 1) * 1.22;
+  const innerW = width - pad.left - pad.right;
+  const innerH = height - pad.top - pad.bottom;
+  const slot = innerW / n;
+  const barW = Math.min(80, Math.max(28, slot * 0.62));
+  const bars = data.map((item, i) => {
+    const x = pad.left + i * slot + (slot - barW) / 2;
+    const h = Math.max(2, item.value / max * innerH);
+    const y = pad.top + innerH - h;
+    const label = metric === "docs" ? numberFormatter.format(item.value) : formatter.format(item.value);
+    const shortName = item.name.length > 16 ? item.name.slice(0, 15) + "…" : item.name;
+    return `
+      <rect class="bar" data-title="${item.name}" data-value="${label}" x="${x}" y="${y}" width="${barW}" height="${h}" rx="6" fill="${item.color}"></rect>
+      <text class="value-label" x="${x + barW / 2}" y="${Math.max(y - 7, 14)}" text-anchor="middle">${compactNumber(item.value)}</text>
+      <text class="axis-label" x="${x + barW / 2}" y="${height - 10}" text-anchor="middle">${shortName}</text>`;
+  }).join("");
+  container.innerHTML = `<svg style="width:${width}px; min-width:100%" viewBox="0 0 ${width} ${height}" role="img" aria-label="Comparativo por sucursal">
+    ${gridLines(width, pad, innerH, max)}${bars}
+  </svg>`;
+  bindChartHover(container);
 }
 
 function renderProductContent() {
@@ -1518,6 +1570,15 @@ function bindSegmented() {
     button.addEventListener("click", () => {
       state.chartMode = button.dataset.chartMode;
       renderSalesContent();
+    });
+  });
+  document.querySelectorAll("[data-compare-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.compareMode = button.dataset.compareMode;
+      renderBranchComparison();
+      document.querySelectorAll("[data-compare-mode]").forEach((b) =>
+        b.classList.toggle("active", b.dataset.compareMode === state.compareMode)
+      );
     });
   });
   document.querySelectorAll("[data-cumulative-mode]").forEach((button) => {

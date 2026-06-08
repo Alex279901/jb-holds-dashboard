@@ -49,7 +49,8 @@ const sheetMap = {
     unidades: "Uds.V",
     sucursal: "Sucursal",
     hora: "Hora",
-    tiempo: "Tiempo"
+    tiempo: "Tiempo",
+    pais: "Pais"
   }
 };
 
@@ -71,18 +72,26 @@ const branchAliases = {
 const brandConfig = {
   "Santa Gloria MX": {
     cover: "assets/cover-sgmx.png",
+    pais: "México",
+    branchPrefix: "SG",
     branches: ["SG Paseo Montejo", "SG La Isla", "SG Altabrisa", "SG Montejo Norte", "SG Victory Platz", "SG Xcanatun"]
   },
   "Santa Gloria ESP": {
     cover: "assets/cover-sgesp.png",
-    branches: ["SG Alameda Recalde", "SG Alcala 164", "SG Alcala 244", "SG Atocha 84", "SG Av. Ciudad de Barcelona", "SG EASO", "SG Intermodal", "SG Iparraguirre", "SG Lopez de Hoyos", "SG Pedro Teixeira", "SG Puente de Deusto"]
+    pais: "España",
+    branchPrefix: "SG",
+    branches: ["SG Alameda Recalde", "SG Alcala 164", "SG Alcala 244", "SG Atocha 84", "SG Av. Ciudad de Barcelona", "SG Av Sancho el Sabio 26", "SG EASO", "SG Intermodal", "SG Iparraguirre", "SG Lopez de Hoyos", "SG Moraleja Green", "SG Pedro Teixeira", "SG Puente de Deusto"]
   },
   "Allo mon Coco": {
     cover: "assets/cover-allomx.png",
+    pais: "México",
+    branchPrefix: "AMC",
     branches: ["AMC DAM", "AMC Cocoyoles", "AMC Carretera Motul"]
   },
   "Wetzel Pretzel ESP": {
     cover: "assets/cover-wetzesp.png",
+    pais: "España",
+    branchPrefix: "WP",
     branches: []
   }
 };
@@ -360,7 +369,12 @@ async function loadSheetData(manual = false) {
     sheetData.loaded = Boolean(sheetData.ventas.length || sheetData.productos.length || sheetData.horas.length);
     sheetData.error = null;
     if (!sheetData.loaded) throw new Error("Sheets respondio, pero no encontre filas en C_Fecha, C_Producto o C_Hora.");
-    if (!manual) syncDateRangeFromSheets();
+    if (!manual) {
+      syncDateRangeFromSheets();
+      state.activeBranches = new Set(dynamicBranchesForBrand(state.activeBrand));
+    } else {
+      dynamicBranchesForBrand(state.activeBrand).forEach((b) => state.activeBranches.add(b));
+    }
     setDataStatus("Sheets conectado", `${numberFormatter.format(sheetData.ventas.length)} ventas · ${numberFormatter.format(sheetData.productos.length)} productos · ${numberFormatter.format(sheetData.horas.length)} horas`);
     renderAll();
     if (manual) showToast("Datos actualizados desde Google Sheets");
@@ -386,6 +400,30 @@ function extractSheetRows(payload, sheetName, alias) {
 function canonicalBranchName(value) {
   const text = normalizeText(value);
   return branchAliases[text] || text;
+}
+
+function dynamicBranchesForBrand(brand) {
+  const config = brandConfig[brand];
+  if (!config) return [];
+  if (!sheetData.loaded || !config.pais) return config.branches;
+  const pais = config.pais.toLowerCase();
+  const prefix = (config.branchPrefix || "").toLowerCase();
+  const found = [...new Set(
+    sheetData.ventas
+      .filter((r) => {
+        const rPais = (r.pais || "").toLowerCase();
+        const rSuc = (r.sucursal || "").toLowerCase();
+        const paisMatch = rPais === pais || rPais.includes(pais) || pais.includes(rPais);
+        const prefixMatch = !prefix || rSuc.startsWith(prefix);
+        return paisMatch && prefixMatch;
+      })
+      .map((r) => r.sucursal)
+  )].sort();
+  return found.length ? found : config.branches;
+}
+
+function activeBrandPais() {
+  return (brandConfig[state.activeBrand]?.pais || "").toLowerCase();
 }
 
 function normalizeVentas(rows) {
@@ -440,7 +478,8 @@ function normalizeHoras(rows) {
     unidades: parseNumber(row[m.unidades]),
     sucursal: canonicalBranchName(row[m.sucursal]),
     hora: parseHourValue(row[m.hora] ?? row[m.tiempo]),
-    tiempo: normalizeText(row[m.tiempo])
+    tiempo: normalizeText(row[m.tiempo]),
+    pais: normalizeText(row[m.pais] || "")
   })).filter((row) => row.fecha && row.sucursal && row.hora);
 }
 
@@ -629,7 +668,15 @@ function sheetProductosInRange(previous = false, applyCategory = true) {
 function sheetHorasInRange(previous = false) {
   const dates = dateKeySet(previous);
   const branches = new Set(activeBranchNames());
-  return sheetData.horas.filter((row) => dates.has(row.fecha) && branches.has(row.sucursal));
+  const pais = activeBrandPais();
+  return sheetData.horas.filter((row) => {
+    if (!dates.has(row.fecha) || !branches.has(row.sucursal)) return false;
+    if (pais && row.pais) {
+      const rp = row.pais.toLowerCase();
+      if (rp !== pais && !rp.includes(pais) && !pais.includes(rp)) return false;
+    }
+    return true;
+  });
 }
 
 function activeFlowHours(previous = false) {
@@ -871,7 +918,7 @@ function renderChrome() {
 }
 
 function renderBranchFilter() {
-  const branches = brandConfig[state.activeBrand].branches;
+  const branches = dynamicBranchesForBrand(state.activeBrand);
   if (!branches.length) {
     els.branchFilter.innerHTML = `<span class="period-compare">Sin sucursales por ahora</span>`;
     return;
@@ -1809,7 +1856,7 @@ document.querySelectorAll(".module-card").forEach((button) => {
 document.querySelectorAll(".brand-card").forEach((button) => {
   button.addEventListener("click", () => {
     state.activeBrand = button.dataset.brand;
-    state.activeBranches = new Set(brandConfig[state.activeBrand].branches);
+    state.activeBranches = new Set(dynamicBranchesForBrand(state.activeBrand));
     state.tableSearch = "";
     ensureModuleDateRange();
     renderAll();

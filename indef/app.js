@@ -62,11 +62,45 @@ const sheetData = {
   horas: []
 };
 
-const branchAliases = {
-  "SG Paseo de Montejo": "SG Paseo Montejo",
-  "SG Paseo Montejo": "SG Paseo Montejo",
-  "SG Pedro Teixeria": "SG Pedro Teixeira",
-  "SG Pedro Teixeira": "SG Pedro Teixeira"
+const EXCLUDED_BRANCHES = new Set([
+  "SG Alameda de Urquijo",
+  "SG Alameda Urquijo"
+]);
+
+const BRANCH_ALIASES = {
+  // MX — Santagloria
+  "SG Paseo de Montejo":            "SG Paseo Montejo",
+  "SG Paseo Montejo":               "SG Paseo Montejo",
+  // ESP — Santagloria
+  "SG Alameda Recalde":             "SG Alameda Recalde 31",
+  "SG Alameda Recalde 31":          "SG Alameda Recalde 31",
+  "SG Alcala 164":                  "SG Alcalá 164",
+  "SG Alcalá 164":                  "SG Alcalá 164",
+  "SG Alcala 244":                  "SG Alcalá 244",
+  "SG Alcalá 244":                  "SG Alcalá 244",
+  "SG Atocha 84":                   "SG Atocha 84",
+  "SG Av. Ciudad de Barcelona":     "SG Av Ciudad de Barcelona 77",
+  "SG Av Ciudad de Barcelona":      "SG Av Ciudad de Barcelona 77",
+  "SG Av Ciudad de Barcelona 77":   "SG Av Ciudad de Barcelona 77",
+  "SG Av Sancho el Sabio 26":       "SG Av Sancho el Sabio 26",
+  "SG CC Bilbao Intermodal":        "SG CC Bilbao Intermodal",
+  "SG CC Paseo del Mar":            "SG CC Paseo del Mar",
+  "SG Easo 73":                     "SG Easo 73",
+  "SG EASO":                        "SG Easo 73",
+  "SG Easo":                        "SG Easo 73",
+  "SG Intermodal":                  "SG CC Bilbao Intermodal",
+  "SG Iparraguirre":                "SG Iparraguirre 11",
+  "SG Iparraguirre 11":             "SG Iparraguirre 11",
+  "SG Lopez de Hoyos":              "SG López de Hoyos 126",
+  "SG López de Hoyos":              "SG López de Hoyos 126",
+  "SG López de Hoyos 126":          "SG López de Hoyos 126",
+  "SG Moraleja Green":              "SG Moraleja Green",
+  "SG Pedro Teixeria":              "SG Pedro Teixeira 7",
+  "SG Pedro Teixeira":              "SG Pedro Teixeira 7",
+  "SG Pedro Teixeira 7":            "SG Pedro Teixeira 7",
+  "SG Puente de Deusto":            "SG Puente Deusto 13",
+  "SG Puente Deusto":               "SG Puente Deusto 13",
+  "SG Puente Deusto 13":            "SG Puente Deusto 13",
 };
 
 const brandConfig = {
@@ -80,13 +114,19 @@ const brandConfig = {
     cover: "assets/cover-sgesp.png",
     pais: "España",
     branchPrefix: "SG",
-    branches: ["SG Alameda Recalde", "SG Alcala 164", "SG Alcala 244", "SG Atocha 84", "SG Av. Ciudad de Barcelona", "SG Av Sancho el Sabio 26", "SG EASO", "SG Intermodal", "SG Iparraguirre", "SG Lopez de Hoyos", "SG Moraleja Green", "SG Pedro Teixeira", "SG Puente de Deusto"]
+    branches: [
+      "SG Alameda Recalde 31", "SG Alcalá 164", "SG Alcalá 244",
+      "SG Atocha 84", "SG Av Ciudad de Barcelona 77", "SG Av Sancho el Sabio 26",
+      "SG CC Bilbao Intermodal", "SG CC Paseo del Mar", "SG Easo 73",
+      "SG Iparraguirre 11", "SG López de Hoyos 126", "SG Moraleja Green",
+      "SG Pedro Teixeira 7", "SG Puente Deusto 13"
+    ]
   },
   "Allo mon Coco": {
     cover: "assets/cover-allomx.png",
     pais: "México",
     branchPrefix: "AMC",
-    branches: ["AMC DAM", "AMC Cocoyoles", "AMC Carretera Motul"]
+    branches: ["AMC DAM"]
   },
   "Wetzel Pretzel ESP": {
     cover: "assets/cover-wetzesp.png",
@@ -369,12 +409,7 @@ async function loadSheetData(manual = false) {
     sheetData.loaded = Boolean(sheetData.ventas.length || sheetData.productos.length || sheetData.horas.length);
     sheetData.error = null;
     if (!sheetData.loaded) throw new Error("Sheets respondio, pero no encontre filas en C_Fecha, C_Producto o C_Hora.");
-    if (!manual) {
-      syncDateRangeFromSheets();
-      state.activeBranches = new Set(dynamicBranchesForBrand(state.activeBrand));
-    } else {
-      dynamicBranchesForBrand(state.activeBrand).forEach((b) => state.activeBranches.add(b));
-    }
+    if (!manual) syncDateRangeFromSheets();
     setDataStatus("Sheets conectado", `${numberFormatter.format(sheetData.ventas.length)} ventas · ${numberFormatter.format(sheetData.productos.length)} productos · ${numberFormatter.format(sheetData.horas.length)} horas`);
     renderAll();
     if (manual) showToast("Datos actualizados desde Google Sheets");
@@ -397,34 +432,23 @@ function extractSheetRows(payload, sheetName, alias) {
   return [];
 }
 
+function stripAccents(str) {
+  return str.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
 function canonicalBranchName(value) {
-  const text = normalizeText(value);
-  return branchAliases[text] || text;
+  const raw = String(value ?? "").trim();
+  if (!raw) return raw;
+  if (EXCLUDED_BRANCHES.has(raw)) return null;
+  if (BRANCH_ALIASES[raw]) return BRANCH_ALIASES[raw];
+  const rawStripped = stripAccents(raw);
+  for (const [key, canonical] of Object.entries(BRANCH_ALIASES)) {
+    if (stripAccents(key) === rawStripped) return canonical;
+  }
+  if (EXCLUDED_BRANCHES.has(rawStripped)) return null;
+  return raw;
 }
 
-function dynamicBranchesForBrand(brand) {
-  const config = brandConfig[brand];
-  if (!config) return [];
-  if (!sheetData.loaded || !config.pais) return config.branches;
-  const pais = config.pais.toLowerCase();
-  const prefix = (config.branchPrefix || "").toLowerCase();
-  const found = [...new Set(
-    sheetData.ventas
-      .filter((r) => {
-        const rPais = (r.pais || "").toLowerCase();
-        const rSuc = (r.sucursal || "").toLowerCase();
-        const paisMatch = rPais === pais || rPais.includes(pais) || pais.includes(rPais);
-        const prefixMatch = !prefix || rSuc.startsWith(prefix);
-        return paisMatch && prefixMatch;
-      })
-      .map((r) => r.sucursal)
-  )].sort();
-  return found.length ? found : config.branches;
-}
-
-function activeBrandPais() {
-  return (brandConfig[state.activeBrand]?.pais || "").toLowerCase();
-}
 
 function normalizeVentas(rows) {
   const m = sheetMap.ventas;
@@ -668,15 +692,7 @@ function sheetProductosInRange(previous = false, applyCategory = true) {
 function sheetHorasInRange(previous = false) {
   const dates = dateKeySet(previous);
   const branches = new Set(activeBranchNames());
-  const pais = activeBrandPais();
-  return sheetData.horas.filter((row) => {
-    if (!dates.has(row.fecha) || !branches.has(row.sucursal)) return false;
-    if (pais && row.pais) {
-      const rp = row.pais.toLowerCase();
-      if (rp !== pais && !rp.includes(pais) && !pais.includes(rp)) return false;
-    }
-    return true;
-  });
+  return sheetData.horas.filter((row) => dates.has(row.fecha) && branches.has(row.sucursal));
 }
 
 function activeFlowHours(previous = false) {
@@ -918,7 +934,7 @@ function renderChrome() {
 }
 
 function renderBranchFilter() {
-  const branches = dynamicBranchesForBrand(state.activeBrand);
+  const branches = brandConfig[state.activeBrand]?.branches ?? [];
   if (!branches.length) {
     els.branchFilter.innerHTML = `<span class="period-compare">Sin sucursales por ahora</span>`;
     return;
@@ -1050,7 +1066,7 @@ function renderAlerts() {
 }
 
 function moduleAlerts() {
-  if (!currentBranches().length) return [{ tone: "warning", title: "Sin sucursales activas", body: `${state.activeBrand} queda reservado para carga futura.` }];
+  if (!(brandConfig[state.activeBrand]?.branches?.length)) return [{ tone: "warning", title: "Sin sucursales activas", body: `${state.activeBrand} queda reservado para carga futura.` }];
   if (state.activeModule === "products") {
     if (sheetData.loaded && !sheetData.productos.length) {
       return [
@@ -1090,7 +1106,7 @@ function activeBranchRows(previous = false) {
   const dates = previous ? previousRange().dates : dateList();
   if (sheetData.loaded) {
     const rows = sheetVentasInRange(previous);
-    return currentBranches().map((branch) => {
+    const result = currentBranches().map((branch) => {
       const branchRows = rows.filter((row) => row.sucursal === branch.name);
       const sales = branchRows.reduce((sum, row) => sum + row.ventaNeta, 0);
       const docs = branchRows.reduce((sum, row) => sum + row.documentos, 0);
@@ -1106,6 +1122,7 @@ function activeBranchRows(previous = false) {
         ticket: sales / Math.max(docs, 1)
       };
     });
+    return result;
   }
   return currentBranches().map((branch) => {
     const sales = dates.reduce((sum, date) => sum + branchValue(branch, date, "sales", previous), 0);
@@ -1116,7 +1133,7 @@ function activeBranchRows(previous = false) {
 }
 
 function renderModuleContent() {
-  if (!currentBranches().length) {
+  if (!(brandConfig[state.activeBrand]?.branches?.length)) {
     els.moduleContent.innerHTML = `<section class="panel"><p class="eyebrow">Sin datos</p><h2>${state.activeBrand}</h2><p class="subtitle">Este apartado queda listo para conectar sucursales cuando tengas la data.</p></section>`;
     return;
   }
@@ -1856,7 +1873,7 @@ document.querySelectorAll(".module-card").forEach((button) => {
 document.querySelectorAll(".brand-card").forEach((button) => {
   button.addEventListener("click", () => {
     state.activeBrand = button.dataset.brand;
-    state.activeBranches = new Set(dynamicBranchesForBrand(state.activeBrand));
+    state.activeBranches = new Set(brandConfig[state.activeBrand].branches);
     state.tableSearch = "";
     ensureModuleDateRange();
     renderAll();

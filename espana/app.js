@@ -116,7 +116,7 @@ const departments = [
     accent: "#7cc9a8",
     accent2: "#9db9c7",
     tone: "Operaciones · ventas diarias ESP por sucursal, documentos y semáforo.",
-    signal: "284 mediciones sucursal-día: 142 en verde, 28 en amarillo y 114 en rojo. SG Alameda de Urquijo concentra 68 lecturas rojas y SG Alameda Recalde 46.",
+    signal: "284 mediciones sucursal-día: 142 en verde, 28 en amarillo y 114 en rojo. SG Alameda Urquijo concentra 68 lecturas rojas y SG Alameda Recalde 31 concentra 46. Urquijo excluida del período actual.",
     metrics: [
       ["Documentos", "28.3K"],
       ["Lecturas en rojo", "114"],
@@ -131,8 +131,8 @@ const departments = [
       items: [
         ["Verdes", "142", "50% lecturas"],
         ["Amarillos", "28", "10% lecturas"],
-        ["SG Alameda de Urquijo", "68 lecturas rojas", "principal foco"],
-        ["SG Alameda Recalde", "46 lecturas rojas", "seguimiento"]
+        ["SG Alameda Recalde 31", "46 lecturas rojas", "principal seguimiento"],
+        ["SG Alameda Urquijo", "68 lecturas rojas", "excluida período actual"]
       ],
       stages: [
         ["Verde", "142", "green", 86],
@@ -167,7 +167,7 @@ const departments = [
         ["Activas", "7", "campañas live"]
       ],
       stages: [
-        ["SG Alameda Recalde Paid", "€15.2K", "amber", 86],
+        ["SG Alameda Recalde 31 Paid", "€15.2K", "amber", 86],
         ["SG Alameda Urquijo Paid", "€13.2K", "amber", 74],
         ["SG ESP Organic", "980K", "green", 100],
         ["SG ESP Social", "214K", "green", 62]
@@ -181,9 +181,9 @@ const departments = [
     accent: "#c9a96a",
     accent2: "#7cc9a8",
     tone: "Recursos Humanos · rotación real por unidad Mayo 2026.",
-    signal: "SG Alameda Recalde registra 9.5% de rotación en mayo 2026. SG Alameda de Urquijo se mantiene en 6.7%. Corporativo permanece en verde.",
+    signal: "SG Alameda Recalde 31 registra 9.5% de rotación en mayo 2026. SG Alameda de Urquijo 6.7% (excluida período actual). Corporativo permanece en verde.",
     metrics: [
-      ["Rotación Alameda Recalde", "9.5%"],
+      ["Rotación Alameda Recalde 31", "9.5%"],
       ["Rotación Alameda de Urquijo", "6.7%"],
       ["Corporativo ESP", "0.0%"]
     ],
@@ -191,15 +191,15 @@ const departments = [
     visual: {
       title: "Rotación Mayo 2026",
       value: "9.5%",
-      meta: "SG Alameda Recalde · amarillo",
+      meta: "SG Alameda Recalde 31 · amarillo",
       status: "amber",
       items: [
-        ["SG Alameda Recalde", "9.5%", "amarillo"],
-        ["SG Alameda de Urquijo", "6.7%", "verde"],
+        ["SG Alameda Recalde 31", "9.5%", "amarillo"],
+        ["SG Alameda de Urquijo", "6.7%", "verde (excluida)"],
         ["CORP ESP", "0.0%", "verde"]
       ],
       stages: [
-        ["SG Alameda Recalde", "9.5%", "amber", 100],
+        ["SG Alameda Recalde 31", "9.5%", "amber", 100],
         ["SG Alameda de Urquijo", "6.7%", "green", 70],
         ["CORP ESP", "0.0%", "green", 4]
       ]
@@ -283,7 +283,7 @@ const departmentDrilldowns = {
     scope: [
       ["Global", "€8.24M", "ventas netas consolidadas"],
       ["Marca", "SG ESP €8.24M", "ventas Jan-May"],
-      ["Sucursal", "2 unidades operativas", "SG Alameda Recalde + SG Alameda de Urquijo"],
+      ["Sucursal", "2 unidades operativas", "SG Alameda Recalde 31 · SG Alameda de Urquijo"],
       ["Detalle", "P&L Jan-Abr", "€312K neto · 7.4% margen"]
     ],
     cardsTitle: "P&L, ventas y margen",
@@ -304,7 +304,7 @@ const departmentDrilldowns = {
       },
       {
         tags: ["all", "sg"],
-        title: "SG Alameda Recalde",
+        title: "SG Alameda Recalde 31",
         subtitle: "Sucursal · P&L Jan-Abr",
         status: "green",
         metrics: [["Ingresos", "€3.84M"], ["Neto", "€186K"], ["Margen", "4.8%"]]
@@ -312,8 +312,8 @@ const departmentDrilldowns = {
       {
         tags: ["all", "sg"],
         title: "SG Alameda de Urquijo",
-        subtitle: "Sucursal · P&L Jan-Abr",
-        status: "amber",
+        subtitle: "Sucursal · P&L Jan-Abr · excluida período actual",
+        status: "grey",
         metrics: [["Ingresos", "€2.85M"], ["Neto", "€126K"], ["Margen", "4.4%"]]
       },
       {
@@ -336,10 +336,10 @@ const departmentDrilldowns = {
       { tags: ["all"], status: "amber", cells: ["Global", "JB Holds ESP", "Ventas netas", "€8.24M", "91.3% vs meta"] },
       { tags: ["all"], status: "amber", cells: ["Global", "JB Holds ESP", "P&L", "€312K", "7.4% margen"] },
       { tags: ["all", "sg"], status: "amber", cells: ["Marca", "Santagloria ESP", "Ventas", "€8.24M", "91.3% vs meta"] },
-      { tags: ["all", "sg"], status: "green", cells: ["Sucursal", "SG Alameda Recalde", "P&L", "€186K", "4.8% margen"] },
-      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Alameda de Urquijo", "P&L", "€126K", "4.4% margen"] }
+      { tags: ["all", "sg"], status: "green", cells: ["Sucursal", "SG Alameda Recalde 31", "P&L", "€186K", "4.8% margen"] },
+      { tags: ["all", "sg"], status: "grey", cells: ["Sucursal", "SG Alameda de Urquijo", "P&L", "€126K", "4.4% margen · excluida"] }
     ],
-    notes: ["P&L disponible solo Jan-Abr.", "Moneda: EUR (€). Dataset demo España 2026."]
+    notes: ["P&L disponible solo Jan-Abr.", "Moneda: EUR (€). Dataset demo España 2026.", "SG Alameda de Urquijo excluida del período actual; datos históricos preservados."]
   },
   operaciones: {
     title: "Desglose operativo",
@@ -352,23 +352,23 @@ const departmentDrilldowns = {
     scope: [
       ["Global", "284", "mediciones sucursal-día"],
       ["Marca", "SG ESP 91.3%", "cumplimiento Jan-May"],
-      ["Sucursal", "SG Alameda Recalde · SG Alameda de Urquijo", "operación diaria"],
+      ["Sucursal", "SG Alameda Recalde 31 · SG Alameda de Urquijo", "operación diaria"],
       ["Detalle", "114 rojas", "lecturas bajo umbral operativo"]
     ],
     cardsTitle: "Sucursal performance",
     cards: [
       {
         tags: ["all", "sg"],
-        title: "SG Alameda Recalde",
+        title: "SG Alameda Recalde 31",
         subtitle: "Sucursal · ventas Jan-May",
         status: "amber",
         metrics: [["Ventas", "€4.62M"], ["Cumpl.", "94.2%"], ["Rojas", "46"]]
       },
       {
-        tags: ["all", "sg", "red"],
+        tags: ["all", "sg"],
         title: "SG Alameda de Urquijo",
-        subtitle: "Sucursal · ventas Jan-May",
-        status: "red",
+        subtitle: "Sucursal · ventas Jan-May · excluida período actual",
+        status: "grey",
         metrics: [["Ventas", "€3.62M"], ["Cumpl.", "88.7%"], ["Rojas", "68"]]
       },
       {
@@ -376,7 +376,7 @@ const departmentDrilldowns = {
         title: "Documentos Santagloria ESP",
         subtitle: "Tickets operativos acumulados",
         status: "green",
-        metrics: [["Total", "28.3K"], ["SG Alameda Recalde", "16.2K"], ["SG Alameda de Urquijo", "12.1K"]]
+        metrics: [["Total", "28.3K"], ["SG Alameda Recalde 31", "16.2K"], ["SG Alameda de Urquijo", "12.1K"]]
       }
     ],
     barsTitle: "Últimas semanas",
@@ -389,11 +389,11 @@ const departmentDrilldowns = {
     columns: ["Nivel", "Unidad", "Ventas", "Meta", "Operación"],
     rows: [
       { tags: ["all"], status: "amber", cells: ["Global", "JB Holds ESP", "€8.24M", "€9.03M", "91.3% cumplimiento"] },
-      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Alameda Recalde", "€4.62M", "€4.90M", "46 lecturas rojas"] },
-      { tags: ["all", "sg", "red"], status: "red", cells: ["Sucursal", "SG Alameda de Urquijo", "€3.62M", "€4.08M", "68 lecturas rojas"] },
+      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Alameda Recalde 31", "€4.62M", "€4.90M", "46 lecturas rojas"] },
+      { tags: ["all", "sg"], status: "grey", cells: ["Sucursal", "SG Alameda de Urquijo", "€3.62M", "€4.08M", "68 lecturas rojas · excluida"] },
       { tags: ["all", "sg"], status: "green", cells: ["Marca", "Santagloria ESP", "28.3K docs", "2 POS", "Soft Restaurant"] }
     ],
-    notes: ["Lectura roja = venta diaria debajo del umbral operativo.", "Dataset demo España 2026."]
+    notes: ["Lectura roja = venta diaria debajo del umbral operativo.", "Dataset demo España 2026.", "SG Alameda de Urquijo excluida del período actual; 68 lecturas rojas preservadas en histórico."]
   },
   marketing: {
     title: "Desglose marketing",
@@ -453,14 +453,14 @@ const departmentDrilldowns = {
     scope: [
       ["Global", "38 colaboradores", "3 unidades reportadas"],
       ["Marca", "SG ESP 34", "plantilla operativa"],
-      ["Sucursal", "2 unidades", "rotación Mayo"],
-      ["Detalle", "SG Alameda Recalde 9.5%", "principal seguimiento"]
+      ["Sucursal", "2 unidades", "rotación Mayo · 1 excluida período actual"],
+      ["Detalle", "SG Alameda Recalde 31 9.5%", "principal seguimiento"]
     ],
     cardsTitle: "Rotación Mayo 2026",
     cards: [
       {
         tags: ["all", "sg"],
-        title: "SG Alameda Recalde",
+        title: "SG Alameda Recalde 31",
         subtitle: "Sucursal · Mayo 2026",
         status: "amber",
         metrics: [["Plantilla", "21"], ["Bajas", "2"], ["Rotación", "9.5%"]]
@@ -468,8 +468,8 @@ const departmentDrilldowns = {
       {
         tags: ["all", "sg"],
         title: "SG Alameda de Urquijo",
-        subtitle: "Sucursal · Mayo 2026",
-        status: "green",
+        subtitle: "Sucursal · Mayo 2026 · excluida período actual",
+        status: "grey",
         metrics: [["Plantilla", "13"], ["Bajas", "1"], ["Rotación", "6.7%"]]
       },
       {
@@ -482,17 +482,17 @@ const departmentDrilldowns = {
     ],
     barsTitle: "Rotación por unidad",
     bars: [
-      { tags: ["all", "sg"], label: "SG Alameda Recalde", value: "9.5%", meta: "2 bajas / 21", status: "amber", width: 100 },
-      { tags: ["all", "sg"], label: "SG Alameda de Urquijo", value: "6.7%", meta: "1 baja / 13", status: "green", width: 70 },
+      { tags: ["all", "sg"], label: "SG Alameda Recalde 31", value: "9.5%", meta: "2 bajas / 21", status: "amber", width: 100 },
+      { tags: ["all", "sg"], label: "SG Alameda de Urquijo", value: "6.7%", meta: "1 baja / 13 · excluida", status: "grey", width: 70 },
       { tags: ["all", "corp"], label: "Corporativo ESP", value: "0.0%", meta: "0 bajas / 4", status: "green", width: 4 }
     ],
     columns: ["Nivel", "Unidad", "Plantilla", "Bajas", "Lectura"],
     rows: [
-      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Alameda Recalde", "21", "2", "9.5% rotación"] },
-      { tags: ["all", "sg"], status: "green", cells: ["Sucursal", "SG Alameda de Urquijo", "13", "1", "Estable"] },
+      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Alameda Recalde 31", "21", "2", "9.5% rotación"] },
+      { tags: ["all", "sg"], status: "grey", cells: ["Sucursal", "SG Alameda de Urquijo", "13", "1", "6.7% rotación · excluida"] },
       { tags: ["all", "corp"], status: "green", cells: ["Corporativo", "IN-DEF ESP", "4", "0", "Equipo estable"] }
     ],
-    notes: ["Rotación tomada de datos Mayo 2026.", "Dataset demo España 2026."]
+    notes: ["Rotación tomada de datos Mayo 2026.", "Dataset demo España 2026.", "SG Alameda de Urquijo excluida del período actual; datos históricos preservados para reactivación."]
   },
   expansion: {
     title: "Desglose expansión",
@@ -560,7 +560,7 @@ const departmentDrilldowns = {
     scope: [
       ["Global", "2 marcas", "master data ESP"],
       ["Marca", "SG ESP · WP ESP", "catálogo"],
-      ["Sucursal", "2 unidades activas", "SG Alameda Recalde + SG Alameda de Urquijo"],
+      ["Sucursal", "2 unidades registradas", "SG Alameda Recalde 31 · SG Alameda de Urquijo"],
       ["Detalle", "dataset demo", "fuentes cargadas al proyecto"]
     ],
     cardsTitle: "Master data",
@@ -608,9 +608,9 @@ const pulseAlerts = [
   {
     level: "P1",
     title: "SG Alameda de Urquijo vende 88.7% vs meta",
-    copy: "Mayo 2026 queda en rojo: €321.4K contra meta de €362.3K. Gap operativo de ventas.",
+    copy: "Mayo 2026 queda en rojo: €321.4K contra meta de €362.3K. Gap operativo de ventas. Sucursal excluida del período actual — dato preservado para seguimiento.",
     owner: "DIR_OPS / SG ESP",
-    status: "red"
+    status: "grey"
   },
   {
     level: "P1",
@@ -621,7 +621,7 @@ const pulseAlerts = [
   },
   {
     level: "P2",
-    title: "Rotación SG Alameda Recalde en amarillo",
+    title: "Rotación SG Alameda Recalde 31 en amarillo",
     copy: "9.5% de rotación en mayo 2026: 2 bajas sobre 21 colaboradores. Requiere seguimiento.",
     owner: "DIR_RH / SG ESP",
     status: "amber"
@@ -647,12 +647,12 @@ const insights = [
     tag: "Ventas",
     title: "91.3% vs meta",
     bullets: ["€8.24M ventas netas acumuladas", "Meta acumulada €9.03M", "Mayo cierra en 87.1% consolidado"],
-    action: "Recuperar SG Alameda de Urquijo",
+    action: "Recuperar SG Alameda de Urquijo + Reforzar cumplimiento ESP",
     status: "amber"
   },
   {
     tag: "Sucursal",
-    title: "SG Alameda Recalde 94.2%",
+    title: "SG Alameda Recalde 31 94.2%",
     bullets: ["Mejor rendimiento de la red ESP", "€4.62M Jan-May 2026", "Cumplimiento por encima de la red"],
     action: "Replicar modelo comercial",
     status: "green"
@@ -676,9 +676,9 @@ const insights = [
 const risks = [
   {
     title: "SG Alameda de Urquijo por debajo de meta",
-    copy: "Venta vs meta de 88.7% en mayo 2026. Requiere plan comercial inmediato.",
-    meta: ["Ventas", "€321.4K", "Rojo"],
-    status: "red"
+    copy: "Venta vs meta de 88.7% en mayo 2026. Requiere plan comercial inmediato. Sucursal excluida del período actual — dato histórico preservado.",
+    meta: ["Ventas", "€321.4K", "Excluida período actual"],
+    status: "grey"
   },
   {
     title: "Margen neto acumulado ESP bajo umbral",
@@ -687,7 +687,7 @@ const risks = [
     status: "amber"
   },
   {
-    title: "Rotación SG Alameda Recalde en amarillo",
+    title: "Rotación SG Alameda Recalde 31 en amarillo",
     copy: "9.5% de rotación en mayo 2026. 2 bajas sobre 21 colaboradores. Sin supervisor cubierto.",
     meta: ["RH", "Mayo 2026", "Amarillo"],
     status: "amber"

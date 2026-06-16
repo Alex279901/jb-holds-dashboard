@@ -116,7 +116,7 @@ const departments = [
     accent: "#7cc9a8",
     accent2: "#9db9c7",
     tone: "Operaciones · ventas diarias MX por sucursal, documentos y semáforo.",
-    signal: "432 mediciones sucursal-día: 185 en verde, 36 en amarillo y 211 en rojo. Rojo significa venta diaria por debajo del umbral operativo; SG La Isla concentra 93 lecturas rojas y SG Paseo de Montejo 77.",
+    signal: "432 mediciones sucursal-día: 185 en verde, 36 en amarillo y 211 en rojo. Rojo significa venta diaria por debajo del umbral operativo; SG La Isla concentra 93 lecturas rojas y SG Paseo Montejo 77.",
     metrics: [
       ["Documentos", "41.6K"],
       ["Lecturas en rojo", "211"],
@@ -132,7 +132,7 @@ const departments = [
         ["Verdes", "185", "43% lecturas"],
         ["Amarillos", "36", "8% lecturas"],
         ["SG La Isla", "93 lecturas rojas", "principal foco"],
-        ["SG Paseo de Montejo", "77 lecturas rojas", "seguimiento"]
+        ["SG Paseo Montejo", "77 lecturas rojas", "seguimiento"]
       ],
       stages: [
         ["Verde", "185", "green", 86],
@@ -181,11 +181,11 @@ const departments = [
     accent: "#c9a96a",
     accent2: "#7cc9a8",
     tone: "Recursos Humanos · rotación real por unidad Mayo 2026.",
-    signal: "AMC marca rojo con 20.0% de rotación. SG La Isla queda en 11.1% y SG Paseo de Montejo en 14.3%, ambos en amarillo. Corporativo permanece verde.",
+    signal: "AMC marca rojo con 20.0% de rotación. SG La Isla queda en 11.1% y SG Paseo Montejo en 14.3%, ambos en amarillo. Corporativo permanece verde.",
     metrics: [
       ["Rotación AMC", "20.0%"],
       ["Rotación SG La Isla", "11.1%"],
-      ["Rotación SG Paseo de Montejo", "14.3%"]
+      ["Rotación SG Paseo Montejo", "14.3%"]
     ],
     bars: [20, 11, 14, 0, 20, 11, 14, 0],
     visual: {
@@ -196,13 +196,13 @@ const departments = [
       items: [
         ["AMC", "20.0%", "rojo"],
         ["SG La Isla", "11.1%", "amarillo"],
-        ["SG Paseo de Montejo", "14.3%", "amarillo"],
+        ["SG Paseo Montejo", "14.3%", "amarillo"],
         ["CORP", "0.0%", "verde"]
       ],
       stages: [
         ["AMC", "20.0%", "red", 100],
         ["SG La Isla", "11.1%", "amber", 56],
-        ["SG Paseo de Montejo", "14.3%", "amber", 72],
+        ["SG Paseo Montejo", "14.3%", "amber", 72],
         ["CORP", "0.0%", "green", 4]
       ]
     }
@@ -316,14 +316,14 @@ const departmentDrilldowns = {
       },
       {
         tags: ["all", "sg"],
-        title: "Santagloria La Isla",
+        title: "SG La Isla",
         subtitle: "Sucursal · P&L Jan-Abr",
         status: "green",
         metrics: [["Ingresos", "$3.76M"], ["Neto", "$572K"], ["Margen", "15.2%"]]
       },
       {
         tags: ["all", "sg"],
-        title: "SG Paseo de Montejo",
+        title: "SG Paseo Montejo",
         subtitle: "Sucursal · P&L Jan-Abr",
         status: "green",
         metrics: [["Ingresos", "$2.50M"], ["Neto", "$438K"], ["Margen", "17.5%"]]
@@ -350,7 +350,7 @@ const departmentDrilldowns = {
       { tags: ["all", "sg"], status: "red", cells: ["Marca", "Santagloria", "Ventas", "$8.05M", "80.1% vs meta"] },
       { tags: ["all", "amc"], status: "green", cells: ["Marca", "Allô Mon Coco", "Ventas", "$6.50M", "121.7% vs meta"] },
       { tags: ["all", "sg"], status: "green", cells: ["Sucursal", "SG La Isla", "P&L", "$572K", "15.2% margen"] },
-      { tags: ["all", "sg"], status: "green", cells: ["Sucursal", "SG Paseo de Montejo", "P&L", "$438K", "17.5% margen"] },
+      { tags: ["all", "sg"], status: "green", cells: ["Sucursal", "SG Paseo Montejo", "P&L", "$438K", "17.5% margen"] },
       { tags: ["all", "corp"], status: "red", cells: ["Corporativo", "IN-DEF", "P&L", "-$350K", "-7.0% margen"] }
     ],
     notes: ["P&L disponible solo Jan-Abr.", "EBITDA exacto no viene en fuente; se conserva Resultado P&L."]
@@ -367,7 +367,7 @@ const departmentDrilldowns = {
     scope: [
       ["Global", "432", "mediciones sucursal-día"],
       ["Marca", "SG 80.1% · AMC 121.7%", "cumplimiento Jan-May"],
-      ["Sucursal", "SG La Isla · SG Paseo de Montejo · AMC", "operación diaria"],
+      ["Sucursal", "SG La Isla · SG Paseo Montejo · AMC", "operación diaria"],
       ["Detalle", "211 rojas", "lecturas bajo umbral operativo"]
     ],
     cardsTitle: "Sucursal performance",
@@ -381,7 +381,7 @@ const departmentDrilldowns = {
       },
       {
         tags: ["all", "sg", "red"],
-        title: "SG Paseo de Montejo",
+        title: "SG Paseo Montejo",
         subtitle: "Sucursal · ventas Jan-May",
         status: "red",
         metrics: [["Ventas", "$2.91M"], ["Cumpl.", "88.6%"], ["Rojas", "77"]]
@@ -398,7 +398,7 @@ const departmentDrilldowns = {
         title: "Documentos Santagloria",
         subtitle: "Tickets operativos acumulados",
         status: "green",
-        metrics: [["Total", "41.6K"], ["SG La Isla", "25.1K"], ["SG Paseo de Montejo", "16.4K"]]
+        metrics: [["Total", "41.6K"], ["SG La Isla", "25.1K"], ["SG Paseo Montejo", "16.4K"]]
       }
     ],
     barsTitle: "Ultimas semanas",
@@ -412,7 +412,7 @@ const departmentDrilldowns = {
     rows: [
       { tags: ["all"], status: "amber", cells: ["Global", "JB Holds", "$14.55M", "$15.39M", "94.5% cumplimiento"] },
       { tags: ["all", "sg", "red"], status: "red", cells: ["Sucursal", "SG La Isla", "$5.14M", "$6.77M", "93 lecturas rojas"] },
-      { tags: ["all", "sg", "red"], status: "red", cells: ["Sucursal", "SG Paseo de Montejo", "$2.91M", "$3.28M", "77 lecturas rojas"] },
+      { tags: ["all", "sg", "red"], status: "red", cells: ["Sucursal", "SG Paseo Montejo", "$2.91M", "$3.28M", "77 lecturas rojas"] },
       { tags: ["all", "amc"], status: "green", cells: ["Sucursal", "AMC Mérida", "$6.50M", "$5.34M", "121.7% cumplimiento"] },
       { tags: ["all", "sg"], status: "green", cells: ["Marca", "Santagloria", "41.6K docs", "2 POS", "Soft Restaurant"] }
     ],
@@ -515,7 +515,7 @@ const departmentDrilldowns = {
       },
       {
         tags: ["all", "sg"],
-        title: "SG Paseo de Montejo",
+        title: "SG Paseo Montejo",
         subtitle: "Sucursal · Mayo 2026",
         status: "amber",
         metrics: [["Plantilla", "14"], ["Bajas", "2"], ["Rotación", "14.3%"]]
@@ -531,7 +531,7 @@ const departmentDrilldowns = {
     barsTitle: "Rotación por unidad",
     bars: [
       { tags: ["all", "amc", "red"], label: "AMC Mérida", value: "20.0%", meta: "3 bajas / 15", status: "red", width: 100 },
-      { tags: ["all", "sg"], label: "SG Paseo de Montejo", value: "14.3%", meta: "2 bajas / 14", status: "amber", width: 72 },
+      { tags: ["all", "sg"], label: "SG Paseo Montejo", value: "14.3%", meta: "2 bajas / 14", status: "amber", width: 72 },
       { tags: ["all", "sg"], label: "SG La Isla", value: "11.1%", meta: "2 bajas / 18", status: "amber", width: 56 },
       { tags: ["all", "corp"], label: "Corporativo", value: "0.0%", meta: "0 bajas / 8", status: "green", width: 4 }
     ],
@@ -539,7 +539,7 @@ const departmentDrilldowns = {
     rows: [
       { tags: ["all", "amc", "red"], status: "red", cells: ["Sucursal", "AMC Mérida", "15", "3", "20.0% rotación"] },
       { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG La Isla", "18", "2", "Supervisor pendiente"] },
-      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Paseo de Montejo", "14", "2", "Ventas bajas elevan riesgo"] },
+      { tags: ["all", "sg"], status: "amber", cells: ["Sucursal", "SG Paseo Montejo", "14", "2", "Ventas bajas elevan riesgo"] },
       { tags: ["all", "corp"], status: "green", cells: ["Corporativo", "IN-DEF", "8", "0", "Equipo estable"] }
     ],
     notes: ["Rotación tomada del archivo real de Mayo 2026.", "Ausentismo y nómina no vienen en esta carga; se dejan pendientes para siguiente inyección."]
@@ -676,14 +676,14 @@ const departmentDrilldowns = {
 const pulseAlerts = [
   {
     level: "P1",
-    title: "Santagloria La Isla vende 68.47% vs meta",
+    title: "SG La Isla vende 68.47% vs meta",
     copy: "Mayo 2026 queda en rojo: $751.7K contra meta de $1.10M. Es el principal gap operativo de ventas.",
     owner: "DIR_OPS / SG",
     status: "red"
   },
   {
     level: "P1",
-    title: "SG Paseo de Montejo vende 79.74% vs meta",
+    title: "SG Paseo Montejo vende 79.74% vs meta",
     copy: "Mayo 2026 también queda en rojo: $424.4K contra meta de $532.3K.",
     owner: "DIR_OPS / SG",
     status: "red"
@@ -750,7 +750,7 @@ const risks = [
     status: "red"
   },
   {
-    title: "SG Paseo de Montejo en rojo comercial",
+    title: "SG Paseo Montejo en rojo comercial",
     copy: "Venta vs meta de 79.74% en mayo 2026. La tendencia de ventas bajas se conecta con riesgo de rotación.",
     meta: ["Ventas", "$424.4K", "Rojo"],
     status: "red"

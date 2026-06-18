@@ -394,7 +394,7 @@ function startCarousel() {
 }
 
 async function loadSheetData(manual = false) {
-  setDataStatus("Conectando Sheets", "Leyendo Google Sheets API...");
+  setDataStatus("Sincronizando datos", "Leyendo Google Sheets API...");
   try {
     const response = await fetch(`${SHEETS_API_URL}?v=${Date.now()}`, { cache: "no-store" });
     const text = await response.text();
@@ -410,15 +410,15 @@ async function loadSheetData(manual = false) {
     sheetData.error = null;
     if (!sheetData.loaded) throw new Error("Sheets respondio, pero no encontre filas en C_Fecha, C_Producto o C_Hora.");
     if (!manual) syncDateRangeFromSheets();
-    setDataStatus("Sheets conectado", `${numberFormatter.format(sheetData.ventas.length)} ventas · ${numberFormatter.format(sheetData.productos.length)} productos · ${numberFormatter.format(sheetData.horas.length)} horas`);
+    setDataStatus("Datos sincronizados", `${numberFormatter.format(sheetData.ventas.length)} ventas · ${numberFormatter.format(sheetData.productos.length)} productos · ${numberFormatter.format(sheetData.horas.length)} horas`);
     renderAll();
-    if (manual) showToast("Datos actualizados desde Google Sheets");
+    if (manual) showToast("Datos sincronizados correctamente");
   } catch (error) {
     sheetData.loaded = false;
     sheetData.error = error.message;
-    setDataStatus("Live demo", "Datos simulados · revisa acceso de Sheets");
+    setDataStatus("Live demo", "Datos simulados · error de conexión");
     console.warn("No se pudo cargar Google Sheets:", error);
-    if (manual) showToast("No pude leer Sheets; sigo con demo local");
+    if (manual) showToast("No pude sincronizar datos; sigo con demo local");
   }
 }
 

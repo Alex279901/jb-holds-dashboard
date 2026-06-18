@@ -6,9 +6,8 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  console.log("URL:", process.env.SUPABASE_URL ? "OK" : "MISSING");
-  console.log("KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "OK" : "MISSING");
-  console.log("SUPABASE_KEYS_PRESENT:", Object.keys(process.env).filter(k => k.startsWith("SUPABASE")));
+  console.log("URL VALUE:", process.env.SUPABASE_URL ? "OK" : "MISSING");
+  console.log("KEY VALUE:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "OK" : "MISSING");
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return res.status(500).json({ error: "Variables de entorno SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no configuradas" });
@@ -40,6 +39,7 @@ export default async function handler(req, res) {
   async function queryView({ key, view, select }) {
     const params = new URLSearchParams({ select });
     const url = `${SUPABASE_URL}/rest/v1/${view}?${params}`;
+    console.log("Consultando:", url);
     let response;
     try {
       response = await fetch(url, { headers });

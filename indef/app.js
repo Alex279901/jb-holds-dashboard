@@ -59,7 +59,8 @@ const sheetData = {
   error: null,
   ventas: [],
   productos: [],
-  horas: []
+  horas: [],
+  detalle: []
 };
 
 const EXCLUDED_BRANCHES = new Set([
@@ -406,6 +407,7 @@ async function loadSheetData(manual = false) {
     sheetData.ventas = normalizeVentas(extractSheetRows(payload, sheetMap.ventas.tab, "ventas"));
     sheetData.productos = normalizeProductos(extractSheetRows(payload, sheetMap.productos.tab, "productos"));
     sheetData.horas = normalizeHoras(extractSheetRows(payload, sheetMap.horas.tab, "horas"));
+    sheetData.detalle = extractSheetRows(payload, "Detalle", "detalle");
     sheetData.loaded = Boolean(sheetData.ventas.length || sheetData.productos.length || sheetData.horas.length);
     sheetData.error = null;
     if (!sheetData.loaded) throw new Error("Sheets respondio, pero no encontre filas en C_Fecha, C_Producto o C_Hora.");
@@ -1172,7 +1174,7 @@ function renderSalesContent() {
     </section>
     <section class="table-section">
       <div class="table-toolbar"><div><p class="eyebrow">Detalle accionable</p><h2>Ventas netas vs meta</h2></div><input id="tableSearch" type="search" placeholder="Buscar sucursal, estado o alerta"></div>
-      <div class="table-wrap"><table><thead><tr><th>Sucursal</th><th>Venta neta</th><th>Periodo anterior</th><th>Meta 100%</th><th>Cumplimiento</th><th>GAP</th><th>Estado</th></tr></thead><tbody id="detailRows"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Sucursal</th><th>Venta Neta</th><th>Periodo Anterior</th><th>$ Nómina</th><th>$ Renta</th><th>Meta Operativa</th><th>Cumplimiento</th><th>GAP</th><th>Estado General</th><th>Estado Nómina</th><th>Estado Renta</th></tr></thead><tbody id="detailRows"></tbody></table></div>
     </section>
     <article class="panel full">
       <div class="panel-heading">
@@ -1458,16 +1460,44 @@ function renderSalesTable() {
   const input = document.querySelector("#tableSearch");
   const rows = document.querySelector("#detailRows");
   const query = state.tableSearch.trim().toLowerCase();
-  const previous = Object.fromEntries(activeBranchRows(true).map((branch) => [branch.name, branch]));
-  const data = activeBranchRows().filter((branch) => branch.name.toLowerCase().includes(query));
-  rows.innerHTML = data.map((branch) => {
-    const risk = branch.compliance >= 1 ? "good" : branch.compliance >= 0.75 ? "warning" : "danger";
-    return `<tr data-row="${branch.name}">
-      <td><strong>${branch.name}</strong></td><td>${exactFormatter.format(branch.sales)}</td><td>${exactFormatter.format(previous[branch.name]?.sales ?? 0)}</td><td>${exactFormatter.format(branch.target)}</td>
-      <td><span class="progress-line"><span>${percent(branch.compliance)}</span><span class="meter"><span style="width:${Math.min(branch.compliance, 1.15) * 100}%; background:${branch.color}"></span></span></span></td>
-      <td>${exactFormatter.format(branch.gap)}</td><td><span class="badge ${risk}">${risk === "good" ? "Fuerte" : risk === "warning" ? "Vigilar" : "Critico"}</span></td>
+
+  function estadoBadge(estado) {
+    if (estado == null) return `<span class="badge neutral">N/D</span>`;
+    const cls = estado === "VERDE" ? "good" : estado === "AMARILLO" ? "warning" : "danger";
+    const label = estado === "VERDE" ? "Verde" : estado === "AMARILLO" ? "Amarillo" : "Rojo";
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function fmtMoney(v) {
+    return v == null ? "N/D" : exactFormatter.format(Number(v));
+  }
+
+  function fmtPct(v) {
+    return v == null ? "N/D" : percent(Number(v));
+  }
+
+  const source = sheetData.detalle.length ? sheetData.detalle : [];
+  const data = source.filter((r) => r.sucursal && r.sucursal.toLowerCase().includes(query));
+
+  rows.innerHTML = data.map((r) => {
+    const cumpl = r.cumplimiento_pct != null ? Number(r.cumplimiento_pct) : null;
+    const meterWidth = cumpl != null ? `${Math.min(cumpl, 1.15) * 100}%` : "0%";
+    const meterColor = cumpl == null ? "var(--muted)" : cumpl >= 1 ? "var(--green)" : cumpl >= 0.75 ? "var(--yellow)" : "var(--red)";
+    return `<tr data-row="${r.sucursal}">
+      <td><strong>${r.sucursal}</strong></td>
+      <td>${fmtMoney(r.venta_neta_actual)}</td>
+      <td>${fmtMoney(r.venta_neta_periodo_anterior)}</td>
+      <td>${r.nomina_total == null ? "N/D" : fmtMoney(r.nomina_total)}</td>
+      <td>${fmtMoney(r.renta_semanal)}</td>
+      <td>${fmtMoney(r.meta_operativa)}</td>
+      <td><span class="progress-line"><span>${fmtPct(cumpl)}</span><span class="meter"><span style="width:${meterWidth}; background:${meterColor}"></span></span></span></td>
+      <td>${fmtMoney(r.gap)}</td>
+      <td>${estadoBadge(r.estado_general)}</td>
+      <td>${r.estado_nomina == null ? "N/D" : estadoBadge(r.estado_nomina)}</td>
+      <td>${estadoBadge(r.estado_renta)}</td>
     </tr>`;
   }).join("");
+
   input.value = state.tableSearch;
   input.addEventListener("input", (event) => { state.tableSearch = event.target.value; renderSalesTable(); });
   document.querySelectorAll("[data-row]").forEach((row) => row.addEventListener("click", () => openInspectorForBranch(row.dataset.row)));

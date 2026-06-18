@@ -1476,13 +1476,21 @@ function renderSalesTable() {
     return v == null ? "N/D" : percent(Number(v));
   }
 
+  // vw_indef_detalle_accionable es un snapshot de la última semana (sin filtros de fecha).
+  // Integración con filtros dinámicos pendiente: vw_calendario_semanas + fn_indef_kpis.
+  // GAP en la vista = meta - venta (invertido). Se corrige aquí multiplicando * -1.
+  // Si VS2 corrige el SQL a gap = venta - meta, eliminar el * -1 en esta línea.
   const source = sheetData.detalle.length ? sheetData.detalle : [];
-  const data = source.filter((r) => r.sucursal && r.sucursal.toLowerCase().includes(query));
+  const data = source
+    .filter((r) => r.sucursal && !EXCLUDED_BRANCHES.has(r.sucursal))
+    .filter((r) => r.sucursal.toLowerCase().includes(query));
 
   rows.innerHTML = data.map((r) => {
     const cumpl = r.cumplimiento_pct != null ? Number(r.cumplimiento_pct) : null;
     const meterWidth = cumpl != null ? `${Math.min(cumpl, 1.15) * 100}%` : "0%";
     const meterColor = cumpl == null ? "var(--muted)" : cumpl >= 1 ? "var(--green)" : cumpl >= 0.75 ? "var(--yellow)" : "var(--red)";
+    const gapDisplay = r.gap != null ? -Number(r.gap) : null;
+    const gapColor = gapDisplay == null ? "" : gapDisplay >= 0 ? "color:var(--green)" : "color:var(--red)";
     return `<tr data-row="${r.sucursal}">
       <td><strong>${r.sucursal}</strong></td>
       <td>${fmtMoney(r.venta_neta_actual)}</td>
@@ -1491,7 +1499,7 @@ function renderSalesTable() {
       <td>${fmtMoney(r.renta_semanal)}</td>
       <td>${fmtMoney(r.meta_operativa)}</td>
       <td><span class="progress-line"><span>${fmtPct(cumpl)}</span><span class="meter"><span style="width:${meterWidth}; background:${meterColor}"></span></span></span></td>
-      <td>${fmtMoney(r.gap)}</td>
+      <td style="${gapColor}">${fmtMoney(gapDisplay)}</td>
       <td>${estadoBadge(r.estado_general)}</td>
       <td>${r.estado_nomina == null ? "N/D" : estadoBadge(r.estado_nomina)}</td>
       <td>${estadoBadge(r.estado_renta)}</td>

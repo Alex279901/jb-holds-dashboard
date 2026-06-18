@@ -1133,6 +1133,8 @@ svg {
 
 .table-wrap {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 560px;
 }
 
 table {
@@ -1154,6 +1156,10 @@ th {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0;
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 1;
 }
 
 tbody tr {

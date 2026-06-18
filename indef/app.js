@@ -1480,10 +1480,20 @@ function renderSalesTable() {
   // Integración con filtros dinámicos pendiente: vw_calendario_semanas + fn_indef_kpis.
   // GAP en la vista = meta - venta (invertido). Se corrige aquí multiplicando * -1.
   // Si VS2 corrige el SQL a gap = venta - meta, eliminar el * -1 en esta línea.
+  const activeBranches = new Set(activeBranchNames());
   const source = sheetData.detalle.length ? sheetData.detalle : [];
   const data = source
     .filter((r) => r.sucursal && !EXCLUDED_BRANCHES.has(r.sucursal))
+    .filter((r) => activeBranches.has(r.sucursal))
     .filter((r) => r.sucursal.toLowerCase().includes(query));
+
+  if (!data.length) {
+    const colCount = 11;
+    rows.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:2rem;color:var(--muted)">Sin datos disponibles</td></tr>`;
+    input.value = state.tableSearch;
+    input.addEventListener("input", (event) => { state.tableSearch = event.target.value; renderSalesTable(); });
+    return;
+  }
 
   rows.innerHTML = data.map((r) => {
     const cumpl = r.cumplimiento_pct != null ? Number(r.cumplimiento_pct) : null;

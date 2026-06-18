@@ -39,15 +39,17 @@ export default async function handler(req, res) {
   async function queryView({ key, view, select }) {
     const params = new URLSearchParams({ select });
     const url = `${SUPABASE_URL}/rest/v1/${view}?${params}`;
-    console.log("Consultando:", url);
+    console.log(`Consultando ${view}`);
     let response;
     try {
       response = await fetch(url, { headers });
     } catch (networkError) {
       throw new Error(`Error consultando ${view}: ${networkError.message}`);
     }
+    console.log(`${view} status:`, response.status);
     if (!response.ok) {
       const body = await response.text().catch(() => "");
+      console.log(`${view} error body:`, body);
       throw new Error(`Error consultando ${view}: HTTP ${response.status} — ${body}`);
     }
     let data;

@@ -394,7 +394,7 @@ function startCarousel() {
 }
 
 async function loadSheetData(manual = false) {
-  setDataStatus("Sincronizando datos", "Leyendo Google Sheets API...");
+  setDataStatus("Sincronizando datos", "Consultando Supabase...");
   try {
     const response = await fetch(`${SHEETS_API_URL}?v=${Date.now()}`, { cache: "no-store" });
     const text = await response.text();

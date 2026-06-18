@@ -1,3 +1,35 @@
+const PAGE_SIZE = 1000;
+
+async function fetchAllRows(baseUrl, authHeaders) {
+  const rows = [];
+  let offset = 0;
+
+  while (true) {
+    const rangeEnd = offset + PAGE_SIZE - 1;
+    const response = await fetch(baseUrl, {
+      headers: {
+        ...authHeaders,
+        "Range-Unit": "items",
+        "Range": `${offset}-${rangeEnd}`,
+        "Prefer": "count=none",
+      },
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new Error(`HTTP ${response.status} — ${body}`);
+    }
+
+    const page = await response.json();
+    rows.push(...page);
+
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return rows;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -6,14 +38,11 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  console.log("URL VALUE:", process.env.SUPABASE_URL ? "OK" : "MISSING");
-  console.log("KEY VALUE:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "OK" : "MISSING");
-
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return res.status(500).json({ error: "Variables de entorno SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no configuradas" });
   }
 
-  const headers = {
+  const authHeaders = {
     apikey: SUPABASE_KEY,
     Authorization: `Bearer ${SUPABASE_KEY}`,
   };
@@ -39,26 +68,12 @@ export default async function handler(req, res) {
   async function queryView({ key, view, select }) {
     const params = new URLSearchParams({ select });
     const url = `${SUPABASE_URL}/rest/v1/${view}?${params}`;
-    console.log(`Consultando ${view}`);
-    let response;
     try {
-      response = await fetch(url, { headers });
-    } catch (networkError) {
-      throw new Error(`Error consultando ${view}: ${networkError.message}`);
+      const data = await fetchAllRows(url, authHeaders);
+      return { key, data };
+    } catch (err) {
+      throw new Error(`Error consultando ${view}: ${err.message}`);
     }
-    console.log(`${view} status:`, response.status);
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      console.log(`${view} error body:`, body);
-      throw new Error(`Error consultando ${view}: HTTP ${response.status} — ${body}`);
-    }
-    let data;
-    try {
-      data = await response.json();
-    } catch {
-      throw new Error(`Error consultando ${view}: respuesta no es JSON válido`);
-    }
-    return { key, data };
   }
 
   let results;

@@ -13,7 +13,7 @@ const users = [
   ["Isaac Cob", "Marketing Creative / Brand"]
 ].map(([name, area]) => ({ name, area }));
 
-const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbx_sdWMzDehOJ69VoiQRyp0OlB3RL0bRV5G51D3_40gnOsmzp-JOTr6xY--k4GjEuMx4Q/exec";
+const SHEETS_API_URL = "/api/indef-data";
 
 const sheetMap = {
   ventas: {

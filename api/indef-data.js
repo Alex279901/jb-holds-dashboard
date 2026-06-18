@@ -8,6 +8,8 @@ export default async function handler(req, res) {
 
   console.log("SUPABASE_URL:", Boolean(process.env.SUPABASE_URL));
   console.log("SUPABASE_SERVICE_ROLE_KEY:", Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY));
+  console.log("URL:", process.env.SUPABASE_URL ? "OK" : "MISSING");
+  console.log("KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "OK" : "MISSING");
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return res.status(500).json({ error: "Variables de entorno SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no configuradas" });

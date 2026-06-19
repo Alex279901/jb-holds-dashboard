@@ -1151,15 +1151,26 @@ td {
   font-size: 14px;
 }
 
+thead {
+  background: rgba(0, 255, 170, 0.06);
+  border-bottom: 1px solid rgba(0, 255, 170, 0.15);
+  box-shadow: 0 2px 0 rgba(0, 255, 170, 0.15);
+}
+
 th {
-  color: var(--muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0;
   position: sticky;
   top: 0;
-  background: var(--card);
-  z-index: 1;
+  z-index: 10;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(8, 15, 28, 0.95);
 }
 
 tbody tr {
@@ -1167,7 +1178,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(0, 255, 170, 0.04);
 }
 
 .progress-line {

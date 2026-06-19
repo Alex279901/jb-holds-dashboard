@@ -63,11 +63,6 @@ export default async function handler(req, res) {
       view: "vw_c_producto",
       select: "Fecha,Sucursal,Producto,Categoria,Neto,Cantidad,Ordenes",
     },
-    {
-      key: "Detalle",
-      view: "vw_indef_detalle_accionable",
-      select: "sucursal,venta_neta_actual,venta_neta_periodo_anterior,nomina_total,renta_semanal,meta_operativa,cumplimiento_pct,gap,estado_general,estado_nomina,estado_renta",
-    },
   ];
 
   async function queryView({ key, view, select }) {

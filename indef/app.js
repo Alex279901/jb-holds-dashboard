@@ -1456,7 +1456,7 @@ function renderDeficit() {
   bindChartHover(container);
 }
 
-function renderSalesTable() {
+async function renderSalesTable() {
   const input = document.querySelector("#tableSearch");
   const rows = document.querySelector("#detailRows");
   const query = state.tableSearch.trim().toLowerCase();
@@ -1476,49 +1476,66 @@ function renderSalesTable() {
     return v == null ? "N/D" : percent(Number(v));
   }
 
-  // vw_indef_detalle_accionable es un snapshot de la última semana (sin filtros de fecha).
-  // Integración con filtros dinámicos pendiente: vw_calendario_semanas + fn_indef_kpis.
-  // GAP en la vista = meta - venta (invertido). Se corrige aquí multiplicando * -1.
-  // Si VS2 corrige el SQL a gap = venta - meta, eliminar el * -1 en esta línea.
-  const activeBranches = new Set(activeBranchNames());
-  const source = sheetData.detalle.length ? sheetData.detalle : [];
-  const data = source
-    .filter((r) => r.sucursal && !EXCLUDED_BRANCHES.has(r.sucursal))
-    .filter((r) => activeBranches.has(r.sucursal))
-    .filter((r) => r.sucursal.toLowerCase().includes(query));
+  function renderRows(source) {
+    const data = source
+      .filter((r) => r.sucursal && !EXCLUDED_BRANCHES.has(r.sucursal))
+      .filter((r) => r.sucursal.toLowerCase().includes(query));
 
-  if (!data.length) {
-    const colCount = 11;
-    rows.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:2rem;color:var(--muted)">Sin datos disponibles</td></tr>`;
-    input.value = state.tableSearch;
-    input.addEventListener("input", (event) => { state.tableSearch = event.target.value; renderSalesTable(); });
-    return;
+    if (!data.length) {
+      rows.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)">Sin datos disponibles</td></tr>`;
+      return;
+    }
+
+    rows.innerHTML = data.map((r) => {
+      const cumpl = r.cumplimiento_pct != null ? Number(r.cumplimiento_pct) : null;
+      const meterWidth = cumpl != null ? `${Math.min(cumpl, 1.15) * 100}%` : "0%";
+      const meterColor = cumpl == null ? "var(--muted)" : cumpl >= 1 ? "var(--green)" : cumpl >= 0.75 ? "var(--yellow)" : "var(--red)";
+      const gapVal = r.gap != null ? Number(r.gap) : null;
+      const gapColor = gapVal == null ? "" : gapVal >= 0 ? "color:var(--green)" : "color:var(--red)";
+      return `<tr data-row="${r.sucursal}">
+        <td><strong>${r.sucursal}</strong></td>
+        <td>${fmtMoney(r.venta_neta_actual)}</td>
+        <td>${fmtMoney(r.venta_neta_periodo_anterior)}</td>
+        <td>${r.nomina_total == null ? "N/D" : fmtMoney(r.nomina_total)}</td>
+        <td>${fmtMoney(r.renta_semanal)}</td>
+        <td>${fmtMoney(r.meta_operativa)}</td>
+        <td><span class="progress-line"><span>${fmtPct(cumpl)}</span><span class="meter"><span style="width:${meterWidth}; background:${meterColor}"></span></span></span></td>
+        <td style="${gapColor}">${fmtMoney(gapVal)}</td>
+        <td>${estadoBadge(r.estado_general)}</td>
+        <td>${r.estado_nomina == null ? "N/D" : estadoBadge(r.estado_nomina)}</td>
+        <td>${estadoBadge(r.estado_renta)}</td>
+      </tr>`;
+    }).join("");
+
+    document.querySelectorAll("[data-row]").forEach((row) => row.addEventListener("click", () => openInspectorForBranch(row.dataset.row)));
   }
-
-  rows.innerHTML = data.map((r) => {
-    const cumpl = r.cumplimiento_pct != null ? Number(r.cumplimiento_pct) : null;
-    const meterWidth = cumpl != null ? `${Math.min(cumpl, 1.15) * 100}%` : "0%";
-    const meterColor = cumpl == null ? "var(--muted)" : cumpl >= 1 ? "var(--green)" : cumpl >= 0.75 ? "var(--yellow)" : "var(--red)";
-    const gapDisplay = r.gap != null ? -Number(r.gap) : null;
-    const gapColor = gapDisplay == null ? "" : gapDisplay >= 0 ? "color:var(--green)" : "color:var(--red)";
-    return `<tr data-row="${r.sucursal}">
-      <td><strong>${r.sucursal}</strong></td>
-      <td>${fmtMoney(r.venta_neta_actual)}</td>
-      <td>${fmtMoney(r.venta_neta_periodo_anterior)}</td>
-      <td>${r.nomina_total == null ? "N/D" : fmtMoney(r.nomina_total)}</td>
-      <td>${fmtMoney(r.renta_semanal)}</td>
-      <td>${fmtMoney(r.meta_operativa)}</td>
-      <td><span class="progress-line"><span>${fmtPct(cumpl)}</span><span class="meter"><span style="width:${meterWidth}; background:${meterColor}"></span></span></span></td>
-      <td style="${gapColor}">${fmtMoney(gapDisplay)}</td>
-      <td>${estadoBadge(r.estado_general)}</td>
-      <td>${r.estado_nomina == null ? "N/D" : estadoBadge(r.estado_nomina)}</td>
-      <td>${estadoBadge(r.estado_renta)}</td>
-    </tr>`;
-  }).join("");
 
   input.value = state.tableSearch;
   input.addEventListener("input", (event) => { state.tableSearch = event.target.value; renderSalesTable(); });
-  document.querySelectorAll("[data-row]").forEach((row) => row.addEventListener("click", () => openInspectorForBranch(row.dataset.row)));
+
+  const branches = activeBranchNames();
+  if (!branches.length) {
+    rows.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)">Sin datos disponibles</td></tr>`;
+    return;
+  }
+
+  rows.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)">Calculando…</td></tr>`;
+
+  const params = new URLSearchParams({
+    fecha_inicio: state.dateStart,
+    fecha_fin: state.dateEnd,
+    sucursales: branches.join(","),
+  });
+
+  try {
+    const response = await fetch(`/api/indef-kpis?${params}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    renderRows(data);
+  } catch {
+    // Fallback a snapshot local si el RPC falla
+    renderRows(sheetData.detalle);
+  }
 }
 
 function renderProductRanks() {

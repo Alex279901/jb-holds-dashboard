@@ -1489,9 +1489,10 @@ async function renderSalesTable() {
     rows.innerHTML = data.map((r) => {
       const cumpl = r.cumplimiento_pct != null ? Number(r.cumplimiento_pct) : null;
       const meterWidth = cumpl != null ? `${Math.min(cumpl, 1.15) * 100}%` : "0%";
-      const meterColor = cumpl == null ? "var(--muted)" : cumpl >= 1 ? "var(--green)" : cumpl >= 0.75 ? "var(--yellow)" : "var(--red)";
+      const cumplColor = cumpl == null ? "var(--muted)" : cumpl >= 0.92 ? "var(--green)" : cumpl >= 0.70 ? "var(--yellow)" : "var(--red)";
+      const meterColor = cumplColor;
       const gapVal = r.gap != null ? Number(r.gap) : null;
-      const gapColor = gapVal == null ? "" : gapVal >= 0 ? "color:var(--green)" : "color:var(--red)";
+      const gapColor = cumpl == null ? "" : `color:${cumplColor}`;
       return `<tr data-row="${r.sucursal}">
         <td><strong>${r.sucursal}</strong></td>
         <td>${fmtMoney(r.venta_neta_actual)}</td>

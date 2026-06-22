@@ -654,6 +654,19 @@ function dateKeySet(previous = false) {
   return new Set((previous ? previousRange().dates : dateList()).map(isoDate));
 }
 
+const _JUNK_CATEGORIES = new Set(["", "-", "0", "sin categoria"]);
+
+function availableCategories() {
+  const seen = new Map();
+  moduleRows("products").forEach((row) => {
+    if (!row.categoria) return;
+    const key = row.categoria.trim().toLowerCase();
+    if (_JUNK_CATEGORIES.has(key)) return;
+    if (!seen.has(key)) seen.set(key, row.categoria.trim());
+  });
+  return [...seen.values()].sort();
+}
+
 function selectedProductCategories() {
   return [...(state.productCategories || new Set(["Todas"]))];
 }
@@ -1246,7 +1259,7 @@ function renderProductContent() {
           <summary>${categorySummary}</summary>
           <div class="category-options">
             <label class="category-option"><input type="checkbox" data-category-option value="Todas" ${allProductCategoriesSelected() ? "checked" : ""}>Todas las categorias</label>
-            ${productCategories.map((category) => `<label class="category-option"><input type="checkbox" data-category-option value="${category}" ${state.productCategories.has(category) ? "checked" : ""}>${category}</label>`).join("")}
+            ${availableCategories().map((category) => `<label class="category-option"><input type="checkbox" data-category-option value="${category}" ${state.productCategories.has(category) ? "checked" : ""}>${category}</label>`).join("")}
           </div>
         </details>
       </div>
@@ -1940,6 +1953,7 @@ document.querySelectorAll(".brand-card").forEach((button) => {
   button.addEventListener("click", () => {
     state.activeBrand = button.dataset.brand;
     state.activeBranches = new Set(brandConfig[state.activeBrand].branches);
+    state.productCategories = new Set(["Todas"]);
     state.tableSearch = "";
     ensureModuleDateRange();
     renderAll();

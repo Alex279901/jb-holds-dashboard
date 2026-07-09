@@ -1975,7 +1975,25 @@ els.dateEnd.addEventListener("change", (event) => {
 
 document.querySelector("#closeInspector").addEventListener("click", () => els.inspector.classList.remove("open"));
 document.querySelector("#refreshButton").addEventListener("click", () => loadSheetData(true));
-document.querySelector("#exportButton").addEventListener("click", openExportModal);
+document.querySelector("#exportButton").addEventListener("click", () => {
+  if (window.ReportWizard) {
+    // Pre-cargar los filtros activos del dashboard como valores iniciales (opcionales).
+    // El wizard los usa como sugerencia; el usuario puede modificarlos libremente.
+    // La fuente oficial de datos siempre es Supabase — el dashboard no provee datos al reporte.
+    const initialValues = {
+      brand:  state?.activeBrand  || null,
+      stores: state?.activeBranches ? [...state.activeBranches] : [],
+      dateRange: {
+        mes:  state?.dateEnd ? new Date(state.dateEnd + "T00:00:00").getMonth() + 1 : null,
+        anio: state?.dateEnd ? new Date(state.dateEnd + "T00:00:00").getFullYear() : null,
+      },
+    };
+    window.ReportWizard.open(initialValues);
+  } else {
+    // Fallback: motor anterior del dashboard (no eliminar hasta que el wizard esté validado en prod)
+    openExportModal();
+  }
+});
 document.querySelector("#logoutButton").addEventListener("click", () => {
   els.appShell.classList.add("locked");
   els.loginScreen.style.display = "grid";

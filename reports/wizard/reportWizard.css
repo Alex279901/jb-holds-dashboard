@@ -1,0 +1,589 @@
+/* ─── Centro de Reportes Corporativo — Wizard ────────────────────────────────
+   Consistente con el tema oscuro del dashboard.
+   El PDF será claro (spec); el wizard UI permanece oscuro.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+#reportWizard {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  background: rgba(4, 7, 14, 0.90);
+  backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+}
+
+#reportWizard.visible {
+  display: flex;
+}
+
+/* ── Dialog ──────────────────────────────────────────────────────────────── */
+
+.rw-dialog {
+  background: #0d1423;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 18px;
+  width: 760px;
+  max-width: 96vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.rw-header {
+  padding: 20px 28px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.rw-header-text { flex: 1; }
+
+.rw-brand {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #22d3ee;
+  margin-bottom: 3px;
+}
+
+.rw-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f4f7fb;
+  line-height: 1.2;
+}
+
+.rw-close {
+  background: none;
+  border: none;
+  color: #475569;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.rw-close:hover { color: #f4f7fb; background: rgba(255,255,255,0.06); }
+
+/* ── Step Indicator ──────────────────────────────────────────────────────── */
+
+.rw-steps {
+  display: flex;
+  align-items: center;
+  padding: 20px 28px 0;
+  flex-shrink: 0;
+}
+
+.rw-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.rw-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #1e293b;
+  background: #0d1423;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.rw-step.active .rw-step-dot {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.12);
+  color: #22d3ee;
+}
+
+.rw-step.done .rw-step-dot {
+  border-color: #2e7d5b;
+  background: rgba(46, 125, 91, 0.15);
+  color: #2e7d5b;
+}
+
+.rw-step-label {
+  font-size: 9px;
+  color: #475569;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rw-step.active .rw-step-label { color: #22d3ee; }
+.rw-step.done  .rw-step-label  { color: #2e7d5b; }
+
+.rw-step-line {
+  flex: 1;
+  height: 2px;
+  background: #1e293b;
+  margin: 0 6px;
+  margin-bottom: 14px; /* align with dot center */
+  transition: background 0.2s;
+}
+
+.rw-step-line.done { background: #2e7d5b; }
+
+/* ── Divider ─────────────────────────────────────────────────────────────── */
+
+.rw-divider {
+  height: 1px;
+  background: rgba(34, 211, 238, 0.08);
+  margin: 16px 0 0;
+  flex-shrink: 0;
+}
+
+/* ── Body (scrollable content) ───────────────────────────────────────────── */
+
+.rw-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b transparent;
+}
+
+.rw-body::-webkit-scrollbar { width: 5px; }
+.rw-body::-webkit-scrollbar-track { background: transparent; }
+.rw-body::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+
+/* ── Step content labels ─────────────────────────────────────────────────── */
+
+.rw-step-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f4f7fb;
+  margin-bottom: 4px;
+}
+
+.rw-step-desc {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 18px;
+}
+
+/* ── Step 1: Report Type Cards ───────────────────────────────────────────── */
+
+.rw-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.rw-type-card {
+  background: #070a0f;
+  border: 2px solid #1e293b;
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+
+.rw-type-card:hover:not(.rw-soon) {
+  border-color: rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.04);
+}
+
+.rw-type-card.selected {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.rw-type-card.rw-soon {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rw-type-card-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f4f7fb;
+  margin-bottom: 4px;
+}
+
+.rw-type-card-desc {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.rw-soon-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(100, 116, 139, 0.2);
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Step 2: Form Fields ─────────────────────────────────────────────────── */
+
+.rw-row { display: grid; gap: 12px; }
+.rw-row-2 { grid-template-columns: 1fr 1fr; }
+.rw-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.rw-field { display: flex; flex-direction: column; gap: 5px; }
+
+.rw-field label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.rw-field select,
+.rw-field input {
+  background: #070a0f;
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  border-radius: 8px;
+  color: #f4f7fb;
+  font-size: 12px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.rw-field select:focus,
+.rw-field input:focus { border-color: rgba(34, 211, 238, 0.45); }
+
+/* ── Step 2: Store List ──────────────────────────────────────────────────── */
+
+.rw-store-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  border-radius: 8px;
+  padding: 8px;
+  background: #070a0f;
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b transparent;
+}
+
+.rw-store-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.rw-store-item:hover { background: rgba(34, 211, 238, 0.06); }
+
+.rw-store-item input[type="checkbox"] {
+  accent-color: #22d3ee;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rw-store-item span {
+  font-size: 11.5px;
+  color: #f4f7fb;
+  user-select: none;
+}
+
+.rw-store-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.rw-store-action-btn {
+  background: none;
+  border: none;
+  font-size: 10px;
+  color: #22d3ee;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rw-store-action-btn:hover { color: #38e4f5; }
+
+/* ── Section separator within steps ─────────────────────────────────────── */
+
+.rw-section-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #22d3ee;
+  margin: 18px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+}
+
+.rw-section-label:first-child { margin-top: 0; }
+
+/* ── Step 3: Module Grid ─────────────────────────────────────────────────── */
+
+.rw-module-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.rw-module-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  background: #070a0f;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  position: relative;
+}
+
+.rw-module-item:hover:not(.rw-module-locked):not(.rw-module-soon) {
+  border-color: rgba(34, 211, 238, 0.25);
+  background: rgba(34, 211, 238, 0.04);
+}
+
+.rw-module-item.rw-module-locked {
+  cursor: default;
+  border-color: rgba(46, 125, 91, 0.2);
+  background: rgba(46, 125, 91, 0.04);
+}
+
+.rw-module-item.rw-module-soon {
+  opacity: 0.40;
+  cursor: default;
+}
+
+.rw-module-item input[type="checkbox"] {
+  accent-color: #22d3ee;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.rw-module-item.rw-module-locked input { accent-color: #2e7d5b; cursor: default; }
+.rw-module-item.rw-module-soon  input { cursor: default; }
+
+.rw-module-text { flex: 1; min-width: 0; }
+
+.rw-module-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f4f7fb;
+  margin-bottom: 2px;
+}
+
+.rw-module-desc {
+  font-size: 9.5px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.rw-module-locked-icon {
+  font-size: 9px;
+  color: #2e7d5b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.rw-module-soon-badge {
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+  background: rgba(71, 85, 105, 0.15);
+  border: 1px solid #334155;
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+/* ── Step 4: Review Summary ──────────────────────────────────────────────── */
+
+.rw-review-block {
+  background: #070a0f;
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.rw-review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.rw-review-key {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.rw-review-val {
+  font-size: 11.5px;
+  color: #f4f7fb;
+  text-align: right;
+  max-width: 70%;
+}
+
+.rw-review-modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.rw-review-chip {
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: #22d3ee;
+}
+
+/* ── Progress / Error ────────────────────────────────────────────────────── */
+
+.rw-progress {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: rgba(34, 211, 238, 0.06);
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #22d3ee;
+  margin-top: 12px;
+}
+
+.rw-progress.visible { display: flex; }
+
+.rw-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(34, 211, 238, 0.2);
+  border-top-color: #22d3ee;
+  border-radius: 50%;
+  animation: rw-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes rw-spin { to { transform: rotate(360deg); } }
+
+.rw-error {
+  display: none;
+  padding: 10px 14px;
+  background: rgba(178, 58, 72, 0.08);
+  border: 1px solid rgba(178, 58, 72, 0.25);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #f87171;
+  margin-top: 12px;
+}
+
+.rw-error.visible { display: block; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.rw-footer {
+  padding: 14px 28px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(34, 211, 238, 0.08);
+  flex-shrink: 0;
+}
+
+.rw-footer-left { display: flex; gap: 10px; }
+.rw-footer-right { display: flex; gap: 10px; }
+
+.rw-btn {
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+}
+
+.rw-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.rw-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+}
+
+.rw-btn-ghost:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #f4f7fb;
+}
+
+.rw-btn-secondary {
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #22d3ee;
+}
+
+.rw-btn-secondary:hover:not(:disabled) {
+  background: rgba(34, 211, 238, 0.15);
+}
+
+.rw-btn-primary {
+  background: #22d3ee;
+  color: #070a0f;
+  font-weight: 700;
+}
+
+.rw-btn-primary:hover:not(:disabled) { background: #38e4f5; }

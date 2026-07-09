@@ -1,0 +1,1081 @@
+{
+  "_meta": {
+    "spec": "reportSchema.json v1.0.0",
+    "reportType": "semestral_consolidado",
+    "descripcion": "Payload REAL del Reporte Ejecutivo Semestral México 2026 (Enero–Junio) con capítulo de Junio. Valores calculados de los datos reales de Supabase (ventas_por_fecha, ventas_por_producto, Junio_Sucursales/resumen_mensual_sucursal, metas_operativas).",
+    "dataProvenance": {
+      "real": [
+        "consolidated.*",
+        "byStore.*",
+        "ranking",
+        "monthChapter.* (campos exactos de Junio_Sucursales_Mexico / resumen_mensual_sucursal)",
+        "comparatives",
+        "costs",
+        "metas.metaNominaPct/metaRentaPct"
+      ],
+      "illustrative": [
+        "branding.logoRef (ruta)",
+        "stores[].city",
+        "stores[].openingDate",
+        "stores[].profile (derivado)",
+        "dateRange.label (texto)",
+        "config.locale"
+      ],
+      "notas": [
+        "SG Altabrisa es de apertura reciente: sin histórico ene–may, por eso NO está en consolidated/byStore (semestre) y SÍ en monthChapter (junio).",
+        "comensales/gasto_comensal en SG suelen venir null en el origen; se marca null.",
+        "utilidad/estados financieros/ROAS NO existen en Supabase → no se incluyen."
+      ]
+    }
+  },
+  "branding": {
+    "company": "INDEF | Inversión en Desarrollo de Franquicias",
+    "companyUrl": "https://indef.mx/",
+    "logoRef": "assets/indef_logo.png [ilustrativo]",
+    "brandTitle": "MÉXICO · SANTA GLORIA Y ALLÔ MON COCO",
+    "tagline": "Business Intelligence · Reporte para Dirección General"
+  },
+  "filters": {
+    "reportType": "semestral_consolidado",
+    "country": "Mexico",
+    "brand": "MIXTO",
+    "storeIds": [
+      "AMC_DAM",
+      "SG_La_Isla",
+      "SG_Paseo_Montejo",
+      "SG_Altabrisa"
+    ],
+    "includeUrquijo": false
+  },
+  "dateRange": {
+    "from": "2026-01-01",
+    "to": "2026-06-30",
+    "label": "Enero – Junio 2026 (semestral) [ilustrativo]",
+    "partialMonths": [],
+    "granularity": "semester",
+    "monthChapterMonth": 6
+  },
+  "config": {
+    "currency": "MXN",
+    "locale": "es-MX [ilustrativo]",
+    "showBrutoNeto": true,
+    "maxConclusionBullets": 10,
+    "roundMoney": 0,
+    "roundPct": 1
+  },
+  "stores": [
+    {
+      "storeId": "AMC_DAM",
+      "name": "AMC DAM",
+      "brand": "AMC",
+      "country": "Mexico",
+      "city": "Mérida",
+      "openingDate": "2026-01-27 [ilustrativo]",
+      "isNew": false,
+      "active": true,
+      "profile": "Madura"
+    },
+    {
+      "storeId": "SG_La_Isla",
+      "name": "SG La Isla",
+      "brand": "SG",
+      "country": "Mexico",
+      "city": "Mérida",
+      "openingDate": "[ilustrativo]",
+      "isNew": false,
+      "active": true,
+      "profile": "Madura"
+    },
+    {
+      "storeId": "SG_Paseo_Montejo",
+      "name": "SG Paseo Montejo",
+      "brand": "SG",
+      "country": "Mexico",
+      "city": "Mérida",
+      "openingDate": "[ilustrativo]",
+      "isNew": false,
+      "active": true,
+      "profile": "Madura"
+    },
+    {
+      "storeId": "SG_Altabrisa",
+      "name": "SG Altabrisa",
+      "brand": "SG",
+      "country": "Mexico",
+      "city": "Mérida",
+      "openingDate": "2026-06 [ilustrativo]",
+      "isNew": true,
+      "active": true,
+      "profile": "Nueva"
+    }
+  ],
+  "consolidated": {
+    "scope": "3 sucursales con histórico (AMC DAM, SG La Isla, SG Paseo Montejo)",
+    "kpis": {
+      "neto": 17553229.5,
+      "bruto": 20361803.58,
+      "documentos": 62181,
+      "ticketPromedio": 282.29,
+      "cumplimiento": null,
+      "storesCount": 3
+    },
+    "monthly": [
+      {
+        "month": 1,
+        "bruto": 2245271.49,
+        "neto": 1935573.37,
+        "documentos": 10360,
+        "ticketPromedio": 186.83,
+        "partial": false
+      },
+      {
+        "month": 2,
+        "bruto": 3244900.7,
+        "neto": 2797318.69,
+        "documentos": 9813,
+        "ticketPromedio": 285.06,
+        "partial": false
+      },
+      {
+        "month": 3,
+        "bruto": 3855757.91,
+        "neto": 3323905.08,
+        "documentos": 10477,
+        "ticketPromedio": 317.26,
+        "partial": false
+      },
+      {
+        "month": 4,
+        "bruto": 3726434.63,
+        "neto": 3212440.38,
+        "documentos": 10348,
+        "ticketPromedio": 310.44,
+        "partial": false
+      },
+      {
+        "month": 5,
+        "bruto": 3884828.97,
+        "neto": 3348987.85,
+        "documentos": 11080,
+        "ticketPromedio": 302.26,
+        "partial": false
+      },
+      {
+        "month": 6,
+        "bruto": 3404609.88,
+        "neto": 2935004.13,
+        "documentos": 10103,
+        "ticketPromedio": 290.51,
+        "partial": false
+      }
+    ],
+    "weekday": [
+      {
+        "weekday": "Lunes",
+        "bruto": 1940560.18,
+        "neto": 1672873.54
+      },
+      {
+        "weekday": "Martes",
+        "bruto": 1801774.41,
+        "neto": 1553251.49
+      },
+      {
+        "weekday": "Miércoles",
+        "bruto": 1752244.42,
+        "neto": 1510553.11
+      },
+      {
+        "weekday": "Jueves",
+        "bruto": 2011141.74,
+        "neto": 1733740.71
+      },
+      {
+        "weekday": "Viernes",
+        "bruto": 2598577.75,
+        "neto": 2240150.23
+      },
+      {
+        "weekday": "Sábado",
+        "bruto": 3497651.48,
+        "neto": 3015207.24
+      },
+      {
+        "weekday": "Domingo",
+        "bruto": 4199228.78,
+        "neto": 3620021.73
+      }
+    ],
+    "weekly": [
+      {
+        "isoWeekMonday": "2025-12-29",
+        "label": "29/12",
+        "neto": 359396.33,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-01-05",
+        "label": "05/01",
+        "neto": 434929.16,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-01-12",
+        "label": "12/01",
+        "neto": 405534.46,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-01-19",
+        "label": "19/01",
+        "neto": 409341.51,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-01-26",
+        "label": "26/01",
+        "neto": 443761.27,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-02-02",
+        "label": "02/02",
+        "neto": 642706.88,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-02-09",
+        "label": "09/02",
+        "neto": 710731.57,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-02-16",
+        "label": "16/02",
+        "neto": 760612.01,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-02-23",
+        "label": "23/02",
+        "neto": 738388.37,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-03-02",
+        "label": "02/03",
+        "neto": 674027.17,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-03-09",
+        "label": "09/03",
+        "neto": 714278.94,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-03-16",
+        "label": "16/03",
+        "neto": 875721.44,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-03-23",
+        "label": "23/03",
+        "neto": 713821.16,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-03-30",
+        "label": "30/03",
+        "neto": 933385.19,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-04-06",
+        "label": "06/04",
+        "neto": 827776.64,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-04-13",
+        "label": "13/04",
+        "neto": 701460.41,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-04-20",
+        "label": "20/04",
+        "neto": 668501.59,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-04-27",
+        "label": "27/04",
+        "neto": 689204.27,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-05-04",
+        "label": "04/05",
+        "neto": 770028.83,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-05-11",
+        "label": "11/05",
+        "neto": 745036.89,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-05-18",
+        "label": "18/05",
+        "neto": 677898.73,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-05-25",
+        "label": "25/05",
+        "neto": 721682.55,
+        "partial": false
+      },
+      {
+        "isoWeekMonday": "2026-06-01",
+        "label": "01/06",
+        "neto": 727572.68,
+        "partial": true
+      }
+    ],
+    "topProducts": [
+      {
+        "name": "Americano",
+        "category": null,
+        "unidades": 8810,
+        "bruto": 573089.67,
+        "neto": 494042.82
+      },
+      {
+        "name": "Brunch Choco Coco De Luxe",
+        "category": null,
+        "unidades": 1702,
+        "bruto": 502231.63,
+        "neto": 432958.3
+      },
+      {
+        "name": "Grilled cheese Huevo Revuelto y Aguacate",
+        "category": null,
+        "unidades": 1806,
+        "bruto": 388277.81,
+        "neto": 334722.25
+      },
+      {
+        "name": "CAPUCCINO GRANDE",
+        "category": null,
+        "unidades": 3983,
+        "bruto": 313965.1,
+        "neto": 270659.57
+      },
+      {
+        "name": "SW BRIOCHE CHIPOTLE",
+        "category": null,
+        "unidades": 2089,
+        "bruto": 251272.5,
+        "neto": 216614.22
+      },
+      {
+        "name": "CAFE AMERICANO GRANDE",
+        "category": null,
+        "unidades": 4058,
+        "bruto": 248117.52,
+        "neto": 213894.41
+      },
+      {
+        "name": "Jugo Fresco de Naranja",
+        "category": null,
+        "unidades": 3534,
+        "bruto": 243926.31,
+        "neto": 210281.3
+      },
+      {
+        "name": "ICED COFFE LATE MEDIANO",
+        "category": null,
+        "unidades": 3502,
+        "bruto": 241342.05,
+        "neto": 208053.5
+      },
+      {
+        "name": "Brunch Arrachera con Huevo",
+        "category": null,
+        "unidades": 766,
+        "bruto": 241288.91,
+        "neto": 208007.68
+      },
+      {
+        "name": "CAJA 8 GLORIAS DULCES VARIADAS",
+        "category": null,
+        "unidades": 1326,
+        "bruto": 236534.95,
+        "neto": 203909.44
+      }
+    ],
+    "bottomProducts": [
+      {
+        "name": "leche de almendra",
+        "category": null,
+        "unidades": 1,
+        "bruto": 10.0,
+        "neto": 8.62
+      },
+      {
+        "name": "EXTRA COLD FOAM CON JARABE DE VAINILLA",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.0,
+        "neto": 12.93
+      },
+      {
+        "name": "CARAMELO",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.0,
+        "neto": 12.93
+      },
+      {
+        "name": "extra caramel",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.0,
+        "neto": 12.93
+      },
+      {
+        "name": "extra chile toreado",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.0,
+        "neto": 12.93
+      },
+      {
+        "name": "Jarabe de Caramelo",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.0,
+        "neto": 12.93
+      },
+      {
+        "name": "VAINILLA",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.0,
+        "neto": 12.93
+      },
+      {
+        "name": "chocolate",
+        "category": null,
+        "unidades": 1,
+        "bruto": 15.01,
+        "neto": 12.94
+      },
+      {
+        "name": "salsa verde",
+        "category": null,
+        "unidades": 1,
+        "bruto": 20.0,
+        "neto": 17.24
+      },
+      {
+        "name": "salsa roja",
+        "category": null,
+        "unidades": 1,
+        "bruto": 25.02,
+        "neto": 21.57
+      }
+    ],
+    "categories": [
+      {
+        "name": "BRUNCH DE LA CASA",
+        "unidades": 3940,
+        "bruto": 1168133.93,
+        "neto": 1007012.01
+      },
+      {
+        "name": "CAFÉ Y TÉ",
+        "unidades": 16228,
+        "bruto": 1054339.01,
+        "neto": 908912.94
+      },
+      {
+        "name": "GRILLED CHEESE Y WRAPS",
+        "unidades": 3381,
+        "bruto": 727274.48,
+        "neto": 626960.76
+      },
+      {
+        "name": "BENEDICTINOS",
+        "unidades": 2096,
+        "bruto": 535557.79,
+        "neto": 461687.75
+      },
+      {
+        "name": "LUNCH",
+        "unidades": 2604,
+        "bruto": 521301.1,
+        "neto": 449397.5
+      },
+      {
+        "name": "OMELETTES GOURMET",
+        "unidades": 2511,
+        "bruto": 499992.65,
+        "neto": 431028.15
+      },
+      {
+        "name": "JUGOS FRESCOS",
+        "unidades": 6121,
+        "bruto": 431466.85,
+        "neto": 371954.18
+      },
+      {
+        "name": "COCO WAFFLES",
+        "unidades": 1354,
+        "bruto": 385705.28,
+        "neto": 332504.55
+      },
+      {
+        "name": "CHILAQUILES",
+        "unidades": 2027,
+        "bruto": 374987.42,
+        "neto": 323265.02
+      },
+      {
+        "name": "MENÚ LIGERO",
+        "unidades": 1499,
+        "bruto": 338606.06,
+        "neto": 291901.78
+      },
+      {
+        "name": "MIMOSAS",
+        "unidades": 2237,
+        "bruto": 322973.67,
+        "neto": 278425.58
+      },
+      {
+        "name": "WAFFLES Y PAN FRANCÉS",
+        "unidades": 1468,
+        "bruto": 276961.47,
+        "neto": 238759.89
+      }
+    ],
+    "paretoInfo": {
+      "productsSortedByNeto_count": 474,
+      "note": "El motor calcula N tal que el acumulado>=80%. En este dataset N≈? (calcular)."
+    }
+  },
+  "byStore": {
+    "SG_La_Isla": {
+      "monthly": [
+        {
+          "month": 1,
+          "bruto": 1214310.95,
+          "neto": 1046816.75,
+          "documentos": 5647
+        },
+        {
+          "month": 2,
+          "bruto": 949618.2,
+          "neto": 818633.77,
+          "documentos": 4584
+        },
+        {
+          "month": 3,
+          "bruto": 1141096.93,
+          "neto": 983701.21,
+          "documentos": 5454
+        },
+        {
+          "month": 4,
+          "bruto": 1061491.01,
+          "neto": 915075.71,
+          "documentos": 5126
+        },
+        {
+          "month": 5,
+          "bruto": 1061578.2,
+          "neto": 915151.09,
+          "documentos": 5403
+        },
+        {
+          "month": 6,
+          "bruto": 918115.73,
+          "neto": 791476.92,
+          "documentos": 4824
+        }
+      ],
+      "kpiSet": {
+        "neto": 5470855.45,
+        "bruto": 6346211.02,
+        "documentos": 31038,
+        "ticketMedio": 176.26
+      },
+      "topProducts": [
+        {
+          "name": "CAPUCCINO GRANDE",
+          "unidades": 2406,
+          "neto": 163460.69
+        },
+        {
+          "name": "SW BRIOCHE CHIPOTLE",
+          "unidades": 1339,
+          "neto": 134550.0
+        },
+        {
+          "name": "CAJA 8 GLORIAS DULCES VARIADAS",
+          "unidades": 844,
+          "neto": 130294.83
+        },
+        {
+          "name": "CAFE AMERICANO GRANDE",
+          "unidades": 2384,
+          "neto": 124571.85
+        },
+        {
+          "name": "LATTE GRANDE",
+          "unidades": 1831,
+          "neto": 124340.6
+        }
+      ]
+    },
+    "SG_Paseo_Montejo": {
+      "monthly": [
+        {
+          "month": 1,
+          "bruto": 1030834.1,
+          "neto": 888647.62,
+          "documentos": 4712
+        },
+        {
+          "month": 2,
+          "bruto": 729172.62,
+          "neto": 628595.56,
+          "documentos": 3503
+        },
+        {
+          "month": 3,
+          "bruto": 519760.25,
+          "neto": 448067.79,
+          "documentos": 2673
+        },
+        {
+          "month": 4,
+          "bruto": 625176.35,
+          "neto": 538943.68,
+          "documentos": 3033
+        },
+        {
+          "month": 5,
+          "bruto": 629318.92,
+          "neto": 542514.76,
+          "documentos": 3142
+        },
+        {
+          "month": 6,
+          "bruto": 579204.78,
+          "neto": 499313.06,
+          "documentos": 2924
+        }
+      ],
+      "kpiSet": {
+        "neto": 3546082.47,
+        "bruto": 4113467.02,
+        "documentos": 19987,
+        "ticketMedio": 177.42
+      },
+      "topProducts": [
+        {
+          "name": "CAPUCCINO GRANDE",
+          "unidades": 1577,
+          "neto": 107198.88
+        },
+        {
+          "name": "CAFE AMERICANO GRANDE",
+          "unidades": 1674,
+          "neto": 89322.56
+        },
+        {
+          "name": "ICED COFFE LATE MEDIANO",
+          "unidades": 1446,
+          "neto": 86068.97
+        },
+        {
+          "name": "SW BRIOCHE CHIPOTLE",
+          "unidades": 750,
+          "neto": 82064.22
+        },
+        {
+          "name": "SW SANTAGLORIA CLUB",
+          "unidades": 613,
+          "neto": 81842.67
+        }
+      ]
+    },
+    "AMC_DAM": {
+      "monthly": [
+        {
+          "month": 1,
+          "bruto": 126.44,
+          "neto": 109.0,
+          "documentos": 1
+        },
+        {
+          "month": 2,
+          "bruto": 1566109.88,
+          "neto": 1350089.36,
+          "documentos": 1726
+        },
+        {
+          "month": 3,
+          "bruto": 2194900.73,
+          "neto": 1892136.08,
+          "documentos": 2350
+        },
+        {
+          "month": 4,
+          "bruto": 2039767.27,
+          "neto": 1758420.99,
+          "documentos": 2189
+        },
+        {
+          "month": 5,
+          "bruto": 2193931.85,
+          "neto": 1891322.0,
+          "documentos": 2535
+        },
+        {
+          "month": 6,
+          "bruto": 1907289.37,
+          "neto": 1644214.15,
+          "documentos": 2355
+        }
+      ],
+      "kpiSet": {
+        "neto": 8536291.58,
+        "bruto": 9902125.54,
+        "documentos": 11156,
+        "ticketMedio": 765.17
+      },
+      "topProducts": [
+        {
+          "name": "Americano",
+          "unidades": 8810,
+          "neto": 494042.82
+        },
+        {
+          "name": "Brunch Choco Coco De Luxe",
+          "unidades": 1702,
+          "neto": 432958.3
+        },
+        {
+          "name": "Grilled cheese Huevo Revuelto y Aguacate",
+          "unidades": 1806,
+          "neto": 334722.25
+        },
+        {
+          "name": "Jugo Fresco de Naranja",
+          "unidades": 3534,
+          "neto": 210281.3
+        },
+        {
+          "name": "Brunch Arrachera con Huevo",
+          "unidades": 766,
+          "neto": 208007.68
+        }
+      ]
+    }
+  },
+  "ranking": {
+    "byNeto": [
+      {
+        "storeId": "AMC_DAM",
+        "name": "AMC DAM",
+        "value": 8536291.58,
+        "partPct": 48.6,
+        "rank": 1
+      },
+      {
+        "storeId": "SG_La_Isla",
+        "name": "SG La Isla",
+        "value": 5470855.45,
+        "partPct": 31.2,
+        "rank": 2
+      },
+      {
+        "storeId": "SG_Paseo_Montejo",
+        "name": "SG Paseo Montejo",
+        "value": 3546082.47,
+        "partPct": 20.2,
+        "rank": 3
+      }
+    ]
+  },
+  "metas": [
+    {
+      "storeId": "AMC_DAM",
+      "period": "2026-06",
+      "metaNominaPct": 0.28,
+      "metaRentaPct": 0.08,
+      "meta_operativa_mensual": 2237400.0,
+      "meta_operativa_diaria": 74580.0,
+      "meta_operativa_semanal": 516323.08,
+      "renta_mensual": 89496.0,
+      "renta_semanal": 20652.92,
+      "meta_renta_pct": 8.0,
+      "meta_nomina_pct": 28.0
+    },
+    {
+      "storeId": "SG_La_Isla",
+      "period": "2026-06",
+      "metaNominaPct": 0.28,
+      "metaRentaPct": 0.08,
+      "meta_operativa_mensual": 1134442.5,
+      "meta_operativa_diaria": 37814.75,
+      "meta_operativa_semanal": 261794.42,
+      "renta_mensual": 113444.25,
+      "renta_semanal": 26179.44,
+      "meta_renta_pct": 8.0,
+      "meta_nomina_pct": 28.0
+    },
+    {
+      "storeId": "SG_Altabrisa",
+      "period": "2026-06",
+      "metaNominaPct": 0.28,
+      "metaRentaPct": 0.08,
+      "meta_operativa_mensual": 710300.0,
+      "meta_operativa_diaria": 23676.67,
+      "meta_operativa_semanal": 163915.38,
+      "renta_mensual": 42618.0,
+      "renta_semanal": 9834.92,
+      "meta_renta_pct": 8.0,
+      "meta_nomina_pct": 28.0
+    },
+    {
+      "storeId": "SG_Paseo_Montejo",
+      "period": "2026-06",
+      "metaNominaPct": 0.28,
+      "metaRentaPct": 0.08,
+      "meta_operativa_mensual": 687500.0,
+      "meta_operativa_diaria": 22916.67,
+      "meta_operativa_semanal": 158653.85,
+      "renta_mensual": 55000.0,
+      "renta_semanal": 12692.31,
+      "meta_renta_pct": 8.0,
+      "meta_nomina_pct": 28.0
+    }
+  ],
+  "costs": [
+    {
+      "storeId": "AMC_DAM",
+      "period": "2026-06",
+      "rentaMensual": 89496.0,
+      "rentaPct": 5.44,
+      "nomina": 315215.05,
+      "laborCostPct": 20.0,
+      "estadoNomina": "VERDE"
+    },
+    {
+      "storeId": "SG_La_Isla",
+      "period": "2026-06",
+      "rentaMensual": 113444.25,
+      "rentaPct": 14.33,
+      "nomina": 174052.33,
+      "laborCostPct": 23.0,
+      "estadoNomina": "VERDE"
+    },
+    {
+      "storeId": "SG_Paseo_Montejo",
+      "period": "2026-06",
+      "rentaMensual": 55000.0,
+      "rentaPct": 11.02,
+      "nomina": 178219.04,
+      "laborCostPct": 37.0,
+      "estadoNomina": "VERDE"
+    },
+    {
+      "storeId": "SG_Altabrisa",
+      "period": "2026-06",
+      "rentaMensual": 42618.0,
+      "rentaPct": 21.3,
+      "nomina": 71349.1,
+      "laborCostPct": 37.0,
+      "estadoNomina": "VERDE"
+    }
+  ],
+  "comparatives": [
+    {
+      "metric": "venta_neta",
+      "month": 2,
+      "current": 2797318.69,
+      "previous": 1935573.37,
+      "deltaAbs": 861745.32,
+      "deltaPct": 44.5,
+      "trend": "UP"
+    },
+    {
+      "metric": "venta_neta",
+      "month": 3,
+      "current": 3323905.08,
+      "previous": 2797318.69,
+      "deltaAbs": 526586.39,
+      "deltaPct": 18.8,
+      "trend": "UP"
+    },
+    {
+      "metric": "venta_neta",
+      "month": 4,
+      "current": 3212440.38,
+      "previous": 3323905.08,
+      "deltaAbs": -111464.7,
+      "deltaPct": -3.4,
+      "trend": "DOWN"
+    },
+    {
+      "metric": "venta_neta",
+      "month": 5,
+      "current": 3348987.85,
+      "previous": 3212440.38,
+      "deltaAbs": 136547.47,
+      "deltaPct": 4.3,
+      "trend": "UP"
+    },
+    {
+      "metric": "venta_neta",
+      "month": 6,
+      "current": 2935004.13,
+      "previous": 3348987.85,
+      "deltaAbs": -413983.72,
+      "deltaPct": -12.4,
+      "trend": "DOWN"
+    }
+  ],
+  "monthChapter": {
+    "month": 6,
+    "monthLabel": "Junio 2026",
+    "byStore": [
+      {
+        "storeId": "AMC_DAM",
+        "name": "AMC DAM",
+        "venta_neta": 1644214.15,
+        "iva": 263075.22,
+        "venta_total": 1907289.37,
+        "documentos": 2355,
+        "comensales": 342,
+        "ticket_medio": 682.62,
+        "gasto_comensal": 253.52,
+        "meta": 1118700.0,
+        "cumplimiento_meta_pct": 146.98,
+        "gap_meta": 525514.15,
+        "estado_meta": "VERDE",
+        "renta_mensual": 89496.0,
+        "renta_pct": 5.44,
+        "meta_operativa": 2237400.0,
+        "cumplimiento_meta_operativa_pct": 73.49,
+        "estado_meta_operativa": "ROJO",
+        "nomina": 315215.05,
+        "labor_cost": 0.2,
+        "estado_nomina": "VERDE"
+      },
+      {
+        "storeId": "SG_La_Isla",
+        "name": "SG La Isla",
+        "venta_neta": 791476.92,
+        "iva": 126638.81,
+        "venta_total": 918115.73,
+        "documentos": 4824,
+        "comensales": null,
+        "ticket_medio": 161.22,
+        "gasto_comensal": null,
+        "meta": 1418053.2,
+        "cumplimiento_meta_pct": 55.81,
+        "gap_meta": -626576.28,
+        "estado_meta": "ROJO",
+        "renta_mensual": 113444.25,
+        "renta_pct": 14.33,
+        "meta_operativa": 1134442.5,
+        "cumplimiento_meta_operativa_pct": 69.77,
+        "estado_meta_operativa": "ROJO",
+        "nomina": 174052.33,
+        "labor_cost": 0.23,
+        "estado_nomina": "VERDE"
+      },
+      {
+        "storeId": "SG_Paseo_Montejo",
+        "name": "SG Paseo Montejo",
+        "venta_neta": 499313.06,
+        "iva": 79891.72,
+        "venta_total": 579204.78,
+        "documentos": 2924,
+        "comensales": null,
+        "ticket_medio": 168.4,
+        "gasto_comensal": null,
+        "meta": 687500.1,
+        "cumplimiento_meta_pct": 72.63,
+        "gap_meta": -188187.04,
+        "estado_meta": "ROJO",
+        "renta_mensual": 55000.0,
+        "renta_pct": 11.02,
+        "meta_operativa": 687500.0,
+        "cumplimiento_meta_operativa_pct": 72.63,
+        "estado_meta_operativa": "ROJO",
+        "nomina": 178219.04,
+        "labor_cost": 0.37,
+        "estado_nomina": "VERDE"
+      },
+      {
+        "storeId": "SG_Altabrisa",
+        "name": "SG Altabrisa",
+        "venta_neta": 200042.16,
+        "iva": 32007.44,
+        "venta_total": 232049.6,
+        "documentos": 1420,
+        "comensales": null,
+        "ticket_medio": 130.37,
+        "gasto_comensal": null,
+        "meta": 266362.5,
+        "cumplimiento_meta_pct": 75.1,
+        "gap_meta": -66320.34,
+        "estado_meta": "ROJO",
+        "renta_mensual": 42618.0,
+        "renta_pct": 21.3,
+        "meta_operativa": 710300.0,
+        "cumplimiento_meta_operativa_pct": 28.16,
+        "estado_meta_operativa": "ROJO",
+        "nomina": 71349.1,
+        "labor_cost": 0.37,
+        "estado_nomina": "VERDE"
+      }
+    ],
+    "hours": [
+      {
+        "storeId": "AMC_DAM",
+        "hour": 9,
+        "neto": 91254.0,
+        "note": "pico mañana [valor real S27]"
+      },
+      {
+        "storeId": "SG_La_Isla",
+        "hour": 18,
+        "neto": null,
+        "note": "pico tarde-noche [hora real; neto agregado semanal]"
+      },
+      {
+        "storeId": "SG_Paseo_Montejo",
+        "hour": 21,
+        "neto": null,
+        "note": "pico noche"
+      },
+      {
+        "storeId": "SG_Altabrisa",
+        "hour": 18,
+        "neto": null,
+        "note": "pico tarde-noche"
+      }
+    ]
+  }
+}

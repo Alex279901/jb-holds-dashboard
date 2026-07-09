@@ -1,0 +1,250 @@
+/* ── Report Generator Modal ───────────────────────────────────────────────── */
+
+#reportGeneratorModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(4, 7, 14, 0.88);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
+
+#reportGeneratorModal.visible {
+  display: flex;
+}
+
+.rg-dialog {
+  background: #0d1423;
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  border-radius: 16px;
+  width: 540px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+}
+
+.rg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+}
+
+.rg-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f4f7fb;
+  letter-spacing: 0.02em;
+}
+
+.rg-subtitle {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.rg-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.rg-close:hover {
+  color: #f4f7fb;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rg-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rg-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #22d3ee;
+  margin-bottom: 8px;
+}
+
+.rg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rg-field label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.rg-field select,
+.rg-field input {
+  background: #070a0f;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 8px;
+  color: #f4f7fb;
+  font-size: 12px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  font-family: inherit;
+}
+
+.rg-field select:focus,
+.rg-field input:focus {
+  border-color: rgba(34, 211, 238, 0.5);
+}
+
+.rg-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Sucursales checkboxes */
+.rg-sucursales {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rg-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #070a0f;
+  border: 1px solid rgba(34, 211, 238, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.rg-check-item:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(34, 211, 238, 0.04);
+}
+
+.rg-check-item input[type="checkbox"] {
+  accent-color: #22d3ee;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rg-check-item span {
+  font-size: 11.5px;
+  color: #f4f7fb;
+}
+
+/* Progress / status */
+.rg-progress {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(34, 211, 238, 0.06);
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #22d3ee;
+}
+
+.rg-progress.visible {
+  display: flex;
+}
+
+.rg-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(34, 211, 238, 0.2);
+  border-top-color: #22d3ee;
+  border-radius: 50%;
+  animation: rg-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes rg-spin {
+  to { transform: rotate(360deg); }
+}
+
+.rg-error {
+  display: none;
+  padding: 10px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #f87171;
+}
+
+.rg-error.visible {
+  display: block;
+}
+
+/* Footer del modal */
+.rg-footer {
+  padding: 16px 24px 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(34, 211, 238, 0.08);
+}
+
+.rg-btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.rg-btn-cancel:hover {
+  border-color: rgba(148, 163, 184, 0.5);
+  color: #f4f7fb;
+}
+
+.rg-btn-generate {
+  background: #22d3ee;
+  border: none;
+  color: #070a0f;
+  border-radius: 8px;
+  padding: 9px 22px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.rg-btn-generate:hover:not(:disabled) {
+  background: #38e4f5;
+}
+
+.rg-btn-generate:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

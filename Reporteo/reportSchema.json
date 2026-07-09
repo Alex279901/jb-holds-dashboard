@@ -1,0 +1,232 @@
+{
+  "$schema": "https://indef.mx/spec/reportSchema/v1",
+  "engine": "INDEF Report Engine",
+  "version": "1.0.0",
+  "purpose": "Esquema maestro del motor de reportes. Define TODAS las entidades, secciones, reglas (referencia), componentes, gráficas, KPIs, textos, estados y parámetros. Es el contrato que valida el payload (reportPayload.example.json) y guía el render (reportRenderer.md) y las reglas (reportRules.md).",
+  "conventions": {
+    "types": ["string", "int", "number", "bool", "date(ISO-8601)", "enum", "array<T>", "object", "money(number, 2 dec)", "pct(number, 1 dec, 0-100 salvo cumplimiento)"],
+    "field_flags": {"required": "obligatorio para el reportType indicado", "optional": "puede faltar; el motor degrada la sección", "derived": "el motor puede calcularlo si no llega", "illustrative": "solo para el ejemplo; no es campo de Supabase"},
+    "money_reference": "Siempre existe par (bruto, neto). neto = referencia principal."
+  },
+
+  "enums": {
+    "reportType": ["mensual_sucursal", "semanal_red", "semanal_ejecutivo_comite", "anual_historico", "semestral_consolidado"],
+    "country": ["Mexico", "Espana"],
+    "brand": ["SG", "AMC", "MIXTO"],
+    "currency": ["MXN", "EUR"],
+    "stateMeta": ["VERDE", "AMARILLO", "ROJO", "SIN_META"],
+    "trend": ["UP", "DOWN", "FLAT"],
+    "alertLevel": ["RED", "AMBER"],
+    "weekday": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"],
+    "hourBand": ["Manana", "Mediodia", "TardeTemprana", "TardeNoche", "Noche", "Madrugada"],
+    "storeProfile": ["Madura", "Nueva", "Reciente"],
+    "chartType": ["linea_evolucion", "barras_variacion_mensual", "lineas_por_sucursal", "heatmap_dia", "linea_semanal", "barras_horizontales_producto", "barras_categoria", "pareto", "ranking_horizontal", "barras_absolutas_sucursal", "barras_cumplimiento", "barras_agrupadas_cumplimiento", "barras_agrupadas_costos", "barras_divergentes_variacion", "linea_por_hora", "perfil_horario_normalizado", "comparativa_semanal_barras_linea"],
+    "componentType": ["portada", "indice", "divisor_parte", "banner_seccion", "kpi_cards", "comment_box", "data_table", "caption", "bullets", "chart", "franja_cierre"],
+    "sectionId": ["resumen_ejecutivo", "resumen_ejecutivo_semestral", "indicadores_corporativos", "comparativo_vs_semana_anterior", "ventas_por_sucursal", "cumplimiento_meta", "cumplimiento_de_metas", "dia_de_semana", "tickets_por_dia", "analisis_por_semana", "comparativa_semanal", "evolucion_historica", "comparativo_mensual", "desempeno_por_sucursal", "detalle_por_sucursal", "analisis_mensual", "analisis_mensual_por_sucursal", "top_productos", "bottom_productos", "top5_por_categoria", "productos_categorias", "mix_pareto", "distribucion_importe_ticket", "analisis_por_hora", "horas_pico_operativo", "estructura_de_costos", "ranking_sucursales", "comparativo_historico", "alertas", "hallazgos", "hallazgos_adicionales", "oportunidades", "recomendaciones", "recomendaciones_tiendas_nuevas", "plan_de_accion", "plan_de_accion_H2", "validacion_de_tendencias", "conclusiones", "conclusion_ejecutiva", "conclusiones_prioridades", "resumen_global_ranking"],
+    "kpiId": ["venta_neta", "venta_bruta", "documentos", "comensales", "ticket_promedio", "gasto_por_comensal", "cumplimiento_meta", "cumplimiento_meta_operativa", "gap_meta", "meta", "meta_operativa", "renta_sobre_ventas", "labor_cost", "participacion", "variacion_pct", "diferencia_abs", "crecimiento_periodo", "unidades"]
+  },
+
+  "params": {
+    "designTokens": {
+      "colors": {"PRIMARY": "#00446B", "GOLD": "#B8924A", "MID": "#2E7DA8", "LIGHT": "#7FB2D1", "PALE": "#CFE0EC", "INK": "#243746", "POS": "#2E7D5B", "NEG": "#B23A48", "MUTED": "#6B7785", "GRID": "#C7D0DA", "AMBER": "#C9922B", "RED_SOFT": "#B0605F", "ROW_ALT": "#F4F7FA", "WHITE": "#FFFFFF"},
+      "typography": {"family": "Carlito", "registerAs": "Aptos", "variants": ["Regular", "Bold", "Italic", "BoldItalic"], "sizesPt": {"portada_titulo": 24, "portada_subtitulo_gold": 16, "portada_subtitulo_desc": 12, "banner": 13, "h1_bloque": 12.5, "cuerpo": 10, "tabla": 8.5, "caption": 8.5, "kpi_valor": 16, "kpi_label": 8.5}},
+      "page": {"size": "A4", "orientation": "portrait", "marginCm": 2.0, "header_left": "INDEF · INVERSIÓN EN DESARROLLO DE FRANQUICIAS", "header_right": "folio", "footer": "EMPTY"},
+      "glyphs": {"up": "↑", "down": "↓", "flat": "→", "dot": "●", "bullet": "▪", "forbidden": ["▲", "▼", "emoji_color"]}
+    },
+    "financial": {
+      "ivaByCountry": {"Mexico": 0.16, "Espana": 0.10},
+      "netoDerivation": "si solo llega bruto: neto = bruto / (1 + iva_pais)",
+      "reference": "neto",
+      "metaTargets": {"labor_cost_pct": 28, "renta_pct_mexico": 8},
+      "calendar": {"weekStart": "Monday", "weekEnd": "Sunday", "weekend": ["Viernes", "Sabado", "Domingo"], "partialMark": "*", "growthBaseline": "ultimo_mes_completo"}
+    },
+    "thresholds": {
+      "cumplimientoState": {"VERDE": ">=100", "AMARILLO": ">=90 and <100", "ROJO": "<90", "note": "Si el payload trae estado explícito (estado_meta), se usa ese; si no, se deriva con estos cortes."},
+      "cumplimientoColorBands_chart": {"gold": ">=90", "blue_mid": ">=75 and <90", "red_soft": "<75"},
+      "variationColor": {"POS": ">=0", "NEG": "<0", "FLAT_epsilon_pct": 0.5},
+      "trendArrow": {"UP": "delta>=0 (o <=0 si inverse)", "DOWN": "opuesto", "FLAT": "abs(delta_pct)<0.5"},
+      "inverseKpis": ["renta_sobre_ventas", "labor_cost", "gap_meta_negativo"],
+      "alerts": {"no_meta_red": "cumplimiento<55", "no_meta_amber": "cumplimiento>=55 and <70", "caida_ventas": "variacion_ventas<=-10", "caida_documentos": "variacion_documentos<=-10", "labor_alto": "labor_cost>28", "renta_alta": "renta_sobre_ventas>=15", "sin_ventas": "venta==0 and venta_periodo_anterior>0"},
+      "opportunities": {"participation_concentration": ">45", "pareto_target_pct": 80, "weekend_lever_pct": 50, "leader_rule": "mayor venta_neta del periodo", "laggard_rule": "menor venta_neta del periodo"},
+      "labor_state_from_data": "Se usa estado_nomina del payload si viene; si no, VERDE si labor_cost<=28 else ROJO"
+    }
+  },
+
+  "entities": {
+    "Branding": {"fields": {"company": "string", "companyUrl": "string", "logoRef": "string", "tagline": "string", "brandTitle": "string"}},
+    "Filters": {"fields": {"reportType": "enum(reportType)", "country": "enum(country)", "brand": "enum(brand)", "storeIds": "array<string>", "includeUrquijo": "bool (Espana=true forzado)"}},
+    "DateRange": {"fields": {"from": "date", "to": "date", "label": "string", "isoWeek": "int?", "compareWeek": "int?", "partialMonths": "array<int>", "granularity": "enum(daily|weekly|monthly|semester)"}},
+    "Config": {"fields": {"currency": "enum(currency)", "locale": "string", "showBrutoNeto": "bool(true)", "maxConclusionBullets": "int(10)", "roundMoney": "int(0)", "roundPct": "int(1)", "sectionsOverride": "array<sectionId>?"}},
+    "Store": {"source": "catalogo_sucursales", "fields": {"storeId": "string", "name": "string", "brand": "enum(brand)", "country": "enum(country)", "city": "string", "openingDate": "date?", "isNew": "bool", "active": "bool", "profile": "enum(storeProfile)?"}},
+    "MonthlyPoint": {"source": "ventas_por_fecha (agregado) | resumen_mensual_sucursal", "fields": {"month": "int(1-12)", "bruto": "money", "neto": "money", "documentos": "int", "unidades": "number?", "ticketPromedio": "money(derived)", "partial": "bool"}},
+    "WeekdayPoint": {"source": "ventas_por_fecha", "fields": {"weekday": "enum(weekday)", "bruto": "money", "neto": "money", "documentos": "int?"}},
+    "WeekPoint": {"source": "ventas_por_fecha", "fields": {"isoWeek": "int", "mondayDate": "date", "label": "string", "bruto": "money", "neto": "money", "partial": "bool"}},
+    "HourPoint": {"source": "ventas_por_hora", "fields": {"storeId": "string", "hour": "int(0-23)", "neto": "money", "documentos": "int?", "band": "enum(hourBand)?"}},
+    "Product": {"source": "ventas_por_producto (+catalogo_productos)", "fields": {"storeId": "string?", "name": "string", "category": "string?", "unidades": "number", "bruto": "money", "neto": "money", "type": "enum(TOP|BOTTOM)?"}},
+    "Category": {"source": "ventas_por_producto agregado por categoria", "fields": {"name": "string", "unidades": "number", "bruto": "money", "neto": "money", "partPct": "pct(derived)"}},
+    "Meta": {"source": "metas_operativas", "fields": {"storeId": "string", "period": "string", "metaComercial": "money?", "metaOperativa": "money?", "metaComercialSemanal": "money?", "metaOperativaSemanal": "money?", "metaDiaria": "money?", "metaNominaPct": "number(0.28)", "metaRentaPct": "number(0.08)"}},
+    "Cost": {"source": "costos_sucursal | resumen_mensual_sucursal", "fields": {"storeId": "string", "period": "string", "rentaMensual": "money?", "rentaSemanal": "money?", "nomina": "money?", "rentaPct": "pct?", "laborCostPct": "pct?", "estadoNomina": "enum(stateMeta)?"}},
+    "StoreKPISet": {"description": "KPIs por sucursal para un periodo (mes/semana)", "source": "resumen_mensual_sucursal | Supabase weekly snapshot", "fields": {"storeId": "string", "neto": "money", "bruto": "money", "documentos": "int", "comensales": "int?", "ticketMedio": "money", "gastoComensal": "money?", "meta": "money?", "cumplimientoPct": "pct?", "gapMeta": "money?", "estadoMeta": "enum(stateMeta)?", "metaOperativa": "money?", "cumplimientoOperativaPct": "pct?", "estadoMetaOperativa": "enum(stateMeta)?", "rentaMensual": "money?", "rentaPct": "pct?", "nomina": "money?", "laborCost": "pct?", "estadoNomina": "enum(stateMeta)?"}},
+    "Comparative": {"description": "Delta de un periodo vs el anterior (para semanal ejecutivo)", "fields": {"storeId": "string", "metric": "enum(kpiId)", "current": "number", "previous": "number", "deltaAbs": "number(derived)", "deltaPct": "pct(derived)", "trend": "enum(trend)(derived)"}},
+    "RankingEntry": {"fields": {"storeId": "string", "value": "number", "partPct": "pct(derived)", "rank": "int(derived)"}},
+    "KPICardSet": {"description": "KPIs consolidados de portada/resumen", "fields": {"neto": "money", "bruto": "money", "documentos": "int", "ticketPromedio": "money", "cumplimiento": "pct?", "storesCount": "int"}}
+  },
+
+  "payloadSchema": {
+    "type": "object",
+    "required": ["branding", "filters", "dateRange", "config", "stores", "consolidated"],
+    "properties": {
+      "branding": "Branding",
+      "filters": "Filters",
+      "dateRange": "DateRange",
+      "config": "Config",
+      "stores": "array<Store>",
+      "consolidated": {"description": "Agregado de la red (o sucursal única)", "properties": {"kpis": "KPICardSet", "monthly": "array<MonthlyPoint>", "weekday": "array<WeekdayPoint>", "weekly": "array<WeekPoint>", "topProducts": "array<Product>", "bottomProducts": "array<Product>", "categories": "array<Category>", "paretoProductsSortedNeto": "array<{name,neto}>"}},
+      "byStore": {"description": "map storeId -> datos por sucursal", "valueShape": {"kpiSet": "StoreKPISet", "monthly": "array<MonthlyPoint>", "weekday": "array<WeekdayPoint>", "products": "array<Product>", "hours": "array<HourPoint>"}},
+      "ranking": {"description": "rankings precalculados o base para calcularlos", "properties": {"byNeto": "array<RankingEntry>", "byGrowth": "array<RankingEntry>?", "byCumplimiento": "array<RankingEntry>?", "byTicket": "array<RankingEntry>?", "byDocuments": "array<RankingEntry>?"}},
+      "metas": "array<Meta>",
+      "costs": "array<Cost>",
+      "comparatives": "array<Comparative>?",
+      "hours": "array<HourPoint>?",
+      "monthChapter": {"description": "solo semestral_consolidado: datos del mes especial (incluye sucursales nuevas)", "optional": true, "properties": {"month": "int", "byStore": "array<StoreKPISet>", "hours": "array<HourPoint>"}}
+    }
+  },
+
+  "sections": {
+    "_shape": {"id": "enum(sectionId)", "title": "string(fijo)", "appliesTo": "array<reportType>", "required": "bool", "components": "array<componentType en orden>", "kpis": "array<kpiId>", "charts": "array<chartType>", "tables": "array<tableId>", "commentRule": "id de regla en reportRules", "hideWhen": "condición para ocultar"},
+    "catalog": [
+      {"id": "resumen_ejecutivo", "title": "RESUMEN EJECUTIVO", "appliesTo": ["mensual_sucursal", "semanal_ejecutivo_comite", "anual_historico"], "required": true, "components": ["banner_seccion", "kpi_cards", "bullets", "bullets", "comment_box"], "kpis": ["venta_neta", "venta_bruta", "cumplimiento_meta", "ticket_promedio", "documentos"], "charts": [], "tables": [], "commentRule": "resumen.5conclusiones"},
+      {"id": "resumen_ejecutivo_semestral", "title": "RESUMEN EJECUTIVO SEMESTRAL", "appliesTo": ["semestral_consolidado"], "required": true, "components": ["banner_seccion", "kpi_cards", "bullets", "bullets", "comment_box"], "kpis": ["venta_neta", "venta_bruta", "documentos", "ticket_promedio"], "charts": [], "tables": []},
+      {"id": "indicadores_corporativos", "title": "INDICADORES CORPORATIVOS", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "data_table", "data_table", "comment_box"], "kpis": ["venta_neta", "venta_bruta", "documentos", "comensales", "ticket_promedio", "gasto_por_comensal", "cumplimiento_meta", "gap_meta", "renta_sobre_ventas", "labor_cost"], "charts": [], "tables": ["indicadores_comerciales", "indicadores_meta_costos"]},
+      {"id": "comparativo_vs_semana_anterior", "title": "COMPARATIVO VS SEMANA ANTERIOR", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "chart", "caption", "bullets", "comment_box"], "charts": ["barras_divergentes_variacion"], "tables": []},
+      {"id": "ventas_por_sucursal", "title": "VENTAS DE LA SEMANA POR SUCURSAL", "appliesTo": ["semanal_red"], "required": true, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["barras_absolutas_sucursal"], "tables": ["detalle_por_sucursal_semanal"]},
+      {"id": "cumplimiento_meta", "title": "CUMPLIMIENTO DE META", "appliesTo": ["mensual_sucursal", "semanal_red"], "required": false, "components": ["banner_seccion", "chart", "caption", "kpi_cards", "comment_box"], "charts": ["barras_cumplimiento"], "hideWhen": "no existe meta para ninguna sucursal (mostrar 'Sin meta')"},
+      {"id": "cumplimiento_de_metas", "title": "CUMPLIMIENTO DE METAS", "appliesTo": ["semestral_consolidado"], "required": true, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["barras_agrupadas_cumplimiento"], "tables": ["cumplimiento_metas_semestral"]},
+      {"id": "dia_de_semana", "title": "ANÁLISIS POR DÍA DE LA SEMANA", "appliesTo": ["mensual_sucursal", "anual_historico", "semestral_consolidado"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["heatmap_dia"], "tables": ["dia_semana"]},
+      {"id": "analisis_por_semana", "title": "ANÁLISIS POR SEMANA", "appliesTo": ["anual_historico", "semestral_consolidado"], "required": false, "components": ["banner_seccion", "chart", "caption", "comment_box"], "charts": ["linea_semanal"]},
+      {"id": "comparativa_semanal", "title": "COMPARATIVA SEMANAL", "appliesTo": ["mensual_sucursal"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["comparativa_semanal_barras_linea"]},
+      {"id": "evolucion_historica", "title": "EVOLUCIÓN HISTÓRICA 2026", "appliesTo": ["anual_historico", "semestral_consolidado"], "required": true, "components": ["banner_seccion", "data_table", "chart", "caption", "comment_box"], "charts": ["linea_evolucion"], "tables": ["evolucion_mensual"]},
+      {"id": "comparativo_mensual", "title": "COMPARATIVO MENSUAL", "appliesTo": ["anual_historico", "semestral_consolidado"], "required": true, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["barras_variacion_mensual"], "tables": ["comparativo_mensual"]},
+      {"id": "desempeno_por_sucursal", "title": "DESEMPEÑO POR SUCURSAL", "appliesTo": ["semestral_consolidado"], "required": true, "components": ["banner_seccion", "chart", "caption", "chart", "caption", "data_table", "comment_box"], "charts": ["lineas_por_sucursal", "ranking_horizontal"], "tables": ["desempeno_por_sucursal"]},
+      {"id": "detalle_por_sucursal", "title": "DETALLE POR SUCURSAL", "appliesTo": ["semanal_red"], "required": true, "components": ["banner_seccion", "data_table", "comment_box"], "tables": ["detalle_por_sucursal_semanal"]},
+      {"id": "analisis_mensual_por_sucursal", "title": "ANÁLISIS MENSUAL POR SUCURSAL", "appliesTo": ["anual_historico"], "required": false, "components": ["banner_seccion", "comment_box", "PER_STORE_BLOCK"], "note": "Un bloque por sucursal (ver reportRenderer). Productos por sucursal SOLO en México."},
+      {"id": "top_productos", "title": "TOP 10 PRODUCTOS", "appliesTo": ["mensual_sucursal", "anual_historico", "semestral_consolidado"], "required": true, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["barras_horizontales_producto"], "tables": ["productos"]},
+      {"id": "bottom_productos", "title": "BOTTOM 10 PRODUCTOS", "appliesTo": ["mensual_sucursal", "anual_historico"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["barras_horizontales_producto"], "tables": ["productos"]},
+      {"id": "top5_por_categoria", "title": "TOP 5 POR CATEGORÍA", "appliesTo": ["mensual_sucursal"], "required": false, "components": ["banner_seccion", "caption", "PER_CATEGORY_TABLE"], "hideWhen": "no hay categoría en los productos"},
+      {"id": "productos_categorias", "title": "PRODUCTOS Y CATEGORÍAS", "appliesTo": ["semestral_consolidado"], "required": true, "components": ["banner_seccion", "h1", "chart", "caption", "data_table", "h1", "chart", "caption", "chart", "caption", "comment_box"], "charts": ["barras_horizontales_producto", "barras_categoria", "pareto"], "tables": ["productos"]},
+      {"id": "mix_pareto", "title": "MIX DE VENTAS", "appliesTo": ["mensual_sucursal", "anual_historico"], "required": false, "components": ["banner_seccion", "h1", "chart", "caption", "data_table", "h1", "chart", "caption", "comment_box"], "charts": ["barras_categoria", "pareto"], "tables": ["categorias"]},
+      {"id": "distribucion_importe_ticket", "title": "DISTRIBUCIÓN POR IMPORTE DE TICKET", "appliesTo": ["anual_historico"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "tables": ["distribucion_ticket"], "hideWhen": "no hay detalle de importe por ticket"},
+      {"id": "analisis_por_hora", "title": "ANÁLISIS POR HORA", "appliesTo": ["semanal_ejecutivo_comite"], "required": false, "components": ["banner_seccion", "chart", "caption", "chart", "caption", "data_table", "bullets"], "charts": ["linea_por_hora", "perfil_horario_normalizado"], "tables": ["horas_pico"], "hideWhen": "no hay ventas_por_hora"},
+      {"id": "horas_pico_operativo", "title": "ANÁLISIS OPERATIVO Y HORAS PICO", "appliesTo": ["semestral_consolidado"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["perfil_horario_normalizado"], "tables": ["horas_pico"], "hideWhen": "no hay ventas_por_hora"},
+      {"id": "estructura_de_costos", "title": "ESTRUCTURA DE COSTOS (RENTA Y NÓMINA)", "appliesTo": ["semestral_consolidado"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["barras_agrupadas_costos"], "tables": ["estructura_costos"], "hideWhen": "no hay costos_sucursal ni labor/renta en resumen"},
+      {"id": "ranking_sucursales", "title": "RANKING DE SUCURSALES", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "bullets", "h1", "bullets", "h1", "bullets"]},
+      {"id": "comparativo_historico", "title": "COMPARATIVO 2025 vs 2026 POR TIENDA", "appliesTo": ["semanal_red"], "required": false, "components": ["banner_seccion", "chart", "caption", "data_table", "comment_box"], "charts": ["linea_evolucion"], "tables": ["comparativo_tienda"]},
+      {"id": "alertas", "title": "ALERTAS", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "data_table", "comment_box"], "tables": ["alertas"], "hideWhen": "sin alertas disparadas -> mostrar 'Sin alertas relevantes'"},
+      {"id": "hallazgos", "title": "HALLAZGOS", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "bullets"]},
+      {"id": "recomendaciones", "title": "RECOMENDACIONES POR SUCURSAL", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "bullets"]},
+      {"id": "recomendaciones_tiendas_nuevas", "title": "RECOMENDACIONES PARA TIENDAS NUEVAS", "appliesTo": ["semanal_red"], "required": false, "components": ["banner_seccion", "data_table", "comment_box"], "tables": ["recomendaciones_nuevas"]},
+      {"id": "plan_de_accion", "title": "PLAN DE ACCIÓN", "appliesTo": ["semanal_red"], "required": false, "components": ["banner_seccion", "data_table", "comment_box"], "tables": ["plan_accion"]},
+      {"id": "plan_de_accion_H2", "title": "PLAN DE ACCIÓN · SEGUNDO SEMESTRE", "appliesTo": ["semestral_consolidado"], "required": true, "components": ["banner_seccion", "h1", "bullets", "h1", "bullets", "h1", "bullets"]},
+      {"id": "validacion_de_tendencias", "title": "VALIDACIÓN DE TENDENCIAS DEL SEMESTRE", "appliesTo": ["semestral_consolidado"], "required": true, "components": ["banner_seccion", "bullets"]},
+      {"id": "conclusiones", "title": "CONCLUSIONES EJECUTIVAS", "appliesTo": ["mensual_sucursal", "semestral_consolidado"], "required": true, "components": ["banner_seccion", "h1", "bullets", "h1", "bullets"]},
+      {"id": "conclusion_ejecutiva", "title": "CONCLUSIÓN EJECUTIVA", "appliesTo": ["semanal_ejecutivo_comite"], "required": true, "components": ["banner_seccion", "bullets"], "maxBullets": 10},
+      {"id": "conclusiones_prioridades", "title": "CONCLUSIONES Y PRIORIDADES", "appliesTo": ["semanal_red"], "required": true, "components": ["banner_seccion", "h1", "bullets", "h1", "bullets"]},
+      {"id": "resumen_global_ranking", "title": "RESUMEN GLOBAL 2026", "appliesTo": ["anual_historico"], "required": true, "components": ["banner_seccion", "h1", "kpi_cards", "h1", "chart", "caption", "data_table", "h1", "bullets"], "charts": ["ranking_horizontal"], "tables": ["ranking_sucursal"]},
+      {"id": "panorama_general", "title": "PANORAMA GENERAL", "appliesTo": ["semanal_red"], "required": true, "components": ["banner_seccion", "kpi_cards", "kpi_cards", "comment_box"]}
+    ]
+  },
+
+  "components": {
+    "portada": {"props": ["logoRef", "brandTitle", "reportTypeLabel", "periodLabel", "descSubtitle", "metadataRows[]", "tagline"], "layoutOrder": ["logo", "regla_dorada", "titulo", "subtitulo_gold", "subtitulo_desc", "tabla_metadatos", "tagline"]},
+    "indice": {"props": ["entries[] {number,title,level}"], "auto": true},
+    "divisor_parte": {"props": ["title"], "style": "GOLD bold + regla dorada; NO consume número de sección"},
+    "banner_seccion": {"props": ["number", "title"], "style": "cuadro PRIMARY con número blanco + título versalitas PRIMARY + regla tenue"},
+    "kpi_cards": {"props": ["cards[] {value,label}"], "count": "4-5", "style": "valor PRIMARY grande + label MUTED sobre banda clara"},
+    "comment_box": {"props": ["text"], "style": "borde izq dorado, texto 3a persona, sin bold decorativo", "rule": "interpreta, NO describe la tabla"},
+    "data_table": {"props": ["header[]", "rows[][]", "colWidths[]", "aligns[]", "highlightRowIndex?"], "style": "header PRIMARY texto blanco, celdas ajustan, numéricos a la derecha, TOTAL si aplica"},
+    "caption": {"props": ["text"], "style": "itálica MUTED bajo la gráfica; añade '(*) parcial' si aplica"},
+    "bullets": {"props": ["items[]"], "style": "marcador ▪ dorado; cada item sustentado por dato"},
+    "chart": {"props": ["chartType", "series", "labels", "options"], "renderedBy": "chart_catalog"},
+    "franja_cierre": {"props": ["methodologyText"], "style": "regla dorada + caption metodología (neto=referencia, alcance, notas de datos)"}
+  },
+
+  "charts": {
+    "_common": {"font": "Carlito", "palette": "designTokens.colors", "background": "white", "dataLabels": true, "captionBelow": true},
+    "linea_evolucion": {"x": "mes", "y": "money", "series": ["bruto(LIGHT)", "neto(PRIMARY, área tenue)"]},
+    "barras_variacion_mensual": {"x": "mes", "y": "neto", "annotations": "% variación al pie (POS/NEG)"},
+    "lineas_por_sucursal": {"x": "mes", "y": "neto", "series": "una por sucursal, color fijo por sucursal"},
+    "heatmap_dia": {"grid": "1x7", "intensity": "neto", "colormap": "PALE->PRIMARY"},
+    "linea_semanal": {"x": "semana_iso", "y": "neto", "area": true},
+    "barras_horizontales_producto": {"y": "producto", "x": "neto", "label": "$neto · uds u", "colorTop": "PRIMARY", "colorBottom": "RED_SOFT"},
+    "barras_categoria": {"y": "categoria", "x": "neto", "color": "MID"},
+    "pareto": {"bars": "neto por producto desc", "line": "acumulado %", "ref": "línea 80% GOLD", "annotation": "80% en N productos"},
+    "ranking_horizontal": {"y": "sucursal", "x": "neto", "label": "$ · %", "leaderColor": "PRIMARY"},
+    "barras_absolutas_sucursal": {"y": "sucursal", "x": "neto", "colorByState": {"AMARILLO": "GOLD", "ROJO": "MID"}},
+    "barras_cumplimiento": {"y": "sucursal", "x": "pct", "refLine": "meta 100%", "colorBands": "thresholds.cumplimientoColorBands_chart"},
+    "barras_agrupadas_cumplimiento": {"x": "sucursal", "groups": ["comercial(PRIMARY)", "operativa(GOLD)"], "refLine": "100%"},
+    "barras_agrupadas_costos": {"x": "sucursal", "groups": ["renta%(PRIMARY)", "labor%(GOLD)"], "refLine": "28% (NEG dashed)"},
+    "barras_divergentes_variacion": {"y": "sucursal", "x": "pct±", "color": {"POS": ">=0 derecha", "NEG": "<0 izquierda"}, "zeroLine": true, "sort": "por valor asc (mayor arriba)"},
+    "linea_por_hora": {"x": "hora", "y": "neto", "series": "hasta 2 semanas comparadas"},
+    "perfil_horario_normalizado": {"x": "hora", "y": "% del pico de cada sucursal", "series": "una por sucursal"},
+    "comparativa_semanal_barras_linea": {"x": "semana", "bars": "neto", "line": "tendencia", "annotations": "variación %"}
+  },
+
+  "kpis": {
+    "venta_neta": {"formula": "sum(neto)", "unit": "money", "reference": true, "interpret": "Desempeño principal."},
+    "venta_bruta": {"formula": "sum(bruto)", "unit": "money", "interpret": "Contexto."},
+    "documentos": {"formula": "sum(documentos)", "unit": "int", "interpret": "Afluencia."},
+    "comensales": {"formula": "sum(comensales)", "unit": "int", "optional": true},
+    "ticket_promedio": {"formula": "venta_neta / documentos", "unit": "money", "interpret": "Gasto por cliente."},
+    "gasto_por_comensal": {"formula": "venta_neta / comensales", "unit": "money", "optional": true},
+    "cumplimiento_meta": {"formula": "venta_neta / meta * 100", "unit": "pct", "interpret": ">=100 supera."},
+    "cumplimiento_meta_operativa": {"formula": "venta_neta / meta_operativa * 100", "unit": "pct"},
+    "gap_meta": {"formula": "venta_neta - meta", "unit": "money"},
+    "renta_sobre_ventas": {"formula": "renta / venta_neta * 100", "unit": "pct", "inverse": true},
+    "labor_cost": {"formula": "nomina / venta_neta * 100", "unit": "pct", "inverse": true, "target": 28},
+    "participacion": {"formula": "store_neto / red_neto * 100", "unit": "pct"},
+    "variacion_pct": {"formula": "(actual - anterior) / anterior * 100", "unit": "pct"},
+    "diferencia_abs": {"formula": "actual - anterior", "unit": "money"},
+    "crecimiento_periodo": {"formula": "(ultimo_mes_completo - primer_mes) / primer_mes * 100", "unit": "pct", "note": "excluye mes parcial"},
+    "unidades": {"formula": "sum(unidades)", "unit": "number", "optional": true, "note": "México sí; España no en diario"}
+  },
+
+  "states": {
+    "estadoMeta": {"values": ["VERDE", "AMARILLO", "ROJO", "SIN_META"], "source": "payload.estadoMeta o derivado con thresholds.cumplimientoState; SIN_META si no hay meta"},
+    "trend": {"values": ["UP", "DOWN", "FLAT"], "glyph": {"UP": "↑ (POS)", "DOWN": "↓ (NEG)", "FLAT": "→ (MUTED)"}, "inverseAware": true},
+    "alertLevel": {"values": ["RED", "AMBER"], "glyph": {"RED": "● NEG", "AMBER": "● AMBER"}},
+    "partial": {"applies": "mes/semana con datos incompletos", "mark": "*", "effect": "excluir de mejor/peor y de crecimiento"}
+  },
+
+  "texts": {
+    "fixed": {
+      "header": "INDEF · INVERSIÓN EN DESARROLLO DE FRANQUICIAS",
+      "company": "INDEF | Inversión en Desarrollo de Franquicias",
+      "url": "https://indef.mx/",
+      "tagline_espana": "Business Intelligence · Juntos elevamos cada taza",
+      "tagline_mexico": "Business Intelligence · Reporte para Dirección General",
+      "disclaimer_neto": "Cifras en venta neta (sin IVA) y bruta; la venta neta es la referencia principal.",
+      "disclaimer_finanzas": "No se incluyen utilidad, estados financieros ni ROAS por no disponer de P&L ni inversión de marketing; el análisis financiero se cubre con la estructura de costos (renta y nómina).",
+      "note_partial": "Los datos de {mes} son parciales (hasta el {dia}); no comparables directamente con meses completos.",
+      "hourBands": {"Manana": "07-10", "Mediodia": "11-13", "TardeTemprana": "14-16", "TardeNoche": "17-20", "Noche": "21-23", "Madrugada": "00-06"},
+      "sin_meta": "Sin meta"
+    },
+    "templates": {
+      "kpi_variacion": "{sign}{value}% vs {prevLabel}",
+      "dia_fuerte": "El {diaFuerte} es el día más fuerte ({venta}, {part}%), frente al {diaFlojo} como más débil.",
+      "fin_de_semana": "El bloque viernes-domingo concentra el {pct}% de la venta neta.",
+      "pareto": "~80% de la venta neta se concentra en {N} productos.",
+      "cumplimiento_red": "La red alcanzó el {cumpl}% de su meta operativa; {v} en verde, {a} en ámbar y {r} en rojo.",
+      "mejor_peor_mes": "El mejor mes fue {mesTop} ({ventaTop}) y el más débil {mesBottom} ({ventaBottom}) —meses completos—.",
+      "crecimiento": "Trayectoria entre {primerMes} y el último mes completo ({ultimoCompleto}): {sign}{pct}%.",
+      "lider": "{store} concentra {part}% del negocio; {laggard} es la de menor volumen.",
+      "afluencia": "La caída viene por menos visitas con ticket estable → reactivar tráfico."
+    }
+  },
+
+  "referencedDocs": {
+    "render_por_pagina": "reportRenderer.md",
+    "reglas_de_negocio": "reportRules.md",
+    "contrato_api": "reportAPI.md",
+    "payload_ejemplo": "reportPayload.example.json"
+  }
+}

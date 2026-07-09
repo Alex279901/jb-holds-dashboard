@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>INDEF Finance Command</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- reportModal.css: REMOVIDO — reportModal.js reemplazado por reportWizard -->
+    <link rel="stylesheet" href="../reports/wizard/reportWizard.css">
   </head>
   <body>
     <section class="login-screen" id="loginScreen" aria-label="Inicio de sesion">
@@ -190,6 +192,31 @@
     <script src="assets/vendor/html2canvas.min.js"></script>
     <script src="assets/vendor/jspdf.umd.min.js"></script>
     <script src="app.js"></script>
+
+    <!-- ── Report Engine — carga en orden de dependencias ──────────────────── -->
+    <!-- 1. Config y builders (sin dependencias entre sí) -->
+    <script src="../reports/engine/reportConfig.js"></script>
+    <script src="../reports/engine/payloadBuilder.js"></script>
+    <script src="../reports/engine/insightEngine.js"></script>
+    <script src="../reports/charts/chartUtils.js"></script>
+    <!-- 2. Secciones (dependen de RC y ChartUtils) -->
+    <script src="../reports/sections/coverSection.js"></script>
+    <script src="../reports/sections/summarySection.js"></script>
+    <script src="../reports/sections/salesSection.js"></script>
+    <script src="../reports/sections/rankingSection.js"></script>
+    <script src="../reports/sections/productSection.js"></script>
+    <script src="../reports/sections/laborSection.js"></script>
+    <script src="../reports/sections/conclusionsSection.js"></script>
+    <script src="../reports/sections/indexSection.js"></script>
+    <script src="../reports/sections/closingSection.js"></script>
+    <!-- 3. Registry (depende de secciones) -->
+    <script src="../reports/registry/moduleRegistry.js"></script>
+    <!-- 4. Perfiles (dependen del registry) -->
+    <script src="../reports/profiles/mensualSucursal.js"></script>
+    <!-- sgMexicoMonthly.js: REMOVIDO — reemplazado por reportWizard + profiles/mensualSucursal.js -->
+    <!-- 6. Engine y Wizard (dependen de todo lo anterior) -->
+    <script src="../reports/engine/reportEngine.js"></script>
+    <script src="../reports/wizard/reportWizard.js"></script>
 
     <a href="/" aria-label="Volver al inicio" style="position:fixed;bottom:24px;left:24px;z-index:9999;display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:rgba(4,13,25,0.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(147,223,255,0.13);border-radius:999px;color:#8fa7bd;font-size:0.72rem;font-weight:660;text-decoration:none;font-family:Inter,ui-sans-serif,system-ui,sans-serif;" onmouseover="this.style.color='#eef8ff';this.style.borderColor='rgba(147,223,255,0.28)'" onmouseout="this.style.color='#8fa7bd';this.style.borderColor='rgba(147,223,255,0.13)'">&#8592; Inicio</a>
   </body>
